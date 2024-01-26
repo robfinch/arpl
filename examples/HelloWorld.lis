@@ -1,0 +1,79 @@
+     1	extern int putchar(char);
+     2	
+     3	private void puts(char *str)
+     4	begin
+     5	until (*str==0) begin
+     6	putchar(*str);
+     7	str++;
+     8	end
+     9	end
+    10	
+
+
+*** local symbol table ***
+
+
+
+*** symbols by compound statement ***
+
+
+
+
+    11	integer main(integer argc, char* argv[])
+    12	begin
+    13	integer x;
+    14	
+    15	for (x = 1; x < 10; x++)
+    16	puts("Hello World!");
+    17	end
+    18	
+
+
+*** local symbol table ***
+
+8 _x         =fffffff8 (none)   8   -    Auto        Int
+
+
+*** symbols by compound statement ***
+
+8 _x         =fffffff8 (none)   8   -    Auto        Int
+8 _x         =fffffff8 (none)   8   -    Auto        Int
+
+
+
+
+ *** global scope typedef symbol table ***
+
+35 __new      =000000 (none)   8   -    
+35 __delete   =000000 (none)   8   -    
+35 __autonew  =000000 (none)   8   -    
+36 _main      =000010 (text)   0   -    Global      Function returning Function returning Int
+		Parameters:
+			Type array:
+   008 018 
+Stack Space:
+		Argbot: 0
+		Tmpbot: -40
+		Stkspc: 40
+36 _puts      =000001 (text)   0   -    Static      Function returning Function returning 
+		Parameters:
+			Type array:
+   018 
+Stack Space:
+		Argbot: 0
+		Tmpbot: -40
+		Stkspc: 40
+36 _putchar   =000000 (text)   0   -    External    Function returning Function returning Int
+		Parameters:
+			Type array:
+   006 
+Stack Space:
+		Argbot: 0
+		Tmpbot: 0
+		Stkspc: 0
+8 _start_data =000000 (data)   8   -    External    Int
+8 _start_bss =000000 (bss)   8   -    External    Int
+8 _start_rodata =000000 (rodata)   8   -    External    Int
+
+ *** structures and unions ***
+

@@ -1,0 +1,18 @@
+extern int putchar(char);
+
+private void puts(char *str)
+begin
+until (*str==0) begin
+putchar(*str);
+str++;
+end
+end
+
+integer main(integer argc, char* argv[])
+begin
+integer x;
+
+for (x = 1; x < 10; x++)
+puts("Hello World!");
+end
+
