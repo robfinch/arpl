@@ -131,7 +131,7 @@ int64_t ENODE::GetReferenceSize()
 
 int ENODE::GetNaturalSize()
 {
-	int siz0, siz1;
+	int siz0, siz1, siz2;
 	if (this == NULL)
 		return 0;
 	switch (nodetype)
@@ -249,6 +249,19 @@ int ENODE::GetNaturalSize()
 			return (siz1);
 		else
 			return (siz0);
+	case en_and_and:
+	case en_and_or:
+	case en_or_or:
+	case en_or_and:
+		siz0 = p[0]->GetNaturalSize();
+		siz1 = p[1]->GetNaturalSize();
+		siz2 = p[2]->GetNaturalSize();
+		if (siz0 > siz1 && siz0 > siz2)
+			return (siz0);
+		else if (siz1 > siz2)
+			return (siz1);
+		else
+			return (siz2);
 	case en_void:   case en_cond:	case en_safe_cond:
 		return (p[1]->GetNaturalSize());
 	case en_cast:
@@ -1033,6 +1046,15 @@ void ENODE::repexpr()
 		p[1]->repexpr();
 		vmask->repexpr();
 		break;
+	case en_and_or:
+	case en_and_and:
+	case en_or_and:
+	case en_or_or:
+		p[0]->repexpr();
+		p[1]->repexpr();
+		p[2]->repexpr();
+		vmask->repexpr();
+		break;
 	case en_bmap:
 	case en_bytendx:	case en_wydendx:
 	case en_sub:
@@ -1331,6 +1353,15 @@ void ENODE::scanexpr(int duse)
 	case en_add:    case en_sub:
 		p[0]->scanexpr(duse);
 		p[1]->scanexpr(duse);
+		vmask->scanexpr(duse);
+		break;
+	case en_and_or:
+	case en_or_and:
+	case en_and_and:
+	case en_or_or:
+		p[0]->scanexpr(duse);
+		p[1]->scanexpr(duse);
+		p[2]->scanexpr(duse);
 		vmask->scanexpr(duse);
 		break;
 	case en_bmap:

@@ -2974,6 +2974,8 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 	case en_ptrdif:  ap1 = GenerateBinary(node, flags, size, op_ptrdif); goto retpt;
 	case en_and:    ap1 = GenerateBinary(node, flags, size, op_and); goto retpt;
   case en_or:     ap1 = GenerateBinary(node,flags,size,op_or); goto retpt;
+	case en_or_and:     ap1 = GenerateTrinary(node, flags, size, op_or_and); goto retpt;
+	case en_and_or:     ap1 = GenerateTrinary(node, flags, size, op_and_or); goto retpt;
 	case en_xor:	ap1 = GenerateBinary(node, flags,size,op_xor); goto retpt;
 	case en_bmap:	ap1 = node->GenerateBinary(flags, size, op_bmap); goto retpt;
 	case en_bytendx:	ap1 = node->GenerateBinary(flags, size, op_bytendx); goto retpt;
@@ -4130,8 +4132,8 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	//	}
 	//	GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cnt2 + sizeOfFP));
 	//}
-	RestoreRegisterVars(func);
 	if (func->IsNocall) {
+		RestoreRegisterVars(func);
 		if (func->epilog) {
 			func->epilog->Generate();
 			return;
@@ -4140,6 +4142,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	}
 	toAdd = 0;
 	if (!cpu.SupportsLeave) {
+		RestoreRegisterVars(func);
 		func->UnlinkStack(0);
 		toAdd = func->has_return_block ? compiler.GetReturnBlockSize() : 0;
 	}
@@ -4222,6 +4225,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	// Generate the return instruction. For the Pascal calling convention pop the parameters
 	// from the stack.
 	if (func->IsInterrupt) {
+		RestoreRegisterVars(func);
 		//RestoreRegisterSet(sym);
 		GenerateInterruptLoad(func);
 		GenerateInterruptReturn(func);
@@ -4230,7 +4234,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 
 	if (!func->IsInline) {
 		if (cpu.SupportsLeave) {
-			if (func->arg_space < 32760)
+			if (func->arg_space < 8338600LL)
 				func->UnlinkStack(toAdd);
 			else {
 				GenerateMove(makereg(regSP), makereg(regFP));
@@ -4243,6 +4247,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 			}
 		}
 		else {
+			RestoreRegisterVars(func);
 			if (toAdd > 0) {
 				cg.GenerateReturnAndDeallocate(toAdd);
 				toAdd = 0;
@@ -4251,8 +4256,10 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 				GenerateReturnInsn();
 		}
 	}
-	else
+	else {
+		RestoreRegisterVars(func);
 		GenerateAddOnto(makereg(regSP), MakeImmediate(toAdd));
+	}
 }
 
 
@@ -4478,4 +4485,127 @@ int CodeGenerator::GetSegmentIndexReg(e_sg segment)
 	default:	return (regPP);
 	}
 	return (regZero);
+}
+
+// For a leaf routine don't bother to store the link register.
+OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
+{
+	Operand* ap, * ap1;
+	int n;
+	char buf[300];
+	OCODE* ip;
+
+	ip = nullptr;
+	fn->alstk = false;
+	if (!cpu.SupportsEnter)
+		GenerateMonadic(op_hint, 0, MakeImmediate(begin_return_block));
+	if (cpu.SupportsEnter)
+	{
+		if (fn->stkspace < 32767) {
+			GenerateMonadic(op_enter, 0, MakeImmediate(-fn->tempbot));
+			ip = currentFn->pl.tail;
+			//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
+						//spAdjust = pl.tail;
+			fn->alstk = true;
+		}
+		else {
+			GenerateMonadic(op_enter, 0, MakeImmediate(32760));
+			ip = currentFn->pl.tail;
+			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 32760));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
+			fn->alstk = true;
+		}
+	}
+	else if (cpu.SupportsLink) {
+		if (fn->stkspace < 32767 - Compiler::GetReturnBlockSize()) {
+			GenerateMonadic(op_link, 0, MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace));
+			//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
+						//spAdjust = pl.tail;
+			fn->alstk = true;
+		}
+		else {
+			GenerateMonadic(op_link, 0, MakeImmediate(32760));
+			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 32760));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
+			fn->alstk = true;
+		}
+	}
+	else {
+		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
+		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), sizeOfWord);
+		cg.GenerateMove(makereg(regFP), makereg(regSP));
+		cg.GenerateStore(makereg(regLR), cg.MakeIndexed(sizeOfWord * 1, regFP), sizeOfWord);	// Store link register on stack
+		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
+		fn->alstk = true;
+		fn->has_return_block = true;
+	}
+	// Put this marker here so that storing the link register relative to the
+	// frame pointer counts as a frame pointer reference.
+	if (!cpu.SupportsEnter)
+		GenerateMonadic(op_hint, 0, MakeImmediate(end_return_block));
+	//	GenerateTriadic(op_stdp, 0, makereg(regFP), makereg(regZero), MakeIndirect(regSP));
+	n = 0;
+	if (!currentFn->IsLeaf && fn->doesJAL) {
+		n |= 2;
+		/*
+		if (alstk) {
+			GenerateDiadic(op_sto, 0, makereg(regLR), MakeIndexed(1 * sizeOfWord + stkspace, regSP));
+		}
+		else
+		*/
+		if (!cpu.SupportsEnter) {
+			//if (IsFar)
+			//	GenerateMonadic(op_di, 0, MakeImmediate(2));
+			//ap = GetTempRegister();
+			//GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x3102));
+			//GenerateDiadic(op_mflk, 0, makereg(regLR), ap);
+			//cg.GenerateStore(makereg(regLR), MakeIndexed(2 * sizeOfWord, regFP), sizeOfWord);
+			//ReleaseTempRegister(ap);
+			if (fn->IsFar) {
+				ap = GetTempRegister();
+				GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x3103));
+				cg.GenerateStore(ap, cg.MakeIndexed(3 * sizeOfWord, regFP), sizeOfWord);
+				ReleaseTempRegister(ap);
+			}
+		}
+	}
+	/*
+	switch (n) {
+	case 0:	break;
+	case 1:	GenerateDiadic(op_std, 0, makereg(regXLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
+	case 2:	GenerateDiadic(op_std, 0, makereg(regLR), MakeIndexed(3 * sizeOfWord, regSP)); break;
+	case 3:	GenerateTriadic(op_stdp, 0, makereg(regXLR), makereg(regLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
+	}
+	*/
+	retlab = nextlabel++;
+	ap = MakeDataLabel(retlab, regZero);
+	ap->mode = am_imm;
+	//if (!cpu.SupportsLink)
+	//	GenerateDiadic(op_mov, 0, makereg(regFP), makereg(regSP));
+	//if (!alstk) {
+	//	GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(stkspace));
+		//spAdjust = pl.tail;
+//	}
+	// Store the catch handler address at 16[$FP]
+	if (exceptions) {
+		ap = GetTempRegister();
+		sprintf_s(buf, sizeof(buf), ".%05lld", fn->defCatchLabel);
+		DataLabels[fn->defCatchLabel]++;
+		fn->defCatchLabelPatchPoint = currentFn->pl.tail;
+		GenerateDiadic(cpu.ldi_op, 0, ap, cg.MakeStringAsNameConst(buf, codeseg));
+		if (fn->IsFar)
+			GenerateMonadic(op_di, 0, MakeImmediate(2));
+		cg.GenerateStore(ap, cg.MakeIndexed((int64_t)32, regFP), sizeOfWord);
+		ReleaseTempRegister(ap);
+		if (fn->IsFar) {
+			ap = GetTempRegister();
+			GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x311F));	// CS
+			cg.GenerateStore(ap, cg.MakeIndexed((int64_t)40, regFP), sizeOfWord);
+			ReleaseTempRegister(ap);
+		}
+		//		GenerateDiadic(cpu.mov_op, 0, makereg(regAFP), makereg(regFP));
+		GenerateMonadic(op_bex, 0, cg.MakeCodeLabel(currentFn->defCatchLabel));
+	}
+	fn->tryCount = 0;
+	return (ip);
 }

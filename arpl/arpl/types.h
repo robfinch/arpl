@@ -285,6 +285,7 @@ public:
 	// Optimizations
 	void OptInstructions();
 	void OptBranchToNext();
+	void OptIncrBranch();
 	void OptDoubleTargetRemoval();
 	void OptConstReg();
 	void OptLoopInvariants(OCODE *loophead);
@@ -375,6 +376,7 @@ public:
 	BasicBlock *ReturnBlock;
 	Var *varlist;
 	PeepList pl;							// under construction
+	OCODE* pEnter;						// place of ENTER instruction
 	OCODE *spAdjust;					// place where sp adjustment takes place
 	OCODE *rcode;
 	int64_t defCatchLabel;
@@ -448,7 +450,7 @@ public:
 
 	void GenLoad(Operand *ap3, Operand *ap1, int ssize, int size);
 	int64_t SizeofReturnBlock();
-	void SetupReturnBlock();
+	OCODE* SetupReturnBlock();
 	void GenerateLocalFunctions();
 	void GenerateCoroutineData();
 	void GenerateCoroutineEntry();
@@ -792,6 +794,14 @@ public:
 	bool IsPositType() {
 		return (nodetype == en_addrof || nodetype == en_autopcon) ? false : (etype == bt_posit);
 	};
+	bool IsLogic() {
+		return (nodetype == en_lor 
+			|| nodetype == en_land 
+			|| nodetype == en_land_safe
+			|| nodetype==en_or
+			|| nodetype==en_lor_safe
+			|| nodetype==en_and);
+	}
 	bool IsVectorType() {
 		return (etype == bt_vector); };
 	bool IsAutocon() { return (nodetype == en_autocon || nodetype == en_autofcon || nodetype == en_autopcon || nodetype == en_autovcon || nodetype == en_classcon); };
@@ -1237,6 +1247,7 @@ public:
 	void OptPush();
 	void OptBne();
 	void OptBeq();
+	void OptIncrBranch();
 	void OptScc();
 	void OptSll();
 	void OptSxw();
@@ -1479,6 +1490,9 @@ public:
 	virtual void GenerateSignExtendWyde(Operand*, Operand*);
 	virtual void GenerateSignExtendTetra(Operand*, Operand*);
 	virtual int GetSegmentIndexReg(e_sg seg);
+
+	virtual OCODE* GenerateReturnBlock(Function* fn);
+	virtual void SaveRegisterVars(CSet* mask) {};
 };
 
 class ThorCodeGenerator : public CodeGenerator
@@ -1639,12 +1653,15 @@ public:
 	void GenerateStore(Operand* ap1, Operand* ap3, int size, Operand* mask = nullptr);
 	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
 
+	OCODE* GenerateReturnBlock(Function* fn);
+
 	Operand* GenerateFloatcon(ENODE* node, int flags, int64_t size);
 	Operand* GenPositcon(ENODE* node, int flags, int64_t size);
 	Operand* GenLabelcon(ENODE* node, int flags, int64_t size);
 	Operand* GenNacon(ENODE* node, int flags, int64_t size);
 	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
 	int GetSegmentIndexReg(e_sg seg);
+	void SaveRegisterVars(CSet* mask);
 };
 
 class RiscvCodeGenerator : public CodeGenerator

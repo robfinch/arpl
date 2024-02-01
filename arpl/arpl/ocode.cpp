@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2018-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2018-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -748,6 +748,48 @@ void OCODE::OptBeq()
 		}
 	}
 }
+
+void OCODE::OptIncrBranch()
+{
+	OCODE* bck;
+
+	if (back->opcode == op_ldi && back->oper1->preg != oper1->preg) {
+		bck = back->back;
+		if (bck && bck->opcode == op_add && bck->oper3->offset) {
+			if (bck->oper3->mode == am_imm) {
+				if (bck->oper3->offset->i128.low == 1 && bck->oper3->offset->i128.high == 0) {
+					if (bck->oper1->mode == am_reg && bck->oper1->preg == oper1->preg) {
+						if (bck->oper2->mode == am_reg && bck->oper2->preg == oper1->preg) {
+							switch (this->opcode) {
+							case op_beq:	opcode = op_ibeq; insn = Instruction::Get(op_ibeq); bck->MarkRemove(); break;
+							case op_bne:	opcode = op_ibne; insn = Instruction::Get(op_ibne); bck->MarkRemove(); break;
+							case op_ble:	opcode = op_ible; insn = Instruction::Get(op_ible); bck->MarkRemove(); break;
+							case op_blt:	opcode = op_iblt; insn = Instruction::Get(op_iblt); bck->MarkRemove(); break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if (back && back->opcode == op_add && back->oper3->offset) {
+		if (back->oper3->mode == am_imm) {
+			if (back->oper3->offset->i128.low == 1 && back->oper3->offset->i128.high == 0) {
+				if (back->oper1->mode == am_reg && back->oper1->preg == oper1->preg) {
+					if (back->oper2->mode == am_reg && back->oper2->preg == oper1->preg) {
+						switch (this->opcode) {
+						case op_beq:	opcode = op_ibeq; insn = Instruction::Get(op_ibeq); back->MarkRemove(); break;
+						case op_bne:	opcode = op_ibne; insn = Instruction::Get(op_ibne); back->MarkRemove(); break;
+						case op_ble:	opcode = op_ible; insn = Instruction::Get(op_ible); back->MarkRemove(); break;
+						case op_blt:	opcode = op_iblt; insn = Instruction::Get(op_iblt); back->MarkRemove(); break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 
 int OCODE::TargetDistance(int64_t i)
 {
@@ -1587,6 +1629,8 @@ void OCODE::OptLdi()
 					else
 						return;
 				}
+				else if (rg1 == oper1->preg || rg2 == oper1->preg)
+					return;
 			}
 		}
 	}

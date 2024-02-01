@@ -103,6 +103,7 @@ enum e_node {
 		en_and, en_or, en_land, en_lor, en_land_safe, en_lor_safe, //104
         en_xor, en_mulu, en_udiv, en_umod, en_ugt,
         en_uge, en_ule, en_ult,
+		en_and_and, en_or_and, en_and_or, en_or_or,
 		en_ref, en_fieldref, en_ursh,
 		en_bchk, en_chk, en_bytendx, en_bitoffset,
 		en_abs, en_max, en_min, en_addrof, en_ptrdif, en_wydendx,
@@ -300,6 +301,8 @@ enum e_op {
 	op_addmo,
 	op_addm, op_addh, op_eorm, op_eorh, op_eors, op_andm, op_andh, op_ands,
 	op_adds, op_ors, op_orh, op_orm, op_movsxb, op_movsxw, op_movsxt,
+	op_or_and, op_or_or, op_and_and, op_and_or,
+	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxw, op_zxt, op_bmap,
 	op_wydendx, op_sync,
@@ -349,6 +352,7 @@ enum e_am {
 	am_mem_indirect = 1 << 26,
 	am_jmp = 1 << 27,
 	am_iindx2 = 1 << 28,
+	am_i16 = 1 << 29,
 	am_all = 0x1FB,	// exclude fp reg for Thor
 };
 

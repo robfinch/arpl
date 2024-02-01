@@ -410,7 +410,7 @@ extern BasicBlock *basicBlocks[10000];
 extern BasicBlock *sortedBlocks[10000];
 extern Forest forest;
 extern IGraph iGraph;
-extern Instruction opl[366];
+extern Instruction opl[371];
 extern BasicBlock *LastBlock;
 extern Instruction *GetInsn(int);
 extern char inpline[100000];

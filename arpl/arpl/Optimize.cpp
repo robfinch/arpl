@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -688,19 +688,103 @@ static void Opt0_uminus(ENODE** node)
 
 static void Opt0_logic(ENODE** node)
 {
-	ENODE* ep;
+	ENODE* ep, * ep1, * ep2, *tep;
+	e_node nt;
 
 	ep = *node;
 	if (ep == (ENODE*)NULL)
 		return;
 	opt0(&(ep->p[0]));
 	opt0(&(ep->p[1]));
+	if (ep->p[2])
+		opt0(&ep->p[2]);
 	if (ep->p[0]->nodetype == en_icon &&
 		ep->p[1]->nodetype == en_icon)
 		dooper(*node);
 	else if (ep->p[0]->nodetype == en_icon) {
 		swap_nodes(ep);
 		ooptimized = true;
+	}
+	else if (ep->p[2]==nullptr) {
+		if (ep->p[0]->IsLogic()) {
+			nt = ep->p[0]->nodetype;
+			switch (ep->nodetype) {
+			case en_and:
+			case en_land:
+			case en_land_safe:
+				ep1 = ep->p[0]->p[0];
+				ep2 = ep->p[0]->p[1];
+				tep = ep->p[1];
+				ep->p[0] = ep1;
+				ep->p[1] = ep2;
+				ep->p[2] = tep;
+				switch (nt) {
+				case en_land:
+				case en_land_safe:
+				case en_and:	ep->nodetype = en_and_and; break;
+				case en_lor:
+				case en_lor_safe:
+				case en_or:		ep->nodetype = en_or_and; break;
+				}
+				break;
+			case en_or:
+			case en_lor:
+			case en_lor_safe:
+				ep1 = ep->p[0]->p[0];
+				ep2 = ep->p[0]->p[1];
+				tep = ep->p[1];
+				ep->p[0] = ep1;
+				ep->p[1] = ep2;
+				ep->p[2] = tep;
+				switch (nt) {
+				case en_land:
+				case en_land_safe:
+				case en_and:	ep->nodetype = en_and_or; break;
+				case en_lor:
+				case en_lor_safe:
+				case en_or:		ep->nodetype = en_or_or; break;
+				}
+				break;
+			}
+		}
+		else if (ep->p[1]->IsLogic()) {
+			nt = ep->p[1]->nodetype;
+			switch (ep->nodetype) {
+			case en_and:
+			case en_land:
+			case en_land_safe:
+				ep1 = ep->p[1]->p[0];
+				ep2 = ep->p[1]->p[1];
+				tep = ep->p[1];
+				ep->p[1] = ep1;
+				ep->p[2] = ep2;
+				switch (nt) {
+				case en_land:
+				case en_land_safe:
+				case en_and:	ep->nodetype = en_and_and; break;
+				case en_lor:
+				case en_lor_safe:
+				case en_or:		ep->nodetype = en_or_and; break;
+				}
+				break;
+			case en_or:
+			case en_lor:
+			case en_lor_safe:
+				ep1 = ep->p[0]->p[0];
+				ep2 = ep->p[0]->p[1];
+				ep->p[1] = ep1;
+				ep->p[2] = ep2;
+				switch (nt) {
+				case en_land:
+				case en_land_safe:
+				case en_and:	ep->nodetype = en_and_or; break;
+				case en_lor:
+				case en_lor_safe:
+				case en_or:		ep->nodetype = en_or_or; break;
+				}
+				break;
+			}
+		}
 	}
 }
 

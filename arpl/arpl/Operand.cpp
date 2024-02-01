@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2017-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2017-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -244,6 +244,10 @@ void Operand::MakeLegal(int flags, int64_t size)
 			}
 			else if (flags & am_ui6) {
 				if (i < 64 && i >= 0)
+					return;
+			}
+			else if (flags & am_i16) {
+				if (i < 32767 && i >= -32768)
 					return;
 			}
 			else if (flags & am_imm0) {
@@ -677,6 +681,7 @@ void Operand::store(txtoStream& ofs)
 				if (offset->sym) {
 					if (offset->sym->IsParameter) {	// must be an parameter
 						offset->i += compiler.GetReturnBlockSize();	// The frame pointer is the second word of the return block.
+						offset->i128.Add(&offset->i128, &offset->i128, Int128::MakeInt128(compiler.GetReturnBlockSize()));
 					}
 				}
 			}
@@ -685,6 +690,7 @@ void Operand::store(txtoStream& ofs)
 				if (offset->sym) {
 					if (offset->sym->IsParameter) {
 						offset->i -= compiler.GetReturnBlockSize();
+						offset->i128.Sub(&offset->i128, &offset->i128, Int128::MakeInt128(compiler.GetReturnBlockSize()));
 					}
 				}
 			}
