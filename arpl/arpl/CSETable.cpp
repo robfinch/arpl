@@ -379,7 +379,11 @@ void CSETable::InitializeTempRegs()
 					else {
 						size = exptr->GetNaturalSize();
 						ap->isUnsigned = exptr->isUnsigned;
-						cg.GenerateLoad(ap2, ap, size, size);
+						// Avoid loading from the stack frame that was just saved to.
+						if (ap->mode == am_indx && ap->preg == regFP && ap->offset->i128.high < 0)
+							;
+						else
+							cg.GenerateLoad(ap2, ap, size, size);
 					}
 					ReleaseTempReg(ap);
 				}
@@ -471,7 +475,7 @@ int CSETable::AllocateRegisterVars()
 	// Push temporaries on the stack.
 	if (!currentFn->prolog) {
 		cg.GenerateHint(begin_save_regvars);
-		SaveRegisterVars(rmask);
+		cg.SaveRegisterVars(rmask);
 		cg.GenerateHint(end_save_regvars);
 	}
 	//SaveFPRegisterVars(fprmask);

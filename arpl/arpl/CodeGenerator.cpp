@@ -4247,7 +4247,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 			}
 		}
 		else {
-			RestoreRegisterVars(func);
+			//RestoreRegisterVars(func);
 			if (toAdd > 0) {
 				cg.GenerateReturnAndDeallocate(toAdd);
 				toAdd = 0;
@@ -4257,7 +4257,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 		}
 	}
 	else {
-		RestoreRegisterVars(func);
+//		RestoreRegisterVars(func);
 		GenerateAddOnto(makereg(regSP), MakeImmediate(toAdd));
 	}
 }
