@@ -113,16 +113,16 @@ int64_t ENODE::GetReferenceSize()
 		if (tp)
 			return(tp->size);
 		else
-			return (sizeOfFPD);
+			return (cpu.sizeOfFPD);
 	case en_pregvar:
 		if (tp)
 			return(tp->size);
 		else
-			return (sizeOfFPD);
+			return (cpu.sizeOfFPD);
 	case en_type:
 		return (tp->size);
 	case en_regvar:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 		//			return node->esize;
 	}
 	return (8);
@@ -145,7 +145,7 @@ int ENODE::GetNaturalSize()
 			return (2);
 		if (-2147483648LL <= i && i <= 2147483647LL)
 			return (4);
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_fcon:
 		if (tp != nullptr)
 			return (tp->precision / 8);
@@ -160,7 +160,7 @@ int ENODE::GetNaturalSize()
 		return (8);
 	case en_ccwp: case en_cucwp:
 	case en_sxb:	case en_sxc:	case en_sxh:
-		return (sizeOfInt);
+		return (cpu.sizeOfInt);
 	case en_tcon: return (6);
 	case en_labcon: case en_clabcon:
 	case en_cnacon: case en_nacon:  case en_autocon: case en_classcon:
@@ -169,31 +169,31 @@ int ENODE::GetNaturalSize()
 	case en_wyde2hexi: case en_uwyde2hexi:
 	case en_tetra2hexi: case en_utetra2hexi:
 	case en_uocta2hexi:
-		return (16);
+		return (cpu.sizeOfWord);
 	case en_byt2ptr: case en_ubyt2ptr:
 	case en_wyde2ptr: case en_uwyde2ptr:
-		return (sizeOfPtr);
+		return (cpu.sizeOfPtr);
 	case en_type:
 		return (tp->size);
 	case en_fcall:
 		if (tp)
 			return (tp->size);
 		else
-			return (sizeOfWord);
+			return (cpu.sizeOfWord);
 	case en_regvar:
 	case en_fpregvar:
 		if (tp)
 			return (tp->size);
 		else
-			return (sizeOfWord);
+			return (cpu.sizeOfWord);
 	case en_autopcon:
 	case en_autofcon:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_ref:
 		if (tp)
 			return (tp->size);
 		else
-			return (sizeOfPtr);
+			return (cpu.sizeOfPtr);
 	case en_byt2wyde: case en_ubyt2wyde: return (2);
 	case en_byt2tetra:	return (4);
 	case en_wyde2tetra:	return (4);
@@ -202,7 +202,7 @@ int ENODE::GetNaturalSize()
 		if (tp)
 			return (tp->precision / 8);
 		else
-			return (sizeOfWord);
+			return (cpu.sizeOfWord);
 	case en_not:    case en_compl:
 	case en_uminus: case en_assign:
 		return p[0]->GetNaturalSize();
@@ -275,26 +275,26 @@ int ENODE::GetNaturalSize()
 		return 8;
 	case en_q2i:
 	case en_t2i:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_i2p:
 	case en_i2d:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_d2t:
-		return (sizeOfFPT);
+		return (cpu.sizeOfFPT);
 	case en_i2q:
 	case en_d2q:
 	case en_t2q:
-		return (sizeOfFPQ);
+		return (cpu.sizeOfFPQ);
 	case en_object_list:
 		return (p[0]->GetNaturalSize());
 	case en_addrof:
-		return (sizeOfPtr);
+		return (cpu.sizeOfPtr);
 	case en_bytendx:
 		return (1);
 	case en_wydendx:
 		return (2);
 	case en_bmap:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_sync:
 		return (4);
 	case en_aggregate:
@@ -308,9 +308,9 @@ int ENODE::GetNaturalSize()
 	case en_switch:
 		if (tp)
 			return (tp->size);
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_unknown:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	default:
 		printf("DIAG - natural size error %d.\n", nodetype);
 		break;
@@ -1170,7 +1170,7 @@ CSE* ENODE::OptInsertAutocon(int duse)
 				return (nullptr);
 		}
 		else {
-			if (this->sym->depth < currentFn->depth + 2)
+			if (this->sym->depth < currentFn->depth + 1)	// was + 1
 				return (nullptr);
 		}
 	}
@@ -1573,8 +1573,8 @@ Operand* ENODE::GenerateRegRegIndex()
 
 	// Don't need to free ap2 here. It is included in ap1.
 	GenerateHint(8);
-	ap1 = cg.GenerateExpression(p[0], am_reg, sizeOfWord, 0);
-	ap2 = cg.GenerateExpression(p[1], am_reg, sizeOfWord, 0);
+	ap1 = cg.GenerateExpression(p[0], am_reg, cpu.sizeOfWord, 0);
+	ap2 = cg.GenerateExpression(p[1], am_reg, cpu.sizeOfWord, 0);
 	GenerateHint(9);
 	if (cpu.SupportsIndexed) {
 		ap1->mode = am_indx2;
@@ -1599,7 +1599,7 @@ Operand* ENODE::GenerateImmExprIndex(Operand* ap1, bool neg)
 {
 	Operand* ap2;
 
-	ap2 = cg.GenerateExpression(p[1], am_reg | am_imm, sizeOfInt, 1);
+	ap2 = cg.GenerateExpression(p[1], am_reg | am_imm, cpu.sizeOfInt, 1);
 	if (ap2->mode == am_reg && ap2->preg == 0) {	// value is zero
 		ap1->mode = am_direct;
 		if (ap1->offset)
@@ -1684,7 +1684,7 @@ Operand *ENODE::GenIndex(bool neg)
 
 	GenerateHint(8);
 //	GenerateHint(begin_index);
-	ap1 = cg.GenerateExpression(p[0], am_reg | am_imm, sizeOfInt, 1);
+	ap1 = cg.GenerateExpression(p[0], am_reg | am_imm, cpu.sizeOfInt, 1);
 	if (ap1->mode == am_imm) {
 		ap1 = GenerateImmExprIndex(ap1, neg);
 		if (ndxlvl > 1) {
@@ -1695,7 +1695,7 @@ Operand *ENODE::GenIndex(bool neg)
 		return (ap1);
 	}
 
-	ap2 = cg.GenerateExpression(p[1], am_all, 8, 1);   /* get right op */
+	ap2 = cg.GenerateExpression(p[1], am_all, cpu.sizeOfWord, 1);   /* get right op */
 //	GenerateHint(end_index);
 	GenerateHint(9);
 
@@ -1788,8 +1788,8 @@ Operand* ENODE::GenerateScaledIndexing(int flags, int size, int rhs)
 	Operand* ap4;
 
 	ap1 = GetTempRegister();
-	ap4 = cg.GenerateExpression(p[0], flags, sizeOfWord, rhs);	// base (constant)
-	ap3 = cg.GenerateExpression(p[1], flags, sizeOfWord, rhs);
+	ap4 = cg.GenerateExpression(p[0], flags, cpu.sizeOfWord, rhs);	// base (constant)
+	ap3 = cg.GenerateExpression(p[1], flags, cpu.sizeOfWord, rhs);
 	ap1->mode = am_indx2;
 	ap1->sreg = ap3->preg;
 	ap1->deep2 = ap3->deep2;
@@ -1995,8 +1995,8 @@ Operand *ENODE::GenerateShift(int flags, int size, int op)
 
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(p[0], am_reg, size, 0);
-	ap2 = cg.GenerateExpression(p[1], am_reg | am_ui6, sizeOfWord, 1);
-	GenerateTriadic(op, size==sizeOfWord ?0 : size, ap3, ap1, ap2);
+	ap2 = cg.GenerateExpression(p[1], am_reg | am_ui6, cpu.sizeOfWord, 1);
+	GenerateTriadic(op, size==cpu.sizeOfWord ?0 : size, ap3, ap1, ap2);
 	// Rotates automatically sign extend
 	if ((op == op_rol || op == op_ror) && ap2->isUnsigned)
 		switch (size) {
@@ -2055,8 +2055,8 @@ Operand *ENODE::GenDivMod(int flags, int size, int op)
 	//	swap_nodes(node);
 	if (op == op_fdiv) {
 		ap3 = GetTempFPRegister();
-		ap1 = cg.GenerateExpression(p[0], am_reg, sizeOfFPD, 0);
-		ap2 = cg.GenerateExpression(p[1], am_reg, sizeOfFPD, 1);
+		ap1 = cg.GenerateExpression(p[0], am_reg, cpu.sizeOfFPD, 0);
+		ap2 = cg.GenerateExpression(p[1], am_reg, cpu.sizeOfFPD, 1);
 	}
 	else {
 		ap3 = GetTempRegister();
@@ -2121,9 +2121,9 @@ Operand *ENODE::GenMultiply(int flags, int size, int op)
 	}
 	else {
 		ap3 = GetTempRegister();
-		ap1 = cg.GenerateExpression(p[0], am_reg|am_vreg, sizeOfWord, 0);
+		ap1 = cg.GenerateExpression(p[0], am_reg|am_vreg, cpu.sizeOfWord, 0);
 		if (!square)
-			ap2 = cg.GenerateExpression(p[1], am_reg | am_vreg | am_imm, sizeOfWord, 1);
+			ap2 = cg.GenerateExpression(p[1], am_reg | am_vreg | am_imm, cpu.sizeOfWord, 1);
 		if (ap1->mode == am_vreg || (ap2 && ap2->mode == am_vreg)) {
 			vec = true;
 			op = op_vmul;
@@ -2330,7 +2330,7 @@ Operand *ENODE::GenLand(int flags, int op, bool safe)
 	lab0 = nextlabel++;
 	lab1 = nextlabel++;
 	ap1 = GetTempRegister();
-	ap2 = cg.GenerateExpression(this, flags, sizeOfWord, 1);
+	ap2 = cg.GenerateExpression(this, flags, cpu.sizeOfWord, 1);
 	ap1 = cg.MakeBoolean(ap2);
 	ReleaseTempReg(ap2);
 	/*
@@ -2376,7 +2376,7 @@ int GetNaturalSize(ENODE *node)
 	case en_cubu: case en_cucu: case en_cuhu:
 	case en_ccwp: case en_cucwp:
 	case en_sxb:	case en_sxc:	case en_sxh:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_wyde2hexi:
 		return (2);
 	case en_fcall:
@@ -2385,9 +2385,9 @@ int GetNaturalSize(ENODE *node)
 		if (node->tp)
 			return (node->tp->size);
 		else
-			return (sizeOfWord);
+			return (cpu.sizeOfWord);
 	case en_autofcon:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_ref:
 		return (node->tp->size);
 	case en_byt2wyde:
@@ -2449,20 +2449,20 @@ int GetNaturalSize(ENODE *node)
 		return 8;
 	case en_q2i:
 	case en_t2i:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_i2d:
-		return (sizeOfWord);
+		return (cpu.sizeOfWord);
 	case en_i2t:
 	case en_d2t:
-		return (sizeOfFPT);
+		return (cpu.sizeOfFPT);
 	case en_i2q:
 	case en_d2q:
 	case en_t2q:
-		return (sizeOfFPQ);
+		return (cpu.sizeOfFPQ);
 	case en_object_list:
 		return (node->p[0]->GetNaturalSize());
 	case en_addrof:
-		return (sizeOfPtr);
+		return (cpu.sizeOfPtr);
 	default:
 		printf("DIAG - natural size error %d.\n", node->nodetype);
 		break;
@@ -2630,11 +2630,11 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 	case en_autocon:
 	case en_icon:
 		if (lowhigh == 2) {
-			sprintf_s(buf, sizeof(buf), "%lld", i & 0xffff);
+			sprintf_s(buf, sizeof(buf), "%lld", i & 0xffffff);
 			ofs.write(buf);
 		}
 		else if (lowhigh == 3) {
-			sprintf_s(buf, sizeof(buf), "%lld", (i >> 16) & 0xffff);
+			sprintf_s(buf, sizeof(buf), "%lld", (i >> 24) & 0xffffff);
 			ofs.write(buf);
 		}
 		else {

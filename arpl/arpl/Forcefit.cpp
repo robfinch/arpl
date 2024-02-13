@@ -452,7 +452,7 @@ TYP *forcefit(ENODE **srcnode, TYP *srctp, ENODE **dstnode, TYP *dsttp, bool pro
 			}
 			if (fcd) *fcd = true;
 			*dstnode = makenode(nt, *srcnode, *dstnode);
-			(*dstnode)->esize = sizeOfPtr;
+			(*dstnode)->esize = cpu.sizeOfPtr;
 			return (dsttp);
 
 		case bt_float:
@@ -478,7 +478,7 @@ TYP *forcefit(ENODE **srcnode, TYP *srctp, ENODE **dstnode, TYP *dsttp, bool pro
 				goto j1;
 			}
 			*dstnode = makenode(nt, *srcnode, *dstnode);
-			(*dstnode)->esize = sizeOfFPD;
+			(*dstnode)->esize = cpu.sizeOfFPD;
 			return (dsttp);
 		case bt_double:
 			switch (srctp->type) {
@@ -503,7 +503,7 @@ TYP *forcefit(ENODE **srcnode, TYP *srctp, ENODE **dstnode, TYP *dsttp, bool pro
 				goto j1;
 			}
 			*dstnode = makenode(nt, *srcnode, *dstnode);
-			(*dstnode)->esize = sizeOfFPD;
+			(*dstnode)->esize = cpu.sizeOfFPD;
 			return (dsttp);
 			//case bt_double:
 		//	return (dsttp);

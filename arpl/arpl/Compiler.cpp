@@ -25,6 +25,7 @@
 //
 #include "stdafx.h"
 
+extern CPU cpu;
 extern int lstackptr;
 extern char* lptr;
 extern int options(char *);
@@ -38,7 +39,7 @@ extern void doInitCleanup();
 
 int Compiler::GetReturnBlockSize()
 {
-	return (4 * sizeOfWord);
+	return (4 * cpu.sizeOfWord);
 }
 
 int Compiler::main2(int argc, char **argv)
@@ -77,9 +78,7 @@ void Compiler::compile()
 {
 	GlobalDeclaration *gd;
 	int nn;
-	Symbol* sp;
 	Symbol* fsp;
-	char buf[10];
 
 	dfs.printf("<compile>\n");
 	genst_cumulative = 0;
@@ -177,87 +176,73 @@ void Compiler::AddStandardTypes()
 	TYP *p, *pchar, *pint, *pbyte;
 	TYP *pichar;
 
-	p = TYP::Make(bt_bit, sizeOfWord);
+	p = TYP::Make(bt_bit, cpu.sizeOfWord);
 	stdbit = *p;
 	pint = p;
-	p->precision = sizeOfWord * 8;
 
-	p = TYP::Make(bt_decimal, sizeOfDecimal);
+	p = TYP::Make(bt_decimal, cpu.sizeOfDecimal);
 	stddecimal = *p;
 	pint = p;
-	p->precision = sizeOfDecimal * 8;
 
-	p = TYP::Make(bt_int,sizeOfInt);
+	p = TYP::Make(bt_int,cpu.sizeOfInt);
 	stdint = *p;
 	pint = p;
-	p->precision = sizeOfInt * 8;
   
-	p = TYP::Make(bt_int,sizeOfInt);
+	p = TYP::Make(bt_int,cpu.sizeOfInt);
 	p->isUnsigned = true;
-	p->precision = sizeOfInt * 8;
 	stduint = *p;
   
-	p = TYP::Make(bt_long,sizeOfWord);
-	p->precision = sizeOfWord * 8;
+	p = TYP::Make(bt_long,cpu.sizeOfWord);
 	stdlong = *p;
   
-	p = TYP::Make(bt_long,sizeOfWord);
+	p = TYP::Make(bt_long,cpu.sizeOfWord);
 	p->isUnsigned = true;
-	p->precision = sizeOfWord * 8;
 	stdulong = *p;
   
-	p = TYP::Make(bt_short,sizeOfWord/2);
-	p->precision = sizeOfWord * 4;
+	p = TYP::Make(bt_short,cpu.sizeOfWord/2);
 	stdshort = *p;
   
-	p = TYP::Make(bt_short,sizeOfWord/2);
+	p = TYP::Make(bt_short,cpu.sizeOfWord/2);
 	p->isUnsigned = true;
-	p->precision = sizeOfWord * 4;
 	stdushort = *p;
   
 	p = TYP::Make(bt_char,2);
 	stdchar = *p;
-	p->precision = 16;
 	pchar = p;
   
 	p = TYP::Make(bt_uchar,2);
 	p->isUnsigned = true;
-	p->precision = 16;
 	stduchar = *p;
   
 	p = TYP::Make(bt_ichar, 2);
 	stdichar = *p;
-	p->precision = 16;
 	pichar = p;
 
 	p = TYP::Make(bt_iuchar, 2);
 	stdiuchar = *p;
-	p->precision = 16;
 //	pchar = p;
 
 	p = TYP::Make(bt_byte,1);
 	stdbyte = *p;
-	p->precision = 8;
 	pbyte = p;
   
 	p = TYP::Make(bt_ubyte,1);
 	p->isUnsigned = true;
-	p->precision = 8;
 	stdubyte = *p;
   
-	p = TYP::Make(bt_pointer,sizeOfPtr);
+	p = TYP::Make(bt_pointer,cpu.sizeOfPtr);
 	p->val_flag = 1;
 	p->btpp = pchar;
 	p->isUnsigned = true;
 	stdstring = *p;
  
-	p = TYP::Make(bt_pointer,sizeOfPtr);
+	p = TYP::Make(bt_pointer,cpu.sizeOfPtr);
 	p->val_flag = 1;
 	p->btpp = pichar;
 	p->isUnsigned = true;
 	stdistring = *p;
 
-	p = TYP::Make(bt_pointer,sizeOfPtr);
+	p = TYP::Make(bt_pointer,cpu.sizeOfPtr);
 	p->val_flag = 1;
 	p->btpp = pbyte;
 	p->isUnsigned = true;
@@ -296,7 +281,7 @@ void Compiler::AddStandardTypes()
 	p->isUnsigned = true;
 	stdexception = *p;
 
-	p = TYP::Make(bt_int,sizeOfInt);
+	p = TYP::Make(bt_int,cpu.sizeOfInt);
 	p->val_flag = 1;
 	stdconst = *p;
 
@@ -316,7 +301,7 @@ void Compiler::AddStandardTypes()
 	p->val_flag = 1;
 	stdenum = *p;
 
-	p = TYP::Make(bt_pointer,sizeOfPtr);
+	p = TYP::Make(bt_pointer,cpu.sizeOfPtr);
 	p->val_flag = 1;
 	stdptr = *p;
 }

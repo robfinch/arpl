@@ -38,6 +38,19 @@ void ReleaseTempRegister(Operand *ap);
 Operand *GetTempRegister();
 extern void GenLoad(Operand *ap1, Operand *ap3, int ssize, int size);
 
+QuplsCPU::QuplsCPU() {
+	sizeOfWord = 8;
+	sizeOfPtr = 8;
+	sizeOfFP = 8;
+	sizeOfFPS = 4;
+	sizeOfFPT = 12;
+	sizeOfFPD = 8;
+	sizeOfFPQ = 16;
+	sizeOfInt = 8;
+	sizeOfDecimal = 16;
+	sizeOfPosit = 8;
+}
+
 void QuplsCodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
 {
 	Operand* ap2;
@@ -106,7 +119,7 @@ Operand* QuplsCodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
 
 	GenerateTriadic(op_and, 0, ap4, ap4, ap5);
 	ReleaseTempReg(ap2);
-	//ap2->MakeLegal(flags, sizeOfWord);
+	//ap2->MakeLegal(flags, cpu.sizeOfWord);
 	ap1->isBool = true;
 	return (ap1);
 }
@@ -114,8 +127,8 @@ Operand* QuplsCodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
 
 void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width)
 {
-	ap1->MakeLegal(am_reg, sizeOfWord);
-	ap2->MakeLegal(am_reg, sizeOfWord);
+	ap1->MakeLegal(am_reg, cpu.sizeOfWord);
+	ap2->MakeLegal(am_reg, cpu.sizeOfWord);
 	Generate4adic(op_dep, 0, ap1, ap2, MakeImmediate(offset), MakeImmediate(((int64_t)offset+width-1LL) & 0x3fLL));
 }
 
@@ -156,8 +169,8 @@ void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENOD
 	Operand* op_end;
 	OCODE* ip;
 
-	ap3 = GenerateExpression(offset, am_reg | am_imm | am_imm0, sizeOfWord, 1);
-	ap4 = GenerateExpression(width, am_reg | am_imm | am_imm0, sizeOfWord, 1);
+	ap3 = GenerateExpression(offset, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
+	ap4 = GenerateExpression(width, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ConvertOffsetWidthToBeginEnd(ap3, ap4, &op_begin, &op_end);
 	GenerateBitfieldInsert(ap1, ap2, op_begin, op_end);
 	ReleaseTempReg(op_end);
@@ -202,8 +215,8 @@ Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset,
 	Operand* op_end;
 
 	ap1 = GetTempRegister();
-	ap2 = GenerateExpression(offset, am_reg | am_imm | am_imm0, sizeOfWord, 1);
-	ap3 = GenerateExpression(width, am_reg | am_imm | am_imm0, sizeOfWord, 1);
+	ap2 = GenerateExpression(offset, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
+	ap3 = GenerateExpression(width, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ConvertOffsetWidthToBeginEnd(ap2, ap3, &op_begin, &op_end);
 	Generate4adic(isSigned ? op_ext : op_extu, 0, ap1, ap, op_begin, op_end);
 	ReleaseTempReg(ap3);
@@ -487,7 +500,7 @@ Operand *QuplsCodeGenerator::GenExpr(ENODE *node)
 {
 	Operand *ap1,*ap2,*ap3,*ap4;
 	int lab0, lab1;
-	int64_t size = sizeOfWord;
+	int64_t size = cpu.sizeOfWord;
 	int op;
 	OCODE* ip;
 
@@ -1009,11 +1022,11 @@ static void SaveRegisterSet(Symbol *sym)
 
 	if (!cpu.SupportsPush || true) {
 		mm = sym->tp->btpp->type!=bt_void ? 29 : 30;
-		GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),cg.MakeImmediate(mm*sizeOfWord));
+		GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),cg.MakeImmediate(mm*cpu.sizeOfWord));
 		mm = 0;
 		for (nn = 1 + (sym->tp->btpp->type!=bt_void ? 1 : 0); nn < 31; nn++) {
-			cg.GenerateStore(makereg(nn),cg.MakeIndexed(mm,regSP),sizeOfWord);
-			mm += sizeOfWord;
+			cg.GenerateStore(makereg(nn),cg.MakeIndexed(mm,regSP),cpu.sizeOfWord);
+			mm += cpu.sizeOfWord;
 		}
 	}
 	else
@@ -1028,11 +1041,11 @@ static void RestoreRegisterSet(Symbol * sym)
 	if (!cpu.SupportsPop || true) {
 		mm = 0;
 		for (nn = 1 + (sym->tp->btpp->type!=bt_void ? 1 : 0); nn < 31; nn++) {
-			cg.GenerateLoad(makereg(nn),cg.MakeIndexed(mm,regSP),sizeOfWord,sizeOfWord);
-			mm += sizeOfWord;
+			cg.GenerateLoad(makereg(nn),cg.MakeIndexed(mm,regSP),cpu.sizeOfWord,cpu.sizeOfWord);
+			mm += cpu.sizeOfWord;
 		}
 		mm = sym->tp->btpp->type!=bt_void ? 29 : 30;
-		GenerateTriadic(op_add,0,makereg(regSP),makereg(regSP),cg.MakeImmediate(mm*sizeOfWord));
+		GenerateTriadic(op_add,0,makereg(regSP),makereg(regSP),cg.MakeImmediate(mm*cpu.sizeOfWord));
 	}
 	else // ToDo: check pop is in reverse order to push
 		for (nn = 1 + (sym->tp->btpp->type!=bt_void ? 1 : 0); nn < 31; nn++)
@@ -1053,7 +1066,7 @@ void QuplsCodeGenerator::SaveRegisterVars(CSet *rmask)
 		return;
 
 	if (pass == 1) {
-		max_stack_use += rmask->NumMember() * sizeOfWord;
+		max_stack_use += rmask->NumMember() * cpu.sizeOfWord;
 		currentFn->regvarbot = max_stack_use;
 	}
 	if( rmask->NumMember() ) {
@@ -1067,21 +1080,21 @@ void QuplsCodeGenerator::SaveRegisterVars(CSet *rmask)
 		}
 		else {
 			cnt = 0;
-			//GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * sizeOfWord));
+			//GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * cpu.sizeOfWord));
 			rmask->resetPtr();
 			for (nn = 0; nn < rmask->NumMember(); nn++) {
 				if (nn == 0)
-					cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), sizeOfWord);
+					cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
 				else
-					cg.GenerateStore(makereg(cpu.saved_regs[nn]), cg.MakeIndexed(sizeOfWord*nn, regSP), sizeOfWord);
+					cg.GenerateStore(makereg(cpu.saved_regs[nn]), cg.MakeIndexed(cpu.sizeOfWord*nn, regSP), cpu.sizeOfWord);
 			}
 			/*
 			if (rmask->NumMember() == 1) {
-				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
 			}
 			else if (rmask->NumMember() == 2) {
-				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), sizeOfWord);
-				cg.GenerateStore(makereg(cpu.saved_regs[1]), cg.MakeIndexed(sizeOfWord,regSP), sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[1]), cg.MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord);
 			}
 			else {
 				sprintf_s(buf, sizeof(buf), "__store_s0s%d", rmask->NumMember() - 1);
@@ -1093,8 +1106,8 @@ void QuplsCodeGenerator::SaveRegisterVars(CSet *rmask)
 				// nn = nregs - 1 - regno
 				// regno = -(nn - nregs + 1);
 				// regno = nregs - 1 - nn
-				cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), sizeOfWord);
-				cnt += sizeOfWord;
+				cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
 			}
 			*/
 		}
@@ -1110,9 +1123,9 @@ void SaveFPRegisterVars(CSet *rmask)
 		cnt = 0;
 		GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),cg.MakeImmediate(rmask->NumMember()*8));
 		for (nn = rmask->lastMember(); nn >= 0; nn = rmask->prevMember()) {
-			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), sizeOfWord);
+			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord);
 //			GenerateDiadic(op_sto, 0, makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP));
-			cnt += sizeOfWord;
+			cnt += cpu.sizeOfWord;
 		}
 	}
 }
@@ -1126,9 +1139,9 @@ void SavePositRegisterVars(CSet* rmask)
 		cnt = 0;
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * 8));
 		for (nn = rmask->lastMember(); nn >= 0; nn = rmask->prevMember()) {
-			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), sizeOfWord);
+			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord);
 //			GenerateDiadic(op_psto, 0, makefpreg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP));
-			cnt += sizeOfWord;
+			cnt += cpu.sizeOfWord;
 		}
 	}
 }
@@ -1151,12 +1164,12 @@ static void RestoreRegisterVars()
 			GenerateMonadic(op_ldm, 0, cg.MakeIndirect(regSP));
 		}
 		else {
-			cnt2 = cnt = save_mask->NumMember() * sizeOfWord;
+			cnt2 = cnt = save_mask->NumMember() * cpu.sizeOfWord;
 			cnt = 0;
 			save_mask->resetPtr();
 			for (nn = save_mask->nextMember(); nn >= 0; nn = save_mask->nextMember()) {
-				cg.GenerateLoad(makereg(nn), cg.MakeIndexed(cnt, regSP), sizeOfWord, sizeOfWord);
-				cnt += sizeOfWord;
+				cg.GenerateLoad(makereg(nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
 			}
 			GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(cnt2));
 		}
@@ -1169,12 +1182,12 @@ static void RestoreFPRegisterVars()
 	int nn;
 
 	if( fpsave_mask->NumMember()) {
-		cnt2 = cnt = fpsave_mask->NumMember()*sizeOfWord;
+		cnt2 = cnt = fpsave_mask->NumMember()*cpu.sizeOfWord;
 		cnt = 0;
 		fpsave_mask->resetPtr();
 		for (nn = fpsave_mask->nextMember(); nn >= 0; nn = fpsave_mask->nextMember()) {
 			GenerateDiadic(op_fldo, 0, makefpreg(nn), cg.MakeIndexed(cnt, regSP));
-			cnt += sizeOfWord;
+			cnt += cpu.sizeOfWord;
 		}
 		GenerateTriadic(op_add,0,makereg(regSP),makereg(regSP),cg.MakeImmediate(cnt2));
 	}
@@ -1198,17 +1211,17 @@ int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *is
 		return (0);
 	}
 	switch(ep->etype) {
-	case bt_quad:	sz = sizeOfFPQ; break;
-	case bt_double:	sz = sizeOfFPD; break;
-	case bt_float:	sz = sizeOfFPD; break;
-	case bt_posit:	sz = sizeOfPosit; break;
-	default:	sz = sizeOfWord; break;
+	case bt_quad:	sz = cpu.sizeOfFPQ; break;
+	case bt_double:	sz = cpu.sizeOfFPD; break;
+	case bt_float:	sz = cpu.sizeOfFPD; break;
+	case bt_posit:	sz = cpu.sizeOfPosit; break;
+	default:	sz = cpu.sizeOfWord; break;
 	}
 	if (ep->tp) {
 		if (ep->tp->IsFloatType())
-			ap = cg.GenerateExpression(ep,am_reg,sizeOfFPQ,1);
+			ap = cg.GenerateExpression(ep,am_reg,cpu.sizeOfFPQ,1);
 		else if (ep->tp->IsPositType())
-			ap = cg.GenerateExpression(ep, am_preg, sizeOfPosit,1);
+			ap = cg.GenerateExpression(ep, am_preg, cpu.sizeOfPosit,1);
 		else
 			ap = cg.GenerateExpression(ep,am_reg|am_imm,ep->GetNaturalSize(),0);
 	}
@@ -1250,7 +1263,7 @@ int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *is
 				if (ap->mode==am_imm) {
 					GenerateDiadic(cpu.ldi_op,0,makereg(regno & 0x7fff), ap);
 					if (regno & 0x8000) {
-						GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),MakeImmediate(sizeOfWord));
+						GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),MakeImmediate(cpu.sizeOfWord));
 						nn = 1;
 					}
 				}
@@ -1259,14 +1272,14 @@ int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *is
 					GenerateDiadic(cpu.mov_op,0,makefpreg(regno & 0x7fff), ap);
 					if (regno & 0x8000) {
 						GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),MakeImmediate(sz));
-						nn = sz/sizeOfWord;
+						nn = sz/cpu.sizeOfWord;
 					}
 				}
 				else {
 					//ap->preg = regno & 0x7fff;
 					GenerateDiadic(cpu.mov_op,0,makereg(regno & 0x7fff), ap);
 					if (regno & 0x8000) {
-						GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),MakeImmediate(sizeOfWord));
+						GenerateTriadic(op_sub,0,makereg(regSP),makereg(regSP),MakeImmediate(cpu.sizeOfWord));
 						nn = 1;
 					}
 				}
@@ -1290,7 +1303,7 @@ int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *is
 						{
 							*isFloat = true;
 							GenerateMonadic(op_push,0,ap);
-							nn = sz/sizeOfWord;
+							nn = sz/cpu.sizeOfWord;
 							nn = 1;
 							*push_count = 1;
 						}
@@ -1309,11 +1322,11 @@ int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *is
 							ap3 = GetTempRegister();
 							regs[ap3->preg].IsArg = true;
 							GenerateLoadConst(ap, ap3);
-	         		cg.GenerateStore(ap3,MakeIndexed(stkoffs,regSP),sizeOfWord);
+	         		cg.GenerateStore(ap3,MakeIndexed(stkoffs,regSP),cpu.sizeOfWord);
 							ReleaseTempReg(ap3);
 						}
 						else {
-							cg.GenerateStore(makereg(0), MakeIndexed(stkoffs, regSP), sizeOfWord);
+							cg.GenerateStore(makereg(0), MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						}
 						nn = 1;
 					}
@@ -1323,38 +1336,38 @@ int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *is
 						// allocated by the caller.
 						// What needs to be done is copy the aggregate to the buffer then push
 						// the buffer address.
-						if (ap->tp->IsAggregateType() && ap->tp->size > sizeOfWord) {
+						if (ap->tp->IsAggregateType() && ap->tp->size > cpu.sizeOfWord) {
 							ap2 = GetTempRegister();
 							GenerateDiadic(op_lea, 0, ap2, MakeIndexed(ep->stack_offs, regSP));	// push target
-							cg.GenerateStore(ap2, MakeIndexed(sizeOfWord, regSP), sizeOfWord);	
+							cg.GenerateStore(ap2, MakeIndexed(cpu.sizeOfWord, regSP), cpu.sizeOfWord);	
 							ReleaseTempRegister(ap2);
-							cg.GenerateStore(ap, MakeIndexed((int64_t)0, regSP), sizeOfWord);		// and source
+							cg.GenerateStore(ap, MakeIndexed((int64_t)0, regSP), cpu.sizeOfWord);		// and source
 							ap3 = GetTempRegister();
 							GenerateLoadConst(MakeImmediate(ap->tp->size), ap3);								// and size
-							cg.GenerateStore(ap3, MakeImmediate(ap->tp->size), sizeOfWord);
+							cg.GenerateStore(ap3, MakeImmediate(ap->tp->size), cpu.sizeOfWord);
 							ReleaseTempRegister(ap3);
 							GenerateMonadic(op_bsr, 0, MakeStringAsNameConst((char *)"__aacpy", codeseg));	// call copy helper
 							ap1 = GetTempRegister();
 							GenerateLoadConst(MakeImmediate(ep->stack_offs), ap1);							// and size
-							cg.GenerateStore(ap1, MakeIndexed(stkoffs, regSP), sizeOfWord);
+							cg.GenerateStore(ap1, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 							ReleaseTempRegister(ap1);
 						}
 						else if (ap->tp->IsFloatType()) {
 							*isFloat = true;
-							cg.GenerateStore(ap,MakeIndexed(stkoffs,regSP),sizeOfWord);
-							nn = 1;// sz / sizeOfWord;
+							cg.GenerateStore(ap,MakeIndexed(stkoffs,regSP),cpu.sizeOfWord);
+							nn = 1;// sz / cpu.sizeOfWord;
 						}
 						else if (ap->type==bt_posit) {
-							cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+							cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 							nn = 1;
 						}
 						else if (ap->type == bt_vector) {
-							cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+							cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 							nn = 4;
 						}
 						else {
 							regs[ap->preg].IsArg = true;
-							cg.GenerateStore(ap,MakeIndexed(stkoffs,regSP),sizeOfWord);
+							cg.GenerateStore(ap,MakeIndexed(stkoffs,regSP),cpu.sizeOfWord);
 							nn = 1;
 						}
 					}
@@ -1433,7 +1446,7 @@ int QuplsCodeGenerator::PushArguments(Function *sym, ENODE *plist)
 		if (pl[nn]->etype == bt_none) {	// was there an empty parameter?
 			if (sy != nullptr) {
 				if (sy[nn]) {
-					sum += PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sy[nn] ? sy[nn]->value.i : sum * sizeOfWord, &isFloat, &pc, large_argcount);
+					sum += PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sy[nn] ? sy[nn]->value.i : sum * cpu.sizeOfWord, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
 				else {
@@ -1445,21 +1458,21 @@ int QuplsCodeGenerator::PushArguments(Function *sym, ENODE *plist)
 			if (sy != nullptr) {
 				if (sy[nn]) {
 					regno = ta ? (i < ta->length ? ta->preg[i] : 0) : 0;
-//					stkoffs = sy[nn] ? sy[nn]->value.i : sum * sizeOfWord;
-					stkoffs = sum * sizeOfWord;
+//					stkoffs = sy[nn] ? sy[nn]->value.i : sum * cpu.sizeOfWord;
+					stkoffs = sum * cpu.sizeOfWord;
 					sum += PushArgument(pl[nn], regno, stkoffs, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
 				else {
 					//error(ERR_MISSING_PARM);
 					regno = ta ? (i < ta->length ? ta->preg[i] : 0) : 0;
-					stkoffs = sum * sizeOfWord;
+					stkoffs = sum * cpu.sizeOfWord;
 					sum += PushArgument(pl[nn], regno, stkoffs, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
 			}
 			else {
-				sum += PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * sizeOfWord, &isFloat, &pc, large_argcount);
+				sum += PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * cpu.sizeOfWord, &isFloat, &pc, large_argcount);
 				push_count += pc;
 			}
 		}
@@ -1469,13 +1482,13 @@ int QuplsCodeGenerator::PushArguments(Function *sym, ENODE *plist)
 	if (sum == 0)
 		ip->fwd->MarkRemove();
 	else
-		ip->fwd->oper3 = MakeImmediate(sum * sizeOfWord);
+		ip->fwd->oper3 = MakeImmediate(sum * cpu.sizeOfWord);
 
 		/*
 	if (sum == 0 || !large_argcount)
 		ip->fwd->MarkRemove();
 	else
-		ip->fwd->oper3 = MakeImmediate(sum*sizeOfWord);
+		ip->fwd->oper3 = MakeImmediate(sum*cpu.sizeOfWord);
 	*/
 	/*
 	if (!sumFloat) {
@@ -1492,7 +1505,7 @@ int QuplsCodeGenerator::PushArguments(Function *sym, ENODE *plist)
 				if (sy == nullptr && sym)
 					sy = sym->params.GetParameters();
 				if (sy)
-					PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * sizeOfWord, &isFloat);
+					PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * cpu.sizeOfWord, &isFloat);
 			}
 			else
 				PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * 8, &isFloat);
@@ -1511,15 +1524,15 @@ int QuplsCodeGenerator::PushArguments(Function *sym, ENODE *plist)
 
 void QuplsCodeGenerator::PopArguments(Function *fnc, int howMany, bool isPascal)
 {
-	howMany *= sizeOfWord;
+	howMany *= cpu.sizeOfWord;
 	if (howMany != 0) {
 		if (fnc) {
 			if (!fnc->IsPascal)
 //				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space));
 				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany));
-			else if (howMany - (fnc->NumFixedAutoParms * sizeOfWord) > 0)
-//				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space - (fnc->NumFixedAutoParms * sizeOfWord)));
-				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany - (fnc->NumFixedAutoParms * sizeOfWord)));
+			else if (howMany - (fnc->NumFixedAutoParms * cpu.sizeOfWord) > 0)
+//				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space - (fnc->NumFixedAutoParms * cpu.sizeOfWord)));
+				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany - (fnc->NumFixedAutoParms * cpu.sizeOfWord)));
 		}
 		else {
 //			error(ERR_UNKNOWN_FN);
@@ -1571,7 +1584,7 @@ void QuplsCodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* 
 
 void QuplsCodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
 {
-	ap->MakeLegal(am_ind, sizeOfWord);
+	ap->MakeLegal(am_ind, cpu.sizeOfWord);
 	if (sym && sym->IsLeaf) {
 		if (flags & am_jmp)
 			GenerateMonadic(op_jmp, 0, ap);
@@ -1827,23 +1840,23 @@ void QuplsCodeGenerator::GenerateInterruptSave(Function* func)
 
 	nn = popcnt(tsm);
 	// Allocate storage for registers on stack
-	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * sizeOfWord));
+	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
 	for (kk = nn = 0; nn < 63; nn++) {
 		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
-			GenerateDiadic(op_storeg, 0, makereg((nn / 4) | rt_group), MakeIndexed(kk * sizeOfWord, regSP));
+			GenerateDiadic(op_storeg, 0, makereg((nn / 4) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
 			kk += 4;
 			tsm = tsm >> 4;
 			nn += 3;
 		}
 		else if (tsm & 1) {
-			GenerateStore(makereg(nn), MakeIndexed(kk * sizeOfWord, regSP), sizeOfWord);
+			GenerateStore(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 			kk++;
 			tsm = tsm >> 1;
 		}
 	}
 	if (DoesContextSave) {
 		for (kk = 0; kk < 16; kk++)
-			GenerateDiadic(op_storeg, 0, makereg(kk | rt_group), MakeIndexed(kk * sizeOfWord * 4, regTS));
+			GenerateDiadic(op_storeg, 0, makereg(kk | rt_group), MakeIndexed(kk * cpu.sizeOfWord * 4, regTS));
 	}
 	if (sp_init) {
 		GenerateLoadConst(MakeImmediate(sp_init), makereg(regSP));
@@ -1863,25 +1876,25 @@ void QuplsCodeGenerator::GenerateInterruptLoad(Function* func)
 
 	if (DoesContextSave) {
 		for (kk = 0; kk < 16; kk++)
-			GenerateDiadic(op_loadg, 0, makereg(kk | rt_group), MakeIndexed(kk * sizeOfWord * 4, regTS));
+			GenerateDiadic(op_loadg, 0, makereg(kk | rt_group), MakeIndexed(kk * cpu.sizeOfWord * 4, regTS));
 	}
 
 	nn = popcnt(tsm);
 	for (kk = nn = 0; nn < 63; nn++) {
 		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
-			GenerateDiadic(op_loadg, 0, makereg((nn >> 2) | rt_group), MakeIndexed(kk * sizeOfWord, regSP));
+			GenerateDiadic(op_loadg, 0, makereg((nn >> 2) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
 			kk += 4;
 			nn += 3;
 			tsm = tsm >> 4;
 		}
 		else if (tsm & 1) {
-			GenerateLoad(makereg(nn), MakeIndexed(kk * sizeOfWord, regSP), sizeOfWord, sizeOfWord);
+			GenerateLoad(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			kk++;
 			tsm = tsm >> 1;
 		}
 	}
 	// Deallocate stack storage
-	GenerateAddOnto(makereg(regSP), MakeImmediate(nn * sizeOfWord));
+	GenerateAddOnto(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
 }
 
 void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
@@ -2069,19 +2082,19 @@ void QuplsCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 {
 	Operand* ap2, * ap4;
 
-	if (address_bits > 21)
+	if (address_bits > 24)
 		ap1->lowhigh = 1;
 	GenerateDiadic(op_lda, 0, ap3, ap1);
-	if (address_bits > 21) {
+	if (address_bits > 24) {
 		ap2 = ap1->Clone();
 		ap2->lowhigh = 2;
-		ap2->mode = am_direct;
+		ap2->mode = am_imm;
 		GenerateDiadic(op_orm, 0, ap3, ap2);
 	}
-	if (address_bits > 43) {
+	if (address_bits > 48) {
 		ap4 = ap1->Clone();
 		ap4->lowhigh = 2;
-		ap4->mode = am_direct;
+		ap4->mode = am_imm;
 		GenerateDiadic(op_orh, 0, ap3, ap4);
 	}
 }
@@ -2387,7 +2400,7 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 			GenerateDiadic(op_enter, 0, MakeImmediate(15), MakeImmediate(8388600LL));
 			ip = currentFn->pl.tail;
 			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 8388600LL));
-			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
 			fn->alstk = true;
 		}
 	}
@@ -2401,15 +2414,15 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 		else {
 			GenerateMonadic(op_link, 0, MakeImmediate(8388600LL));
 			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 8388600LL));
-			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
 			fn->alstk = true;
 		}
 	}
 	else {
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
-		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), sizeOfWord);
+		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord);
 		cg.GenerateMove(makereg(regFP), makereg(regSP));
-		cg.GenerateStore(makereg(regLR), cg.MakeIndexed(sizeOfWord * 1, regFP), sizeOfWord);	// Store link register on stack
+		cg.GenerateStore(makereg(regLR), cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
 		fn->alstk = true;
 		fn->has_return_block = true;
@@ -2424,7 +2437,7 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 		n |= 2;
 		/*
 		if (alstk) {
-			GenerateDiadic(op_sto, 0, makereg(regLR), MakeIndexed(1 * sizeOfWord + stkspace, regSP));
+			GenerateDiadic(op_sto, 0, makereg(regLR), MakeIndexed(1 * cpu.sizeOfWord + stkspace, regSP));
 		}
 		else
 		*/
@@ -2432,9 +2445,9 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 	/*
 	switch (n) {
 	case 0:	break;
-	case 1:	GenerateDiadic(op_std, 0, makereg(regXLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
-	case 2:	GenerateDiadic(op_std, 0, makereg(regLR), MakeIndexed(3 * sizeOfWord, regSP)); break;
-	case 3:	GenerateTriadic(op_stdp, 0, makereg(regXLR), makereg(regLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
+	case 1:	GenerateDiadic(op_std, 0, makereg(regXLR), MakeIndexed(2 * cpu.sizeOfWord, regSP)); break;
+	case 2:	GenerateDiadic(op_std, 0, makereg(regLR), MakeIndexed(3 * cpu.sizeOfWord, regSP)); break;
+	case 3:	GenerateTriadic(op_stdp, 0, makereg(regXLR), makereg(regLR), MakeIndexed(2 * cpu.sizeOfWord, regSP)); break;
 	}
 	*/
 	retlab = nextlabel++;
@@ -2453,7 +2466,7 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 		DataLabels[fn->defCatchLabel]++;
 		fn->defCatchLabelPatchPoint = currentFn->pl.tail;
 		GenerateLoadAddress(ap, cg.MakeStringAsNameConst(buf, codeseg));
-		cg.GenerateStore(ap, cg.MakeIndexed((int64_t)32, regFP), sizeOfWord);
+		cg.GenerateStore(ap, cg.MakeIndexed((int64_t)32, regFP), cpu.sizeOfWord);
 		ReleaseTempRegister(ap);
 		//		GenerateDiadic(cpu.mov_op, 0, makereg(regAFP), makereg(regFP));
 		GenerateMonadic(op_bex, 0, cg.MakeCodeLabel(currentFn->defCatchLabel));

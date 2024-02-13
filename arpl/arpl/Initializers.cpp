@@ -296,7 +296,7 @@ static void SetFuncPointerAlign(Symbol* sp, e_sg oseg)
 {
 	int64_t algn;
 
-	algn = sizeOfWord;
+	algn = cpu.sizeOfWord;
 	seg(ofs, oseg == noseg ? dataseg : oseg, algn);          /* initialize into data segment */
 	nl(ofs);                   /* start a new line in object */
 }
@@ -734,7 +734,7 @@ int64_t InitializePointer(TYP *tp2, int opt, Symbol* symi)
 /*
 	if (opt==0) {
 		GenerateLong(ofs, 0);
-		return (sizeOfPtr);
+		return (cpu.sizeOfPtr);
 	}
 	sp = nullptr;
 	if (lastst == begin) {
@@ -854,7 +854,7 @@ int64_t InitializePointer(TYP *tp2, int opt, Symbol* symi)
 	if (need_end)
 		needpunc(end, 8);
 	endinit();
-    return (sizeOfPtr);       /* pointers are 8 bytes long
+    return (cpu.sizeOfPtr);       /* pointers are 8 bytes long
 	*/
 	return(0);
 }

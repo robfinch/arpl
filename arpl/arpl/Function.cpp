@@ -43,7 +43,6 @@ void Function::GenerateName(bool force)
 	std::string lbl;
 	std::string nme;
 	char* p;
-	Symbol* sy;
 	
 	//currentFn = this;
 	pl.head = pl.tail = nullptr;
@@ -149,10 +148,6 @@ void Function::GenerateName(bool force)
 Statement *Function::ParseBody()
 {
 	std::string lbl;
-	char *p;
-	OCODE *ip, *ip2;
-	int oc;
-	int label, lab1;
 	char cc = comment_char;
 	Function* ofn;
 
@@ -180,7 +175,6 @@ Statement *Function::ParseBody()
 	currentFn->body = sym->stmt;
 	currentFn = ofn;
 	if (lastst == kw_catch) {
-		int lab1;
 		Statement stmt;
 
 		currentFn->hasDefaultCatch = true;
@@ -213,7 +207,7 @@ void Function::GenerateBody(bool force_inline)
 
 	currentFn = this;
 
-	while (lc_auto % sizeOfWord)	// round frame size to word
+	while (lc_auto % cpu.sizeOfWord)	// round frame size to word
 		++lc_auto;
 	if (pass == 1)
 		stkspace = roundWord(lc_auto);
@@ -230,7 +224,7 @@ void Function::GenerateBody(bool force_inline)
 		label = nextlabel;
 		Generate();
 		if (pass == 1) {
-			stkspace += (ArgRegCount/* - regFirstArg*/)*sizeOfWord;
+			stkspace += (ArgRegCount/* - regFirstArg*/)*cpu.sizeOfWord;
 			argbot = -stkspace;
 			stkspace += max_stack_use;// GetTempMemSpace();
 			tempbot = -stkspace;
@@ -295,7 +289,7 @@ void Function::Init()
 
 void Function::DoFuncptrAssign(Function *sp)
 {
-	ENODE* node, * ep1, * ep2;
+	ENODE* ep1, * ep2;
 	TYP* tp1, * tp2;
 	Expression exp(cg.stmt);
 	e_node op;
@@ -303,8 +297,8 @@ void Function::DoFuncptrAssign(Function *sp)
 
 	NextToken();
 	ep1 = nullptr;
-	tp1 = TYP::Make(bt_pointer, sizeOfPtr);
-	tp1->btpp = TYP::Make(bt_func, sizeOfWord);
+	tp1 = TYP::Make(bt_pointer, cpu.sizeOfPtr);
+	tp1->btpp = TYP::Make(bt_func, cpu.sizeOfWord);
 	asym = nullptr;
 	exp.nameref2(sp->sym->name->c_str(), &ep1, en_ref, FALSE, nullptr, nullptr, sp->sym);
 	exp.CondDeref(&ep1, sp->sym->tp);
@@ -540,13 +534,13 @@ void Function::StackGPRs()
 {
 	int nn;
 
-	GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(31 * sizeOfWord));
+	GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(31 * cpu.sizeOfWord));
 	for (nn = 1; nn < 31; nn = nn + 1) {
-		GenerateDiadic(op_sto, 0, makereg(nn), MakeIndexed((nn - 1) * sizeOfWord, regSP));
+		GenerateDiadic(op_sto, 0, makereg(nn), MakeIndexed((nn - 1) * cpu.sizeOfWord, regSP));
 	}
 	// Get usp
 	GenerateTriadic(op_csrrw, 0, makereg(2), MakeImmediate(0x00), makereg(regZero));
-	GenerateDiadic(op_sto, 0, makereg(2), MakeIndexed(30 * sizeOfWord, regSP));
+	GenerateDiadic(op_sto, 0, makereg(2), MakeIndexed(30 * cpu.sizeOfWord, regSP));
 }
 */
 
@@ -556,25 +550,24 @@ void Function::SaveGPRegisterVars()
 {
 	int cnt;
 	int nn;
-	char buf[100];
 
 	if (rmask) {
 		if (rmask->NumMember()) {
 			cnt = 0;
-			cg.GenerateSubtractFrom(makereg(regSP), cg.MakeImmediate(rmask->NumMember() * sizeOfWord));
+			cg.GenerateSubtractFrom(makereg(regSP), cg.MakeImmediate(rmask->NumMember() * cpu.sizeOfWord));
 			rmask->resetPtr();
 			for (nn = 0; nn < rmask->NumMember(); nn++) {
 				if (nn == 0)
-					cg.GenerateStore(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), sizeOfWord);
+					cg.GenerateStore(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord);
 				else
-					cg.GenerateStore(makereg(cpu.saved_regs[nn]), MakeIndexed(sizeOfWord * nn, regSP), sizeOfWord);
+					cg.GenerateStore(makereg(cpu.saved_regs[nn]), MakeIndexed(cpu.sizeOfWord * nn, regSP), cpu.sizeOfWord);
 			}
 			/*
 			if (rmask->NumMember() == 1)
-				cg.GenerateStore(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord);
 			else if (rmask->NumMember() == 2) {
-				cg.GenerateStore(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), sizeOfWord);
-				cg.GenerateStore(makereg(cpu.saved_regs[1]), MakeIndexed(sizeOfWord,regSP), sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[1]), MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord);
 			}
 			else {
 				sprintf_s(buf, sizeof(buf), "__store_s0s%d", rmask->NumMember()-1);
@@ -583,9 +576,9 @@ void Function::SaveGPRegisterVars()
 			*/
 			/*
 			for (nn = rmask->lastMember(); nn >= 0; nn = rmask->prevMember()) {
-				cg.GenerateStore(makereg(nregs - 1 - nn), MakeIndexed(cnt, regSP), sizeOfWord);
+				cg.GenerateStore(makereg(nregs - 1 - nn), MakeIndexed(cnt, regSP), cpu.sizeOfWord);
 				//GenerateDiadic(cpu.sto_op, 0, makereg(nregs - 1 - nn), MakeIndexed(cnt, regSP));
-				cnt += sizeOfWord;
+				cnt += cpu.sizeOfWord;
 			}
 			*/
 		}
@@ -603,9 +596,9 @@ void Function::SaveFPRegisterVars()
 			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(fprmask->NumMember() * 8));
 			fprmask->resetPtr();
 			for (nn = fprmask->lastMember(); nn >= 0; nn = fprmask->prevMember()) {
-				cg.GenerateStore(makereg(nregs - 1 - nn), MakeIndexed(cnt, regSP), sizeOfWord);
+				cg.GenerateStore(makereg(nregs - 1 - nn), MakeIndexed(cnt, regSP), cpu.sizeOfWord);
 //				GenerateDiadic(op_sto, 0, makereg(nregs - 1 - nn), MakeIndexed(cnt, regSP));
-				cnt += sizeOfWord;
+				cnt += cpu.sizeOfWord;
 			}
 		}
 	}
@@ -623,7 +616,7 @@ void Function::SavePositRegisterVars()
 			prmask->resetPtr();
 			for (nn = prmask->lastMember(); nn >= 0; nn = prmask->prevMember()) {
 				GenerateDiadic(op_psto, ' ', makefpreg(nregs - 1 - nn), MakeIndexed(cnt, regSP));
-				cnt += sizeOfWord;
+				cnt += cpu.sizeOfWord;
 			}
 		}
 	}
@@ -658,15 +651,15 @@ void Function::SaveRegisterArguments()
 					if (ta->types[nn] == bt_quad)
 						count++;
 				}
-			cg.GenerateSubtractFrom(makereg(regSP), makereg(regSP), count * sizeOfWord);
+			cg.GenerateSubtractFrom(makereg(regSP), makereg(regSP), count * cpu.sizeOfWord);
 			for (count = nn = 0; nn < ta->length; nn++) {
 				if (ta->preg[nn]) {
 					switch (ta->types[nn]) {
-					case bt_quad:	GenerateDiadic(op_stf, 'q', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP)); count += 2; break;
-					case bt_float:	GenerateDiadic(op_stf, 's', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP)); count += 1; break;
-					case bt_double:	GenerateDiadic(op_stf, 'd', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP)); count += 1; break;
-					case bt_posit:	GenerateDiadic(op_stf, 'd', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count * sizeOfWord, regSP)); count += 1; break;
-					default:	cg.GenerateStore(makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP), sizeOfWord); count += 1; break;
+					case bt_quad:	GenerateDiadic(op_stf, 'q', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP)); count += 2; break;
+					case bt_float:	GenerateDiadic(op_stf, 's', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP)); count += 1; break;
+					case bt_double:	GenerateDiadic(op_stf, 'd', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP)); count += 1; break;
+					case bt_posit:	GenerateDiadic(op_stf, 'd', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count * cpu.sizeOfWord, regSP)); count += 1; break;
+					default:	cg.GenerateStore(makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP), cpu.sizeOfWord); count += 1; break;
 					}
 				}
 			}
@@ -704,15 +697,15 @@ void Function::RestoreRegisterArguments()
 				if (ta->types[nn] == bt_quad)
 					count++;
 			}
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(count * sizeOfWord));
+		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(count * cpu.sizeOfWord));
 		for (count = nn = 0; nn < ta->length; nn++) {
 			if (ta->preg[nn]) {
 				switch (ta->types[nn]) {
-				case bt_quad:	GenerateDiadic(op_ldf, 'q', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP)); count += 2; break;
-				case bt_float:	GenerateDiadic(op_ldf, 's', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP)); count += 1; break;
-				case bt_double:	GenerateDiadic(op_ldf, 'd', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP)); count += 1; break;
-				case bt_posit:	GenerateDiadic(op_ldf, ' ', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count * sizeOfWord, regSP)); count += 1; break;
-				default:	cg.GenerateLoad(makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*sizeOfWord, regSP), sizeOfWord, sizeOfWord); count += 1; break;
+				case bt_quad:	GenerateDiadic(op_ldf, 'q', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP)); count += 2; break;
+				case bt_float:	GenerateDiadic(op_ldf, 's', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP)); count += 1; break;
+				case bt_double:	GenerateDiadic(op_ldf, 'd', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP)); count += 1; break;
+				case bt_posit:	GenerateDiadic(op_ldf, ' ', makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count * cpu.sizeOfWord, regSP)); count += 1; break;
+				default:	cg.GenerateLoad(makereg(ta->preg[nn] & 0x7fff), MakeIndexed(count*cpu.sizeOfWord, regSP), cpu.sizeOfWord, cpu.sizeOfWord); count += 1; break;
 				}
 			}
 		}
@@ -725,7 +718,6 @@ int Function::RestoreGPRegisterVars()
 	int cnt2 = 0, cnt;
 	int nn;
 	int64_t mask;
-	char buf[100];
 
 	if (save_mask == nullptr)
 		return (0);
@@ -739,21 +731,21 @@ int Function::RestoreGPRegisterVars()
 			GenerateDiadic(op_ldm, 0, cg.MakeIndirect(regSP), cg.MakeImmediate(mask, 16));
 		}
 		else {
-			cnt2 = cnt = save_mask->NumMember() * sizeOfWord;
+			cnt2 = cnt = save_mask->NumMember() * cpu.sizeOfWord;
 			cnt = 0;
 			save_mask->resetPtr();
 			for (nn = 0; nn < save_mask->NumMember(); nn++) {
 				if (nn==0)
-					cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), sizeOfWord, sizeOfWord);
+					cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 				else
-					cg.GenerateLoad(makereg(cpu.saved_regs[nn]), MakeIndexed(sizeOfWord*nn, regSP), sizeOfWord, sizeOfWord);
+					cg.GenerateLoad(makereg(cpu.saved_regs[nn]), MakeIndexed(cpu.sizeOfWord*nn, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			}
 			/*
 			if (save_mask->NumMember() == 1)
-				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), sizeOfWord, sizeOfWord);
+				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			else if (save_mask->NumMember() == 2) {
-				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), sizeOfWord, sizeOfWord);
-				cg.GenerateLoad(makereg(cpu.saved_regs[1]), MakeIndexed(sizeOfWord,regSP), sizeOfWord, sizeOfWord);
+				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cg.GenerateLoad(makereg(cpu.saved_regs[1]), MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			}
 			else {
 				sprintf_s(buf, sizeof(buf), "__load_s0s%d", save_mask->NumMember() - 1);
@@ -762,8 +754,8 @@ int Function::RestoreGPRegisterVars()
 			*/
 			/*
 			for (nn = save_mask->nextMember(); nn >= 0; nn = save_mask->nextMember()) {
-				cg.GenerateLoad(makereg(nn), MakeIndexed(cnt, regSP), sizeOfWord, sizeOfWord);
-				cnt += sizeOfWord;
+				cg.GenerateLoad(makereg(nn), MakeIndexed(cnt, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
 			}
 			*/
 		}
@@ -780,13 +772,13 @@ int Function::RestoreFPRegisterVars()
 	if (fpsave_mask == nullptr)
 		return (0);
 	if (fpsave_mask->NumMember()) {
-		cnt2 = cnt = (fpsave_mask->NumMember() - 1)*sizeOfWord;
+		cnt2 = cnt = (fpsave_mask->NumMember() - 1)*cpu.sizeOfWord;
 		fpsave_mask->resetPtr();
 		for (nn = fpsave_mask->nextMember(); nn >= 1; nn = fpsave_mask->nextMember()) {
 			GenerateDiadic(op_fldo, 0, makefpreg(nn), MakeIndexed(cnt2 - cnt, regSP));
-			cnt -= sizeOfWord;
+			cnt -= cpu.sizeOfWord;
 		}
-		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cnt2 + sizeOfFP));
+		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cnt2 + cpu.sizeOfFP));
 	}
 	return (cnt2);
 }
@@ -799,13 +791,13 @@ int Function::RestorePositRegisterVars()
 	if (psave_mask == nullptr)
 		return (0);
 	if (psave_mask->NumMember()) {
-		cnt2 = cnt = (psave_mask->NumMember() - 1) * sizeOfWord;
+		cnt2 = cnt = (psave_mask->NumMember() - 1) * cpu.sizeOfWord;
 		psave_mask->resetPtr();
 		for (nn = psave_mask->nextMember(); nn >= 1; nn = psave_mask->nextMember()) {
 			GenerateDiadic(op_pldo, 0, compiler.of.makepreg(nn), MakeIndexed(cnt2 - cnt, regSP));
-			cnt -= sizeOfWord;
+			cnt -= cpu.sizeOfWord;
 		}
-		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cnt2 + sizeOfFP));
+		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfFP +cnt2));
 	}
 	return (cnt2);
 }
@@ -868,16 +860,16 @@ void Function::UnlinkStack(int64_t amt)
 	else if (!IsLeaf) {
 //		if (doesJAL) {	// ??? Not a leaf, so it must be transferring control
 			if (alstk) {
-				cg.GenerateLoad(makereg(regLR), MakeIndexed(1 * sizeOfWord, regFP), sizeOfWord, sizeOfWord);
+				cg.GenerateLoad(makereg(regLR), MakeIndexed(1 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 				//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
 				if (IsFar) {
 					ap = GetTempRegister();
-					cg.GenerateLoad(ap, MakeIndexed(3 * sizeOfWord, regFP), sizeOfWord, sizeOfWord);
+					cg.GenerateLoad(ap, MakeIndexed(3 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 					GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3103));
 					ReleaseTempRegister(ap);
 				}
 				cg.GenerateMove(makereg(regSP), makereg(regFP));
-				cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), sizeOfWord, sizeOfWord);
+				cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			}
 //		}
 	}
@@ -885,7 +877,7 @@ void Function::UnlinkStack(int64_t amt)
 	else {
 		if (alstk) {
 			cg.GenerateMove(makereg(regSP), makereg(regFP));
-			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), sizeOfWord, sizeOfWord);
+			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 		}
 	}
 	cg.GenerateUnlink(amt);
@@ -894,19 +886,19 @@ void Function::UnlinkStack(int64_t amt)
 	}
 	else if (!IsLeaf && doesJAL) {
 		if (alstk) {
-			cg.GenerateLoad(makereg(regLR), MakeIndexed(2 * sizeOfWord, regFP), sizeOfWord, sizeOfWord);
+			cg.GenerateLoad(makereg(regLR), MakeIndexed(2 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 			//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
 			if (IsFar) {
 				ap = GetTempRegister();
-				cg.GenerateLoad(ap, MakeIndexed(3 * sizeOfWord, regFP), sizeOfWord, sizeOfWord);
+				cg.GenerateLoad(ap, MakeIndexed(3 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 				GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3103));
 				ReleaseTempRegister(ap);
 			}
 			cg.GenerateMove(makereg(regSP), makereg(regFP));
-			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), sizeOfWord, sizeOfWord);
+			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 		}
 	}
-	//	GenerateTriadic(op_add,0,makereg(regSP),makereg(regSP),MakeImmediate(3*sizeOfWord));
+	//	GenerateTriadic(op_add,0,makereg(regSP),makereg(regSP),MakeImmediate(3*cpu.sizeOfWord));
 	*/
 	if (!cpu.SupportsLeave)
 		GenerateMonadic(op_hint, 0, MakeImmediate(end_stack_unlink));
@@ -959,21 +951,21 @@ void Function::GenerateCoroutineEntry()
 
 	cg.GenerateLoadConst(MakeStringAsNameConst((char *)"_start_data", dataseg), makereg(regGP));
 	ap = GetTempRegister();
-	cg.GenerateLoad(ap, cg.MakeIndexedName(MakeConame(*sym->mangledName, "target"), regGP), sizeOfWord, sizeOfWord);
+	cg.GenerateLoad(ap, cg.MakeIndexedName(MakeConame(*sym->mangledName, "target"), regGP), cpu.sizeOfWord, cpu.sizeOfWord);
 	GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3108));
 	ReleaseTempRegister(ap);
 	GenerateMonadic(op_jmp, 0, MakeIndirect(136));	// CA4
 	GenerateStrLabel(my_strdup((char*)MakeConame(*sym->mangledName, "first").c_str()));
 	ap = GetTempRegister();
 	GenerateTriadic(op_csrrw, 0, ap, makereg(regZero), MakeImmediate(0x3102));
-	cg.GenerateStore(ap, cg.MakeIndexedName(MakeConame(*sym->mangledName, "orig_lr").c_str(), regGP), sizeOfWord);
+	cg.GenerateStore(ap, cg.MakeIndexedName(MakeConame(*sym->mangledName, "orig_lr").c_str(), regGP), cpu.sizeOfWord);
 	ReleaseTempRegister(ap);
-	cg.GenerateStore(makereg(regFP), cg.MakeIndexedName(MakeConame(*sym->mangledName, "orig_fp").c_str(), regGP), sizeOfWord);
-	cg.GenerateStore(makereg(regSP), cg.MakeIndexedName(MakeConame(*sym->mangledName, "orig_sp").c_str(), regGP), sizeOfWord);
+	cg.GenerateStore(makereg(regFP), cg.MakeIndexedName(MakeConame(*sym->mangledName, "orig_fp").c_str(), regGP), cpu.sizeOfWord);
+	cg.GenerateStore(makereg(regSP), cg.MakeIndexedName(MakeConame(*sym->mangledName, "orig_sp").c_str(), regGP), cpu.sizeOfWord);
 	node = (ENODE*)sp_init;
 	opt_const(&node);
 	initstack();
-	ap = cg.GenerateExpression(node, am_reg, sizeOfWord, 0);
+	ap = cg.GenerateExpression(node, am_reg, cpu.sizeOfWord, 0);
 }
 
 // Generate a function body.
@@ -1016,7 +1008,7 @@ void Function::Generate()
 	if (IsCoroutine)
 		GenerateCoroutineEntry();
 
-	while (lc_auto % sizeOfWord)	// round frame size to word
+	while (lc_auto % cpu.sizeOfWord)	// round frame size to word
 		++lc_auto;
 
 	if (currentFn->csetbl == nullptr) {
@@ -1475,7 +1467,7 @@ void Function::BuildParameterList(int *num, int *numa, int* ellipos)
 			else
 				poffset += roundWord(sp1->tp->size);
 		}
-		if (roundWord(sp1->tp->size) > sizeOfWord && !sp1->tp->IsVectorType())
+		if (roundWord(sp1->tp->size) > cpu.sizeOfWord && !sp1->tp->IsVectorType())
 			IsLeaf = FALSE;
 		sp1->storage_class = sc_auto;
 	}
@@ -1486,13 +1478,13 @@ void Function::BuildParameterList(int *num, int *numa, int* ellipos)
 	if (sym->tp) {
 		if (sym->tp->btpp) {
 			if (sym->tp->btpp->type == bt_struct || sym->tp->btpp->type == bt_union || sym->tp->btpp->type == bt_class) {
-				if (sym->tp->btpp->size > sizeOfWord) {
+				if (sym->tp->btpp->size > cpu.sizeOfWord) {
 					sp1 = makeStructPtr("_pHiddenStructPtr");
 					sp1->parmno = i;
 					sp1->IsParameter = true;
 					sp1->parent = sym->parent;
 					sp1->value.i = poffset;
-					poffset += sizeOfWord;
+					poffset += cpu.sizeOfWord;
 					sp1->storage_class = sc_register;
 					sp1->IsAuto = false;
 					sp1->next = 0;

@@ -772,7 +772,7 @@ void Symbol::SetStorageOffset(TYP *head, int nbytes, int al, int ilc, int ztype)
 	if (head == nullptr) {
 		head = this->tp;
 		if (head == nullptr)
-			head = TYP::Make(bt_int, sizeOfInt);
+			head = TYP::Make(bt_int, cpu.sizeOfInt);
 	}
 	// Set the struct member storage offset.
 	if (al == sc_static || al == sc_thread) {
@@ -788,7 +788,7 @@ void Symbol::SetStorageOffset(TYP *head, int nbytes, int al, int ilc, int ztype)
 		value.i = -(ilc + nbytes + head->roundSize());// + parentBytes);
 	}
 //	if (head == nullptr) {
-//		head = TYP::Make(bt_int, sizeOfInt);
+//		head = TYP::Make(bt_int, cpu.sizeOfInt);
 //	}
 	head->struct_offset = value.i;
 }
@@ -1158,8 +1158,8 @@ int64_t Symbol::InitializePointerToUnion(txtoStream& tfs, ENODE* rootnode, TYP* 
 	Symbol* sp;
 	std::string lbl;
 
-	nbytes = sizeOfPtr;
-	switch (sizeOfPtr) {
+	nbytes = cpu.sizeOfPtr;
+	switch (cpu.sizeOfPtr) {
 	case 4: rootnode->GenerateShort(tfs); break;
 	case 8: rootnode->GenerateInt(tfs); break;
 	case 16: rootnode->GenerateLong(tfs); break;
@@ -1179,17 +1179,17 @@ int64_t Symbol::InitializePointerToStruct(txtoStream& tfs, ENODE* rootnode, TYP*
 	Symbol* sp;
 
 	if (initlvl == 1) {
-		nbytes = sizeOfPtr;
+		nbytes = cpu.sizeOfPtr;
 		switch (syntax) {
 		case MOT:
-			switch (sizeOfPtr) {
+			switch (cpu.sizeOfPtr) {
 			case 4: tfs.puts("\n\tdc.l\t"); nbytes = 4; break;
 			case 8: tfs.puts("\n\tdc.q\t"); nbytes = 8; break;
 			case 16: tfs.puts("\n????\t"); nbytes = 16; break;
 			}
 			break;
 		default:
-			switch (sizeOfPtr) {
+			switch (cpu.sizeOfPtr) {
 			case 4: tfs.puts("\n\t.4byte\t"); nbytes = 4; break;
 			case 8: tfs.puts("\n\t.8byte\t"); nbytes = 8; break;
 			case 16: tfs.puts("\n\t.16byte\t"); nbytes = 16; break;
@@ -1207,8 +1207,8 @@ int64_t Symbol::InitializePointerToStruct(txtoStream& tfs, ENODE* rootnode, TYP*
 		}
 	}
 	else {
-		nbytes = sizeOfPtr;
-		switch (sizeOfPtr) {
+		nbytes = cpu.sizeOfPtr;
+		switch (cpu.sizeOfPtr) {
 		case 4: rootnode->GenerateShort(tfs); nbytes = 4;  break;
 		case 8: rootnode->GenerateInt(tfs); nbytes = 8;  break;
 		case 16: rootnode->GenerateLong(tfs); nbytes = 16; break;
@@ -1309,8 +1309,8 @@ int64_t Symbol::GenerateT(txtoStream& tfs, ENODE* node, TYP* ptp)
 						GenerateLabelReference(tfs, node->i_lhs, 0, (char *)node->GetLabconLabel(node->i_lhs)->c_str());
 				}
 				else {
-					nbytes = sizeOfPtr;
-					switch (sizeOfPtr) {
+					nbytes = cpu.sizeOfPtr;
+					switch (cpu.sizeOfPtr) {
 					case 4: node->GenerateShort(tfs); break;
 					case 8: node->GenerateInt(tfs); break;
 					case 16: node->GenerateLong(tfs); break;

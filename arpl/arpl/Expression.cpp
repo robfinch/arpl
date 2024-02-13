@@ -233,7 +233,7 @@ TYP* Expression::ParseStringConst(ENODE** node, Symbol* sym)
 	free(str);
 	*node = pnode;
 	pnode->etype = bt_pointer;
-	pnode->esize = sizeOfPtr;
+	pnode->esize = cpu.sizeOfPtr;
 	pnode->constflag = true;
 	pnode->segment = use_iprel ? codeseg : rodataseg;
 	pnode->SetType(tptr);
@@ -337,7 +337,7 @@ ENODE* Expression::ParseThis(ENODE** node)
 		memcpy(tptr2, currentClass->tp, sizeof(TYP));
 	}
 	NextToken();
-	tptr = TYP::Make(bt_pointer, sizeOfPtr);
+	tptr = TYP::Make(bt_pointer, cpu.sizeOfPtr);
 	tptr->btpp = tptr2;
 	tptr->isUnsigned = TRUE;
 	dfs.puts((char*)tptr->btpp->sname->c_str());
@@ -1035,7 +1035,7 @@ ENODE* Expression::ParseSizeof(Symbol* symi)
 	if (flag2)
 		needpunc(closepa, 2);
 	ep1->constflag = TRUE;
-	ep1->esize = sizeOfWord;//??? 8?
+	ep1->esize = cpu.sizeOfWord;//??? 8?
 	tp = &stdint;
 	ep1->SetType(tp);
 	return (ep1);
@@ -1096,7 +1096,7 @@ ENODE* Expression::ParseAlignof(Symbol* symi)
 	if (flag2)
 		needpunc(closepa, 2);
 	ep1->constflag = TRUE;
-	ep1->esize = sizeOfWord;//??? 8?
+	ep1->esize = cpu.sizeOfWord;//??? 8?
 	tp = &stdint;
 	ep1->SetType(tp);
 	return (ep1);
@@ -1244,8 +1244,8 @@ ENODE* Expression::ParseAddressOf(Symbol* symi)
 					ep1 = ep1->p[0];
 			}
 		}
-		ep1->esize = sizeOfPtr;		// converted to a pointer so size is now 8
-		tp1 = TYP::Make(bt_pointer, sizeOfPtr);
+		ep1->esize = cpu.sizeOfPtr;		// converted to a pointer so size is now 8
+		tp1 = TYP::Make(bt_pointer, cpu.sizeOfPtr);
 		tp1->btpp = tp;
 		tp1->val_flag = FALSE;
 		tp1->isUnsigned = TRUE;
@@ -1313,7 +1313,7 @@ ENODE* Expression::ParseMulf(Symbol* symi)
 	needpunc(closepa, 48);
 	ep1 = makenode(en_mulf, ep1, ep2);
 	ep1->isUnsigned = TRUE;
-	ep1->esize = sizeOfWord;
+	ep1->esize = cpu.sizeOfWord;
 	tp = &stduint;
 	ep1->SetType(tp);
 	return (ep1);
@@ -1331,7 +1331,7 @@ ENODE* Expression::ParseSync(Symbol* symi)
 	needpunc(closepa, 48);
 	ep1 = makenode(en_sync, ep1, nullptr);
 	ep1->isUnsigned = TRUE;
-	ep1->esize = sizeOfWord;
+	ep1->esize = cpu.sizeOfWord;
 	tp = &stduint;
 	ep1->SetType(tp);
 	return (ep1);
@@ -1351,7 +1351,7 @@ ENODE* Expression::ParseBytndx(Symbol* symi)
 	tp2 = ParseNonCommaExpression(&ep2, symi);
 	needpunc(closepa, 48);
 	ep1 = makenode(en_bytendx, ep1, ep2);
-	ep1->esize = sizeOfWord;
+	ep1->esize = cpu.sizeOfWord;
 	tp = &stdint;
 	if (ep1) ep1->SetType(tp);
 	return (ep1);
@@ -1371,7 +1371,7 @@ ENODE* Expression::ParseWydndx(Symbol* symi)
 	tp2 = ParseNonCommaExpression(&ep2, symi);
 	needpunc(closepa, 48);
 	ep1 = makenode(en_wydendx, ep1, ep2);
-	ep1->esize = sizeOfWord;
+	ep1->esize = cpu.sizeOfWord;
 	tp = &stdint;
 	if (ep1) ep1->SetType(tp);
 	return (ep1);
@@ -1391,7 +1391,7 @@ ENODE* Expression::ParseBmap(Symbol* symi)
 	tp2 = ParseNonCommaExpression(&ep2, symi);
 	needpunc(closepa, 48);
 	ep1 = makenode(en_bmap, ep1, ep2);
-	ep1->esize = sizeOfWord;
+	ep1->esize = cpu.sizeOfWord;
 	tp = &stdint;
 	if (ep1) ep1->SetType(tp);
 	return (ep1);
@@ -1406,7 +1406,7 @@ ENODE* Expression::ParseSaveContext(Symbol* symi)
 	needpunc(openpa, 81);
 	needpunc(closepa, 82);
 	ep1 = makenode(en_save_context, nullptr, nullptr);
-	ep1->esize = sizeOfWord;
+	ep1->esize = cpu.sizeOfWord;
 	tp = &stdint;
 	if (ep1) ep1->SetType(tp);
 	return (ep1);
@@ -1723,7 +1723,7 @@ j1:
 		if (ep1) {
 			ep1->sym = sp;
 			ep1->isUnsigned = iu;
-			ep1->esize = sizeOfWord;
+			ep1->esize = cpu.sizeOfWord;
 		}
 //		ep1->p[2] = pep1;
 		//if (tp1->type==bt_pointer && (tp1->btpp->type==bt_func || tp1->btpp->type==bt_ifunc))
@@ -1854,14 +1854,14 @@ ENODE* Expression::ParseOpenpa(TYP* tp1, ENODE* ep1, Symbol* symi)
 		sp->storage_class = sc_external;
 		sp->SetName(name);
 		sp->tp = TYP::Make(bt_func, 0);
-		sp->tp->btpp = TYP::Make(bt_int, sizeOfInt);
+		sp->tp->btpp = TYP::Make(bt_int, cpu.sizeOfInt);
 		sp->fi->AddProto(&typearray);
 		sp->mangledName = sp->fi->BuildSignature();
 		gsyms[0].insert(sp);
 	}
 	else if (sp->IsUndefined) {
 		sp->tp = TYP::Make(bt_func, 0);
-		sp->tp->btpp = TYP::Make(bt_int, sizeOfInt);
+		sp->tp->btpp = TYP::Make(bt_int, cpu.sizeOfInt);
 		if (!sp->fi) {
 			sp->fi = MakeFunction(sp->id, sp, defaultcc == 1);
 		}
@@ -2067,7 +2067,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	}
 	qnode = makeinode(en_icon, sz1);
 	qnode->etype = bt_ushort;
-	qnode->esize = sizeOfWord;
+	qnode->esize = cpu.sizeOfWord;
 	qnode->constflag = TRUE;
 	qnode->isUnsigned = TRUE;
 	cf = qnode->constflag;
@@ -2086,7 +2086,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 		else
 			qnode = makenode(en_mulu, qnode, rnode);
 		qnode->etype = bt_short;
-		qnode->esize = sizeOfWord;
+		qnode->esize = cpu.sizeOfWord;
 		qnode->constflag = cf & rnode->constflag;
 		qnode->isUnsigned = rnode->isUnsigned;
 		if (rnode->sym)
@@ -2104,7 +2104,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 */
 		pnode = makenode(en_add, pnode, qnode);
 		pnode->etype = bt_pointer;
-		pnode->esize = sizeOfPtr;
+		pnode->esize = cpu.sizeOfPtr;
 		pnode->constflag = cf & qnode->constflag;
 		pnode->isUnsigned = uf & qnode->isUnsigned;
 		if (pnode->sym == nullptr)
@@ -2706,7 +2706,7 @@ ENODE* Expression::MakeUnknownFunctionNameNode(std::string nm, TYP** tp, TypeArr
 	node->sym = sp;
 	if (sp->tp->isUnsigned)
 		node->isUnsigned = TRUE;
-	node->esize = sizeOfInt;
+	node->esize = cpu.sizeOfInt;
 	node->isPascal = sp->fi->IsPascal;
 	return (node);
 }

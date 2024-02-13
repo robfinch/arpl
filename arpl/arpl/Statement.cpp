@@ -68,7 +68,7 @@ static Symbol *makeint(char *name)
 	TYP *tp;
 
 	sp = Symbol::alloc();
-	tp = TYP::Make(bt_int, sizeOfInt);
+	tp = TYP::Make(bt_int, cpu.sizeOfInt);
 	tp->sname = new std::string("");
 	tp->isUnsigned = FALSE;
 	tp->isVolatile = FALSE;
@@ -735,7 +735,7 @@ Statement *Statement::ParseGoto()
 		sp->SetName(*(new std::string(lastid)));
 		sp->value.i = nextlabel++;
 		sp->storage_class = sc_ulabel;
-		sp->tp = TYP::Make(bt_label, sizeOfWord);
+		sp->tp = TYP::Make(bt_label, cpu.sizeOfWord);
 		currentFn->sym->lsyms.insert(sp);
 	}
 	NextToken();       /* get past label name */
@@ -1972,7 +1972,7 @@ void Statement::GenerateYield()
 	lab1 = nextlabel++;
 	ap1 = GetTempRegister();
 	cg.GenerateLoadConst(MakeCodeLabel(lab1), ap1);
-	GenStore(ap1,MakeIndexedName(MakeConame(*currentFn->sym->mangledName,"target"), regGP),sizeOfWord);
+	GenStore(ap1,MakeIndexedName(MakeConame(*currentFn->sym->mangledName,"target"), regGP),cpu.sizeOfWord);
 	ReleaseTempRegister(ap1);
 	if (node->p[0]->nodetype == en_nacon || node->p[0]->nodetype == en_cnacon) {
 		if (node->p[2])
@@ -1990,13 +1990,13 @@ void Statement::GenerateYield()
 		}
 		else
 			currentFn->DoesThrow = true;
-		GenStore(makereg(regFP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "fp_save"), regGP), sizeOfWord);
-		GenStore(makereg(regSP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "sp_save"), regGP), sizeOfWord);
+		GenStore(makereg(regFP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "fp_save"), regGP), cpu.sizeOfWord);
+		GenStore(makereg(regSP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "sp_save"), regGP), cpu.sizeOfWord);
 		GenerateMonadic(op_jmp, 0, MakeDirect(node->p[0]));
 	}
 	else {
 		i = 0;
-		ap = cg.GenerateExpression(node->p[0], am_reg, sizeOfWord, 0);
+		ap = cg.GenerateExpression(node->p[0], am_reg, cpu.sizeOfWord, 0);
 		if (ap->offset) {
 			if (ap->offset->sym)
 				sym = ap->offset->sym->fi;
@@ -2011,15 +2011,15 @@ void Statement::GenerateYield()
 		}
 		else
 			currentFn->DoesThrow = true;
-		GenStore(makereg(regFP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "fp_save"), regGP), sizeOfWord);
-		GenStore(makereg(regSP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "sp_save"), regGP), sizeOfWord);
+		GenStore(makereg(regFP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "fp_save"), regGP), cpu.sizeOfWord);
+		GenStore(makereg(regSP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "sp_save"), regGP), cpu.sizeOfWord);
 		GenerateMonadic(op_jmp, 0, cg.MakeStringAsNameConst((char*)exp->msp->c_str(), codeseg));
 	}
 	GenerateMonadic(op_bex, 0, MakeDataLabel(throwlab, regZero));
 	if (lab1)
 		GenerateLabel(lab1);
-	cg.GenerateLoad(makereg(regFP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "fp_save"), regGP), sizeOfWord, sizeOfWord);
-	cg.GenerateLoad(makereg(regSP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "sp_save"), regGP), sizeOfWord, sizeOfWord);
+	cg.GenerateLoad(makereg(regFP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "fp_save"), regGP), cpu.sizeOfWord, cpu.sizeOfWord);
+	cg.GenerateLoad(makereg(regSP), MakeIndexedName(MakeConame(*currentFn->sym->mangledName, "sp_save"), regGP), cpu.sizeOfWord, cpu.sizeOfWord);
 	if (currentFn->HasRegisterParameters())
 		if (sym)
 			sym->RestoreRegisterArguments();
@@ -2039,7 +2039,7 @@ void Statement::GenerateFuncBody()
 			;
 		else if (sp->initexp) {
 			initstack();
-			ReleaseTempRegister(cg.GenerateExpression(sp->initexp->p[1], am_all, sizeOfWord, 0));
+			ReleaseTempRegister(cg.GenerateExpression(sp->initexp->p[1], am_all, cpu.sizeOfWord, 0));
 		}
 		sp = sp->nextp;
 	}
@@ -2223,7 +2223,7 @@ void Statement::GenerateAsm()
 						if (thead->IsRegister)
 							sprintf_s(buf2, sizeof(buf2), "x%I64d", thead->reg);
 						else
-							sprintf_s(buf2, sizeof(buf2), "%I64d[$fp]", thead->value.i + currentFn->SizeofReturnBlock() * sizeOfWord);
+							sprintf_s(buf2, sizeof(buf2), "%I64d[$fp]", thead->value.i + currentFn->SizeofReturnBlock() * cpu.sizeOfWord);
 						lo = strlen(buf2);
 						
 						if (lo==tn)

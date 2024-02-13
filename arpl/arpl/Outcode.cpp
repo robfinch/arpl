@@ -1349,9 +1349,9 @@ void dumplits(txtoStream& tfs)
 			case bt_float:
 			case bt_double:
 #ifdef LOCAL_LABELS
-				put_label(tfs, lp->label, "", ""/*lp->nmspace*/, 'D', sizeOfFPD);
+				put_label(tfs, lp->label, "", ""/*lp->nmspace*/, 'D', cpu.sizeOfFPD);
 #else
-				put_label(tfs, lp->label, "", lp->nmspace, 'D', sizeOfFPD, curseg);
+				put_label(tfs, lp->label, "", lp->nmspace, 'D', cpu.sizeOfFPD, curseg);
 #endif
 				if (syntax == MOT)
 					tfs.printf("\tdc.l\t");
@@ -1363,9 +1363,9 @@ void dumplits(txtoStream& tfs)
 				break;
 			case bt_quad:
 #ifdef LOCAL_LABELS
-				put_label(tfs, lp->label, "", ""/*lp->nmspace*/, 'D', sizeOfFPQ);
+				put_label(tfs, lp->label, "", ""/*lp->nmspace*/, 'D', cpu.sizeOfFPQ);
 #else
-				put_label(tfs, lp->label, "", lp->nmspace, 'D', sizeOfFPQ, curseg);
+				put_label(tfs, lp->label, "", lp->nmspace, 'D', cpu.sizeOfFPQ, curseg);
 #endif
 				if (syntax == MOT)
 					tfs.printf("\tdc.l\t");
@@ -1458,9 +1458,9 @@ void dumplits(txtoStream& tfs)
 		nl(tfs);
 		if (DataLabels[qt->label]) {
 #ifdef LOCAL_LABELS
-			put_label(tfs, quadtab->label, "", ""/*quadtab->nmspace*/, 'D', sizeOfFPQ, curseg);
+			put_label(tfs, quadtab->label, "", ""/*quadtab->nmspace*/, 'D', cpu.sizeOfFPQ, curseg);
 #else
-			put_label(tfs, qt->label, "", qt->nmspace, 'D', sizeOfFPQ, curseg);
+			put_label(tfs, qt->label, "", qt->nmspace, 'D', cpu.sizeOfFPQ, curseg);
 #endif
 			tfs.printf("\tdh\t");
 			qt->Pack(64);

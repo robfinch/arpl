@@ -70,7 +70,7 @@ Operand* RiscvCodeGenerator::GenExpr(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3, * ap4;
 	int lab0, lab1;
-	int64_t size = sizeOfWord;
+	int64_t size = cpu.sizeOfWord;
 	int op;
 
 	lab0 = nextlabel++;
@@ -1062,7 +1062,7 @@ void RiscvCodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function
 {
 	Operand* ap1;
 
-	ap->MakeLegal(am_reg, sizeOfWord);
+	ap->MakeLegal(am_reg, cpu.sizeOfWord);
 	GenerateDiadic(op_ld, 0, ap, MakeIndirect(ap->preg));
 	if (sym && sym->IsLeaf) {
 		if (flags & am_jmp)
@@ -1112,10 +1112,10 @@ void RiscvCodeGenerator::GenerateInterruptSave(Function* func)
 
 	nn = popcnt(tsm);
 	// Allocate storage for registers on stack
-	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * sizeOfWord));
+	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
 	for (kk = nn = 0; nn < cpu.nregs; nn++) {
 		if (tsm & 1) {
-			GenerateStore(makereg(nn), MakeIndexed(kk * sizeOfWord, regSP), sizeOfWord);
+			GenerateStore(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 			kk++;
 		}
 		tsm = tsm >> 1;
@@ -1139,13 +1139,13 @@ void RiscvCodeGenerator::GenerateInterruptLoad(Function* func)
 	nn = popcnt(tsm);
 	for (kk = nn = 0; nn < cpu.nregs; nn++) {
 		if (tsm & 1) {
-			GenerateLoad(makereg(nn), MakeIndexed(kk * sizeOfWord, regSP), sizeOfWord, sizeOfWord);
+			GenerateLoad(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			kk++;
 		}
 		tsm = tsm >> 1;
 	}
 	// Deallocate stack storage
-	GenerateAddOnto(makereg(regSP), MakeImmediate(kk * sizeOfWord));
+	GenerateAddOnto(makereg(regSP), MakeImmediate(kk * cpu.sizeOfWord));
 }
 
 void RiscvCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
@@ -1340,17 +1340,17 @@ int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 		return (0);
 	}
 	switch (ep->etype) {
-	case bt_quad:	sz = sizeOfFPQ; break;
-	case bt_double:	sz = sizeOfFPD; break;
-	case bt_float:	sz = sizeOfFPD; break;
-	case bt_posit:	sz = sizeOfPosit; break;
-	default:	sz = sizeOfWord; break;
+	case bt_quad:	sz = cpu.sizeOfFPQ; break;
+	case bt_double:	sz = cpu.sizeOfFPD; break;
+	case bt_float:	sz = cpu.sizeOfFPD; break;
+	case bt_posit:	sz = cpu.sizeOfPosit; break;
+	default:	sz = cpu.sizeOfWord; break;
 	}
 	if (ep->tp) {
 		if (ep->tp->IsFloatType())
-			ap = cg.GenerateExpression(ep, am_reg, sizeOfFPQ, 1);
+			ap = cg.GenerateExpression(ep, am_reg, cpu.sizeOfFPQ, 1);
 		else if (ep->tp->IsPositType())
-			ap = cg.GenerateExpression(ep, am_preg, sizeOfPosit, 1);
+			ap = cg.GenerateExpression(ep, am_preg, cpu.sizeOfPosit, 1);
 		else
 			ap = cg.GenerateExpression(ep, am_reg | am_imm, ep->GetNaturalSize(), 1);
 	}
@@ -1392,7 +1392,7 @@ int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 			if (ap->mode == am_imm) {
 				GenerateDiadic(cpu.ldi_op, 0, makereg(regno & 0x7fff), ap);
 				if (regno & 0x8000) {
-					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(sizeOfWord));
+					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord));
 					nn = 1;
 				}
 			}
@@ -1401,14 +1401,14 @@ int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 				GenerateDiadic(cpu.mov_op, 0, makefpreg(regno & 0x7fff), ap);
 				if (regno & 0x8000) {
 					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(sz));
-					nn = sz / sizeOfWord;
+					nn = sz / cpu.sizeOfWord;
 				}
 			}
 			else {
 				//ap->preg = regno & 0x7fff;
 				GenerateDiadic(cpu.mov_op, 0, makereg(regno & 0x7fff), ap);
 				if (regno & 0x8000) {
-					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(sizeOfWord));
+					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord));
 					nn = 1;
 				}
 			}
@@ -1432,7 +1432,7 @@ int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 					{
 						*isFloat = true;
 						GenerateMonadic(op_push, 0, ap);
-						nn = sz / sizeOfWord;
+						nn = sz / cpu.sizeOfWord;
 						nn = 1;
 						*push_count = 1;
 					}
@@ -1451,11 +1451,11 @@ int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 						ap3 = GetTempRegister();
 						regs[ap3->preg].IsArg = true;
 						GenerateLoadConst(ap, ap3);
-						cg.GenerateStore(ap3, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap3, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						ReleaseTempReg(ap3);
 					}
 					else {
-						cg.GenerateStore(makereg(0), MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(makereg(0), MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 					}
 					nn = 1;
 				}
@@ -1465,38 +1465,38 @@ int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 					// allocated by the caller.
 					// What needs to be done is copy the aggregate to the buffer then push
 					// the buffer address.
-					if (ap->tp->IsAggregateType() && ap->tp->size > sizeOfWord) {
+					if (ap->tp->IsAggregateType() && ap->tp->size > cpu.sizeOfWord) {
 						ap2 = GetTempRegister();
 						GenerateDiadic(op_lea, 0, ap2, MakeIndexed(ep->stack_offs, regSP));	// push target
-						cg.GenerateStore(ap2, MakeIndexed(sizeOfWord, regSP), sizeOfWord);
+						cg.GenerateStore(ap2, MakeIndexed(cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 						ReleaseTempRegister(ap2);
-						cg.GenerateStore(ap, MakeIndexed((int64_t)0, regSP), sizeOfWord);		// and source
+						cg.GenerateStore(ap, MakeIndexed((int64_t)0, regSP), cpu.sizeOfWord);		// and source
 						ap3 = GetTempRegister();
 						GenerateLoadConst(MakeImmediate(ap->tp->size), ap3);								// and size
-						cg.GenerateStore(ap3, MakeImmediate(ap->tp->size), sizeOfWord);
+						cg.GenerateStore(ap3, MakeImmediate(ap->tp->size), cpu.sizeOfWord);
 						ReleaseTempRegister(ap3);
 						GenerateMonadic(op_bsr, 0, MakeStringAsNameConst((char*)"__aacpy", codeseg));	// call copy helper
 						ap1 = GetTempRegister();
 						GenerateLoadConst(MakeImmediate(ep->stack_offs), ap1);							// and size
-						cg.GenerateStore(ap1, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap1, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						ReleaseTempRegister(ap1);
 					}
 					else if (ap->tp->IsFloatType()) {
 						*isFloat = true;
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
-						nn = 1;// sz / sizeOfWord;
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
+						nn = 1;// sz / cpu.sizeOfWord;
 					}
 					else if (ap->type == bt_posit) {
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						nn = 1;
 					}
 					else if (ap->type == bt_vector) {
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						nn = 4;
 					}
 					else {
 						regs[ap->preg].IsArg = true;
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						nn = 1;
 					}
 				}
@@ -1572,7 +1572,7 @@ int RiscvCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 		if (pl[nn]->etype == bt_none) {	// was there an empty parameter?
 			if (sy != nullptr) {
 				if (sy[nn]) {
-					sum += PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sy[nn] ? sy[nn]->value.i : sum * sizeOfWord, &isFloat, &pc, large_argcount);
+					sum += PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sy[nn] ? sy[nn]->value.i : sum * cpu.sizeOfWord, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
 				else {
@@ -1584,7 +1584,7 @@ int RiscvCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 			if (sy != nullptr) {
 				if (sy[nn]) {
 					regno = ta ? (i < ta->length ? ta->preg[i] : 0) : 0;
-					stkoffs = sy[nn] ? sy[nn]->value.i : sum * sizeOfWord;
+					stkoffs = sy[nn] ? sy[nn]->value.i : sum * cpu.sizeOfWord;
 					sum += PushArgument(pl[nn], regno, stkoffs, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
@@ -1593,7 +1593,7 @@ int RiscvCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 				}
 			}
 			else {
-				sum += PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * sizeOfWord, &isFloat, &pc, large_argcount);
+				sum += PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * cpu.sizeOfWord, &isFloat, &pc, large_argcount);
 				push_count += pc;
 			}
 		}
@@ -1604,7 +1604,7 @@ int RiscvCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 	if (sum == 0 || !large_argcount)
 		ip->fwd->MarkRemove();
 	else
-		ip->fwd->oper3 = MakeImmediate(sum*sizeOfWord);
+		ip->fwd->oper3 = MakeImmediate(sum*cpu.sizeOfWord);
 	*/
 	/*
 	if (!sumFloat) {
@@ -1621,7 +1621,7 @@ int RiscvCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 				if (sy == nullptr && sym)
 					sy = sym->params.GetParameters();
 				if (sy)
-					PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * sizeOfWord, &isFloat);
+					PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * cpu.sizeOfWord, &isFloat);
 			}
 			else
 				PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * 8, &isFloat);
@@ -1645,12 +1645,12 @@ void RiscvCodeGenerator::PopArguments(Function* fnc, int howMany, bool isPascal)
 			if (!fnc->IsPascal)
 				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space));
 			else if (howMany - fnc->NumFixedAutoParms > 0)
-				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space - (fnc->NumFixedAutoParms * sizeOfWord)));
+				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space - (fnc->NumFixedAutoParms * cpu.sizeOfWord)));
 		}
 		else {
 			error(ERR_UNKNOWN_FN);
 			if (!isPascal)
-				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany * sizeOfWord));
+				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany * cpu.sizeOfWord));
 		}
 	}
 }

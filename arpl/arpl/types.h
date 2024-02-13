@@ -2523,7 +2523,7 @@ public:
 	SymbolFactory syf;
 	struct clit* casetab;
 	Float128* quadtab;
-	e_cpu cpu;
+	e_cpu cputype;
 	short int pass;
 	bool ipoll;
 	bool nogcskips;
@@ -2636,7 +2636,23 @@ public:
 	int stw_op;
 	int stb_op;
 	int std_op;
+	int sizeOfWord;
+	int sizeOfPtr;
+	int sizeOfFP;
+	int sizeOfFPS;
+	int sizeOfFPT;
+	int sizeOfFPD;
+	int sizeOfFPQ;
+	int sizeOfInt;
+	int sizeOfDecimal;
+	int sizeOfPosit;
+	CPU();
 	void InitRegs();
+};
+
+class QuplsCPU : public CPU
+{
+	QuplsCPU();
 };
 
 //#define SYM     struct sym

@@ -536,9 +536,9 @@ int IsFsavedReg(int rg)
 
 void SpillRegister(Operand *ap, int number)
 {
-	cg.GenerateStore(ap,cg.MakeIndexed(currentFn->GetTempBot()+ap->deep*sizeOfWord,regFP), sizeOfWord);
+	cg.GenerateStore(ap,cg.MakeIndexed(currentFn->GetTempBot()+ap->deep*cpu.sizeOfWord,regFP), cpu.sizeOfWord);
 	if (pass==1)
-		max_stack_use = max(max_stack_use, (ap->deep+1) * sizeOfWord);
+		max_stack_use = max(max_stack_use, (ap->deep+1) * cpu.sizeOfWord);
   //reg_stack[reg_stack_ptr].Operand = ap;
   //reg_stack[reg_stack_ptr].f.allocnum = number;
   if (reg_alloc[number].f.isPushed=='T')
@@ -549,9 +549,9 @@ void SpillRegister(Operand *ap, int number)
 
 void SpillVectorRegister(Operand* ap, int number)
 {
-	GenerateDiadic(op_store, 0, ap, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * (sizeOfWord * 4), regFP));
+	GenerateDiadic(op_store, 0, ap, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * (cpu.sizeOfWord * 4), regFP));
 	if (pass == 1)
-		max_stack_use = max(max_stack_use, (ap->deep + 1) * (sizeOfWord * 4));
+		max_stack_use = max(max_stack_use, (ap->deep + 1) * (cpu.sizeOfWord * 4));
 	//reg_stack[reg_stack_ptr].Operand = ap;
 	//reg_stack[reg_stack_ptr].f.allocnum = number;
 	if (vreg_alloc[number].f.isPushed == 'T')
@@ -562,9 +562,9 @@ void SpillVectorRegister(Operand* ap, int number)
 
 void SpillFPRegister(Operand *ap, int number)
 {
-	GenerateDiadic(op_store,0,ap,cg.MakeIndexed(currentFn->GetTempBot()-ap->deep*sizeOfWord,regFP));
+	GenerateDiadic(op_store,0,ap,cg.MakeIndexed(currentFn->GetTempBot()-ap->deep*cpu.sizeOfWord,regFP));
 	if (pass==1)
-		max_stack_use = max(max_stack_use, (ap->deep+1) * sizeOfWord);
+		max_stack_use = max(max_stack_use, (ap->deep+1) * cpu.sizeOfWord);
 	fpreg_stack[fpreg_stack_ptr].Operand = ap; 
 	fpreg_stack[fpreg_stack_ptr].f.allocnum = number;
    if (fpreg_alloc[number].f.isPushed=='T')
@@ -574,9 +574,9 @@ void SpillFPRegister(Operand *ap, int number)
 
 void SpillPositRegister(Operand* ap, int number)
 {
-	GenerateDiadic(op_store, 0, ap, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * sizeOfWord, regFP));
+	GenerateDiadic(op_store, 0, ap, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * cpu.sizeOfWord, regFP));
 	if (pass == 1)
-		max_stack_use = max(max_stack_use, (ap->deep + 1) * sizeOfWord);
+		max_stack_use = max(max_stack_use, (ap->deep + 1) * cpu.sizeOfWord);
 	preg_stack[preg_stack_ptr].Operand = ap;
 	preg_stack[preg_stack_ptr].f.allocnum = number;
 	if (preg_alloc[number].f.isPushed == 'T')
@@ -591,7 +591,7 @@ void LoadRegister(int regno, int number)
 	if (reg_in_use[regno] >= 0)
 		fatal("LoadRegister():register still in use");
 	reg_in_use[regno] = number;
-	cg.GenerateLoad(makereg(regno),cg.MakeIndexed(currentFn->GetTempBot()+number*sizeOfWord,regFP), sizeOfWord, sizeOfWord);
+	cg.GenerateLoad(makereg(regno),cg.MakeIndexed(currentFn->GetTempBot()+number*cpu.sizeOfWord,regFP), cpu.sizeOfWord, cpu.sizeOfWord);
     reg_alloc[number].f.isPushed = 'F';
 }
 
@@ -602,7 +602,7 @@ void LoadVectorRegister(int regno, int number)
 	if (vreg_in_use[regno] >= 0)
 		fatal("LoadVectorRegister():register still in use");
 	vreg_in_use[regno] = number;
-	GenerateDiadic(op_load, 0, makevreg(regno), cg.MakeIndexed(currentFn->GetTempBot() + number * (sizeOfWord * 4), regFP));
+	GenerateDiadic(op_load, 0, makevreg(regno), cg.MakeIndexed(currentFn->GetTempBot() + number * (cpu.sizeOfWord * 4), regFP));
 	vreg_alloc[number].f.isPushed = 'F';
 }
 
@@ -611,7 +611,7 @@ void LoadFPRegister(int regno, int number)
 	if (fpreg_in_use[regno & 0x3f] >= 0)
 		fatal("LoadRegister():register still in use");
 	fpreg_in_use[regno & 0x3f] = number;
-	GenerateDiadic(op_fld,0,makefpreg(regno),cg.MakeIndexed(currentFn->GetTempBot()-number*sizeOfWord,regFP));
+	GenerateDiadic(op_fld,0,makefpreg(regno),cg.MakeIndexed(currentFn->GetTempBot()-number*cpu.sizeOfWord,regFP));
     fpreg_alloc[number].f.isPushed = 'F';
 }
 
@@ -620,7 +620,7 @@ void LoadPositRegister(int regno, int number)
 	if (preg_in_use[regno] >= 0)
 		fatal("LoadRegister():register still in use");
 	preg_in_use[regno] = number;
-	GenerateDiadic(op_pldo, 0, makefpreg(regno), cg.MakeIndexed(currentFn->GetTempBot() - number * sizeOfWord, regFP));
+	GenerateDiadic(op_pldo, 0, makefpreg(regno), cg.MakeIndexed(currentFn->GetTempBot() - number * cpu.sizeOfWord, regFP));
 	preg_alloc[number].f.isPushed = 'F';
 }
 
@@ -1440,7 +1440,7 @@ void ReleaseTempReg(Operand *ap)
 
 int GetTempMemSpace()
 {
-	return (max_reg_alloc_ptr * sizeOfWord);
+	return (max_reg_alloc_ptr * cpu.sizeOfWord);
 }
 
 bool IsArgumentReg(int regno)

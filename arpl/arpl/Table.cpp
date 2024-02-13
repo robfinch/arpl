@@ -172,7 +172,7 @@ int TABLE::Find(std::string na,__int16 rettype, TypeArray *typearray, bool exact
 {
 	Symbol *thead, *first;
 	TypeArray *ta;
-	int s1,s2,s3;
+	int s1;
 	std::string name;
 	static int level = 0;
 
@@ -275,7 +275,6 @@ int TABLE::FindRising(std::string na)
 {
 	int sp;
   Symbol *sym;
-  int bse;
 	Symbol* bsep;
   static Symbol *mt[110];
   int nn, ii;

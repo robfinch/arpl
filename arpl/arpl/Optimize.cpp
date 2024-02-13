@@ -846,7 +846,7 @@ static void Opt0_byt2hexi(ENODE* ep)
 {
 	opt0(&(ep->p[0]));
 	if (ep->p[0]->nodetype == en_icon) {
-		ep->esize = sizeOfWord;
+		ep->esize = cpu.sizeOfWord;
 		ep->nodetype = en_icon;
 		if (ep->i & 0x80) {
 			ep->i = ep->p[0]->i | 0xffffffffffffff00LL;
@@ -870,7 +870,7 @@ static void Opt0_ubyt2hexi(ENODE* ep)
 {
 	opt0(&(ep->p[0]));
 	if (ep->p[0]->nodetype == en_icon) {
-		ep->esize = sizeOfWord;
+		ep->esize = cpu.sizeOfWord;
 		ep->nodetype = en_icon;
 		ep->i = ep->p[0]->i & 0xffLL;
 		ep->i128.high = 0;
@@ -887,7 +887,7 @@ static void Opt0_wyde2hexi(ENODE* ep)
 {
 	opt0(&(ep->p[0]));
 	if (ep->p[0]->nodetype == en_icon) {
-		ep->esize = sizeOfWord;
+		ep->esize = cpu.sizeOfWord;
 		ep->nodetype = en_icon;
 		if (ep->i & 0x8000) {
 			ep->i = ep->p[0]->i | 0xffffffffffff0000LL;
@@ -911,7 +911,7 @@ static void Opt0_uwyde2hexi(ENODE* ep)
 {
 	opt0(&(ep->p[0]));
 	if (ep->p[0]->nodetype == en_icon) {
-		ep->esize = sizeOfWord;
+		ep->esize = cpu.sizeOfWord;
 		ep->nodetype = en_icon;
 		ep->i = ep->p[0]->i & 0xffffLL;
 		ep->i128.high = 0;
@@ -928,7 +928,7 @@ static void Opt0_tetra2hexi(ENODE* ep)
 {
 	opt0(&(ep->p[0]));
 	if (ep->p[0]->nodetype == en_icon) {
-		ep->esize = sizeOfWord;
+		ep->esize = cpu.sizeOfWord;
 		ep->nodetype = en_icon;
 		if (ep->i & 0x80000000LL) {
 			ep->i = ep->p[0]->i | 0xffffffff00000000LL;
@@ -952,7 +952,7 @@ static void Opt0_utetra2hexi(ENODE* ep)
 {
 	opt0(&(ep->p[0]));
 	if (ep->p[0]->nodetype == en_icon) {
-		ep->esize = sizeOfWord;
+		ep->esize = cpu.sizeOfWord;
 		ep->nodetype = en_icon;
 		ep->i = ep->p[0]->i & 0xffffffffLL;
 		ep->i128.high = 0;
@@ -992,7 +992,7 @@ static void Opt0_uocta2hexi(ENODE* ep)
 {
 	opt0(&(ep->p[0]));
 	if (ep->p[0]->nodetype == en_icon) {
-		ep->esize = sizeOfWord;
+		ep->esize = cpu.sizeOfWord;
 		ep->nodetype = en_icon;
 		ep->i = ep->p[0]->i;
 		ep->i128.high = 0;
@@ -1096,7 +1096,7 @@ static void opt0(ENODE **node)
 	case en_uocta2ptr:
 		opt0(&((*node)->p[0]));
 		if (ep->p[0]->nodetype == en_icon) {
-			ep->esize = sizeOfPtr;
+			ep->esize = cpu.sizeOfPtr;
 			ep->nodetype = en_icon;
 			ep->i = ep->p[0]->i;
 			ep->i128 = ep->p[0]->i128;

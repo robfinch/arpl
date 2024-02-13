@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 	cpu.cache_line_size = 6;
 	cpu.code_align = 2;
 	cpu.fileExt = ".r5a";
-	sizeOfWord = 8;
+	cpu.sizeOfWord = 8;
 	cpu.lea_op = op_la;
 	cpu.SupportsBand = false;
 	cpu.SupportsBor = false;
@@ -348,7 +348,7 @@ int	options(char *s)
              use_gp = TRUE;
         }
 				if (strcmp(&s[2], "riscv64") == 0) {
-					sizeOfWord = 8;
+					cpu.sizeOfWord = 8;
 					gCpu = 5;
 					regLR = 1;
 					regSP = 2;
@@ -389,7 +389,7 @@ int	options(char *s)
 					cpu.stw_op = op_sh;
 				}
 				else if (strcmp(&s[2], "riscv32") == 0) {
-					sizeOfWord = 4;
+					cpu.sizeOfWord = 4;
 				}
 	}
 	else if (s[1]=='w')

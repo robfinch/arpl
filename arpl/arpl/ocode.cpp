@@ -635,22 +635,25 @@ void OCODE::OptLoadWord()
 
 	for (ip = fwd; ip; ip = ip->fwd) {
 		if (ip->opcode == op_label)
-			break;
+			goto j1;
 		if (ip->opcode == op_call || ip->opcode == op_jsr || ip->opcode == op_jal)
-			break;
+			goto j1;
 		if (ip->opcode == op_hint || ip->opcode == op_remark)
 			continue;
 		if (ip->HasSourceReg(oper1->preg))
-			break;
+			goto j1;
 		if (ip->HasTargetReg()) {
 			ip->GetTargetReg(&rg1, &rg2);
-			if (rg1 == oper1->preg || rg2==oper1->preg) {
+			if (rg1 == oper1->preg || rg2 == oper1->preg) {
 				MarkRemove();
 				optimized++;
 				break;
 			}
 		}
 	}
+	// If we get to the end, and no use, then eliminate
+j1:
+	;
 }
 
 void OCODE::OptSxb()
@@ -1386,6 +1389,8 @@ void OCODE::OptHint()
 		// Translated to:
 		//     MOV r1,arg
 	case 2:
+		// Optimization disabled for now. Does not always work correctly.
+		break;
 		// This optimization didn't work with:
 		// ldi $t1,#0
 		// mov $t0,$t1

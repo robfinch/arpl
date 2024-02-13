@@ -39,13 +39,13 @@ int64_t round10(int64_t n)
 
 int64_t roundWord(int64_t n)
 {
-	while (n % sizeOfWord) n++;
+	while (n % cpu.sizeOfWord) n++;
 	return (n);
 }
 
 int64_t roundQuadWord(int64_t n)
 {
-	while (n % (sizeOfWord * 4)) n++;
+	while (n % (cpu.sizeOfWord * 4)) n++;
 	return (n);
 }
 

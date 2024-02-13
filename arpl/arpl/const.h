@@ -28,8 +28,8 @@
 //
 enum e_cpu { thor, qupls, riscv };
 //#define THOR	1
-//#define QUPLS	1
-#define RISCV 5
+#define QUPLS	1
+//#define RISCV 5
 
 enum e_bt {
 	bt_none,

@@ -78,17 +78,6 @@ int address_bits = 32;
 int maxVL = 64;
 int nregs = 128;
 
-int sizeOfWord = 8;
-int sizeOfFP = 8;
-int sizeOfFPS = 4;
-int sizeOfFPD = 8;
-int sizeOfFPT = 12;
-int sizeOfFPQ = 16;
-int sizeOfPtr = 8;
-int sizeOfInt = 8;
-int sizeOfDecimal = 16;
-int sizeOfPosit = 8;
-
 #endif
 #ifdef THOR
 int regTS = 52;
@@ -133,16 +122,16 @@ int address_bits = 32;
 int maxVL = 64;
 int nregs = 128;
 
-int sizeOfWord = 16;
+int cpu.sizeOfWord = 16;
 int sizeOfFP = 16;
-int sizeOfFPS = 4;
-int sizeOfFPD = 8;
-int sizeOfFPT = 12;
-int sizeOfFPQ = 16;
-int sizeOfPtr = 16;
-int sizeOfInt = 16;
-int sizeOfDecimal = 16;
-int sizeOfPosit = 8;
+int cpu.sizeOfFPS = 4;
+int cpu.sizeOfFPD = 8;
+int cpu.sizeOfFPT = 12;
+int cpu.sizeOfFPQ = 16;
+int cpu.sizeOfPtr = 16;
+int cpu.sizeOfInt = 16;
+int cpu.sizeOfDecimal = 16;
+int cpu.sizeOfPosit = 8;
 
 #endif
 #ifdef RISCV
@@ -164,16 +153,16 @@ int use_gp = 1;
 int address_bits = 32;
 int nregs = 32;
 
-int sizeOfWord = 8;
+int cpu.sizeOfWord = 8;
 int sizeOfFP = 8;
-int sizeOfFPS = 4;
-int sizeOfFPD = 8;
-int sizeOfFPT = 12;
-int sizeOfFPQ = 16;
-int sizeOfPtr = 8;
-int sizeOfInt = 8;
-int sizeOfDecimal = 8;
-int sizeOfPosit = 8;
+int cpu.sizeOfFPS = 4;
+int cpu.sizeOfFPD = 8;
+int cpu.sizeOfFPT = 12;
+int cpu.sizeOfFPQ = 16;
+int cpu.sizeOfPtr = 8;
+int cpu.sizeOfInt = 8;
+int cpu.sizeOfDecimal = 8;
+int cpu.sizeOfPosit = 8;
 
 int use_iprel = 0;
 #endif

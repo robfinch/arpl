@@ -140,7 +140,7 @@ void Leave(const char* p, int n)
 
 int GetPtrSize()
 {
-	return sizeOfPtr;
+	return cpu.sizeOfPtr;
 }
 
 
@@ -819,7 +819,7 @@ TYP *Expression::CondDeref(ENODE **node, TYP *tp)
 		tp1 = tp->btpp;// ->btpp;
 		if (tp1==NULL)
 			printf("DIAG: CondDeref: tp1 is NULL\r\n");
-		tp =(TYP *) TYP::Make(bt_pointer, sizeOfPtr);
+		tp =(TYP *) TYP::Make(bt_pointer, cpu.sizeOfPtr);
 		tp->isArray = true;
 		tp->dimen = dimen;
 		tp->numele = numele;
@@ -1150,8 +1150,8 @@ Symbol *makeStructPtr(std::string name)
 	Symbol *sp;
 	TYP *tp,*tp2;
 	sp = Symbol::alloc();
-	tp = TYP::Make(bt_pointer,sizeOfPtr);
-	tp2 = TYP::Make(bt_struct,sizeOfPtr);
+	tp = TYP::Make(bt_pointer,cpu.sizeOfPtr);
+	tp2 = TYP::Make(bt_struct,cpu.sizeOfPtr);
 	tp->btpp = tp2;
 	tp->sname = new std::string("");
 	tp->isUnsigned = TRUE;
@@ -1187,7 +1187,7 @@ Symbol *CreateDummyParameters(ENODE *ep, Symbol *parent, TYP *tp)
 				sp1->parent = parent->GetIndex();
 				sp1->parentp = parent;
 				sp1->value.i = poffset;
-				poffset += sizeOfWord;
+				poffset += cpu.sizeOfWord;
 				sp1->storage_class = sc_auto;
 				sp1->next = 0;
 				list = sp1;
@@ -1289,7 +1289,7 @@ j1:
 		if (strcmp(lastid, "_L") == 0 || strcmp(lastid, "_l") == 0) {
 			if (lastch == '\'') {
 				NextToken();
-				tptr = ParseCharConst(&pnode, sizeOfWord);
+				tptr = ParseCharConst(&pnode, cpu.sizeOfWord);
 				break;
 			}
 		}
@@ -2177,22 +2177,22 @@ TYP *Expression::ParseMultOps(ENODE **node, Symbol* symi)
 									switch(tp1->type) {
 									case bt_double:
 										ep1 = makenode(en_fmul,ep1,ep2);
-										ep1->esize = sizeOfFPD;
+										ep1->esize = cpu.sizeOfFPD;
 										ep1->etype = bt_double;
 										break;
 									case bt_quad:
 										ep1 = makenode(en_fmul,ep1,ep2);
-										ep1->esize = sizeOfFPQ;
+										ep1->esize = cpu.sizeOfFPQ;
 										ep1->etype = bt_quad;
 										break;
 									case bt_float:
 										ep1 = makenode(en_fmul,ep1,ep2);
-										ep1->esize = sizeOfFP;
+										ep1->esize = cpu.sizeOfFP;
 										ep1->etype = bt_double;
 										break;
 									case bt_posit:
 										ep1 = makenode(en_pmul, ep1, ep2);
-										ep1->esize = sizeOfPosit;
+										ep1->esize = cpu.sizeOfPosit;
 										ep1->etype = bt_posit;
 										break;
 									case bt_vector:
@@ -2231,22 +2231,22 @@ TYP *Expression::ParseMultOps(ENODE **node, Symbol* symi)
                 case divide:
 								if (tp1->type==bt_double) {
 									ep1 = makenode(en_fdiv,ep1,ep2);
-									ep1->esize = sizeOfFPD;
+									ep1->esize = cpu.sizeOfFPD;
 									ep1->etype = bt_double;
 								}
 								else if (tp1->type==bt_quad) {
 									ep1 = makenode(en_fdiv,ep1,ep2);
-									ep1->esize = sizeOfFPQ;
+									ep1->esize = cpu.sizeOfFPQ;
 									ep1->etype = bt_quad;
 								}
 								else if (tp1->type==bt_float) {
 									ep1 = makenode(en_fdiv,ep1,ep2);
-									ep1->esize = sizeOfFP;
+									ep1->esize = cpu.sizeOfFP;
 									ep1->etype = bt_double;
 								}
 								else if (tp1->type == bt_posit) {
 									ep1 = makenode(en_pdiv, ep1, ep2);
-									ep1->esize = sizeOfPosit;
+									ep1->esize = cpu.sizeOfPosit;
 									ep1->etype = bt_posit;
 								}
 								else if( tp1->isUnsigned )
@@ -2344,7 +2344,7 @@ TYP *Expression::ParseAddOps(ENODE **node, Symbol* symi)
 				tp2 = forcefit(&ep2,tp2,0,&stdint,true,false);
 				ep3 = makeinode(en_icon, tp1->btpp->size);
 				ep3->constflag = TRUE;
-				ep3->esize = sizeOfWord;
+				ep3->esize = cpu.sizeOfWord;
     		//ep3->esize = tp2->size;
 				//if (ep2->nodetype == en_icon) {
 				//	ep2 = makeinode(en_icon, ep3->i * ep2->i);
@@ -2354,18 +2354,18 @@ TYP *Expression::ParseAddOps(ENODE **node, Symbol* symi)
 				{
 					ep2 = makenode(en_mulu, ep3, ep2);
 					ep2->constflag = ep2->p[1]->constflag;
-					ep2->esize = sizeOfWord;
+					ep2->esize = cpu.sizeOfWord;
 				}
 			}
       else if( tp2->type == bt_pointer ) {
 				onePtr = true;
         tp1 = forcefit(&ep1,tp1,0,&stdint,true,false);
-				ep3 = makeinode(en_icon, sizeOfWord);// tp2->btpp->size);
+				ep3 = makeinode(en_icon, cpu.sizeOfWord);// tp2->btpp->size);
         ep3->constflag = TRUE;
 		    ep3->esize = tp2->size;
         ep1 = makenode(en_mulu,ep3,ep1);
         ep1->constflag = ep1->p[1]->constflag;
-				ep2->esize = sizeOfWord;
+				ep2->esize = cpu.sizeOfWord;
 				tp1 = tp2;
       }
 			if (!onePtr)
@@ -2373,20 +2373,20 @@ TYP *Expression::ParseAddOps(ENODE **node, Symbol* symi)
 			switch (tp1->type) {
 			case bt_double:
     		ep1 = makenode( oper ? en_fadd : en_fsub,ep1,ep2);
-				ep1->esize = sizeOfFPD;
+				ep1->esize = cpu.sizeOfFPD;
 				break;
 			case bt_quad:
         //tp1 = forcefit(&ep1,tp1,&ep2,tp2,true,false);
     		ep1 = makenode( oper ? en_fadd : en_fsub,ep1,ep2);
-				ep1->esize = sizeOfFPQ;
+				ep1->esize = cpu.sizeOfFPQ;
 				break;
 			case bt_float:
     		ep1 = makenode( oper ? en_fadd : en_fsub,ep1,ep2);
-				ep1->esize = sizeOfFPS;
+				ep1->esize = cpu.sizeOfFPS;
 				break;
 			case bt_posit:
 				ep1 = makenode(oper ? en_padd : en_psub, ep1, ep2);
-				ep1->esize = sizeOfPosit;
+				ep1->esize = cpu.sizeOfPosit;
 				break;
 			case bt_vector:
 				if (isScalar)
@@ -2584,7 +2584,7 @@ TYP *Expression::ParseRelationalOps(ENODE **node, Symbol* symi)
 		ep1->SetType(tp1);
 		ep1->esize = 1;
 		if (isVector)
-			tp1 = TYP::Make(bt_vector_mask, sizeOfWord);
+			tp1 = TYP::Make(bt_vector_mask, cpu.sizeOfWord);
 		PromoteConstFlag(ep1);
 	}
 fini: *node = ep1;
@@ -2644,7 +2644,7 @@ TYP *Expression::ParseEqualOps(ENODE **node, Symbol* symi)
 					ep1 = makenode(oper ? en_eq : en_ne, ep1, ep2);
 				ep1->esize = 1;
 				if (isVector)
-					tp1 = TYP::Make(bt_vector_mask, sizeOfWord);
+					tp1 = TYP::Make(bt_vector_mask, cpu.sizeOfWord);
 				ep1->etype = tp1->type;// stdint.GetIndex(); //tp1->type;
 				ep1->etypep = tp1;
 				//ep1->etypep = &stdint;
@@ -3162,7 +3162,7 @@ ascomm2:
 					}
 					// Struct assign calls memcpy, so function is no
 					// longer a leaf routine.
-					if (tp1->size > sizeOfWord)
+					if (tp1->size > cpu.sizeOfWord)
 						currentFn->IsLeaf = FALSE;
 				}
 				break;
@@ -3176,9 +3176,9 @@ ascomm3:
 						ep3 = makeinode(en_icon, tp1->btpp->size);
 					else
 						ep3 = makeinode(en_icon, 16);
-					ep3->esize = sizeOfPtr;
+					ep3->esize = cpu.sizeOfPtr;
 					ep2 = makenode(en_mul, ep2, ep3);
-					ep2->esize = sizeOfPtr;
+					ep2->esize = cpu.sizeOfPtr;
 					ep2->isUnsigned = true;
 				}
 				goto ascomm2;

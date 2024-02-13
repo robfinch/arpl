@@ -532,7 +532,7 @@ bool Forest::SpillCode()
 				bb = basicBlocks[m];
 				if (!spilled.isMember(v->num)) {
 					v->spillOffset = spillOffset;
-					spillOffset += sizeOfWord;
+					spillOffset += cpu.sizeOfWord;
 					spilled.add(v->num);
 				}
 				bb->InsertSpillCode(v->num, -v->spillOffset);

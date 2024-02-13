@@ -188,7 +188,7 @@ Operand* CodeGenerator::GenerateHook(ENODE* inode, int flags, int size)
 			GenerateLoadConst(ap3, ap1);
 			break;
 		default:
-			GenerateLoad(ap3, ap1, sizeOfWord, sizeOfWord);
+			GenerateLoad(ap3, ap1, cpu.sizeOfWord, cpu.sizeOfWord);
 			break;
 		}
 	ReleaseTempRegister(ap1);
@@ -207,7 +207,7 @@ Operand* CodeGenerator::GenerateHook(ENODE* inode, int flags, int size)
 			GenerateLoadConst(ap3, ap2);	// I think this is backwards, test
 			break;
 		default:
-			GenerateLoad(ap3, ap2, sizeOfWord, sizeOfWord);
+			GenerateLoad(ap3, ap2, cpu.sizeOfWord, cpu.sizeOfWord);
 			break;
 		}
 	ReleaseTempRegister(ap2);
@@ -258,7 +258,7 @@ Operand* CodeGenerator::GenerateMux(ENODE* inode, int flags, int size)
 				GenerateLoadConst(ap1, ap3);
 				break;
 			default:
-				GenerateLoad(ap3, ap1, sizeOfWord, sizeOfWord);
+				GenerateLoad(ap3, ap1, cpu.sizeOfWord, cpu.sizeOfWord);
 				break;
 			}
 		ReleaseTempRegister(ap1);
@@ -435,7 +435,7 @@ Operand* CodeGenerator::GenerateFieldrefDereference(ENODE* node, TYP* tp, bool i
 {
 	Operand* ap1;
 
-	ap1 = GenerateExpression(node, am_reg | am_mem, sizeOfWord, 0);
+	ap1 = GenerateExpression(node, am_reg | am_mem, cpu.sizeOfWord, 0);
 	ap1->bit_offset = node->bit_offset;
 	ap1->bit_width = node->bit_width;
 	ap1->isPtr = isRefType;
@@ -466,7 +466,7 @@ Operand* CodeGenerator::GenerateAddDereference(ENODE* node, TYP* tp, bool isRefT
 	}
 	else
 		ap1->MakeLegal(flags, siz1);
-	ap1->MakeLegal(flags, size);
+//	ap1->MakeLegal(flags, size);
 	return (ap1);
 }
 
@@ -509,12 +509,12 @@ Operand* CodeGenerator::GenerateAutoconDereference(ENODE* node, TYP* tp, bool is
 		if (nn==1)
 			GenerateLoad(ap3, MakeIndirect(regFP), size, size);
 		else
-			GenerateLoad(ap3, MakeIndirect(regFP), sizeOfWord, sizeOfWord);
+			GenerateLoad(ap3, MakeIndirect(regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 		for (--nn; nn > 0; nn--) {
 			if (nn == 1)
 				GenerateLoad(ap3, MakeIndirect(ap3->preg), size, size);
 			else
-				GenerateLoad(ap3, MakeIndirect(regFP), sizeOfWord, sizeOfWord);
+				GenerateLoad(ap3, MakeIndirect(regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 		}
 		ap1->isPtr = true;// node->etype == bt_pointer;
 		ap1->preg = ap3->preg;
@@ -583,7 +583,7 @@ Operand* CodeGenerator::GenerateAutofconDereference(ENODE* node, TYP* tp, bool i
 		}
 	}
 	else {
-		node->tp = TYP::Make(bt_double, sizeOfFPD);
+		node->tp = TYP::Make(bt_double, cpu.sizeOfFPD);
 	}
 	//	    ap1->MakeLegal(flags,siz1);
 	ap1->MakeLegal(flags, size);
@@ -823,17 +823,17 @@ Operand* CodeGenerator::GenerateBitoffsetDereference(ENODE* node, TYP* tp, bool 
 //	return (ap5);
 
 	ap4 = GetTempRegister();
-	ap1 = GenerateExpression(node->p[0], am_reg, sizeOfWord,0);
+	ap1 = GenerateExpression(node->p[0], am_reg, cpu.sizeOfWord,0);
 	if (opt) {
 		ip = currentFn->pl.tail;
-		ap2 = GenerateExpression(node->p[1], am_reg | am_imm | am_imm0, sizeOfWord,1);
-		ap3 = GenerateExpression(node->p[2], am_reg | am_imm | am_imm0, sizeOfWord,1);
+		ap2 = GenerateExpression(node->p[1], am_reg | am_imm | am_imm0, cpu.sizeOfWord,1);
+		ap3 = GenerateExpression(node->p[2], am_reg | am_imm | am_imm0, cpu.sizeOfWord,1);
 		if (ap2->mode != ap3->mode) {
 			ReleaseTempReg(ap3);
 			ReleaseTempReg(ap2);
 			currentFn->pl.tail = ip;
-			ap2 = GenerateExpression(node->p[1], am_reg, sizeOfWord,1);
-			ap3 = GenerateExpression(node->p[2], am_reg, sizeOfWord,1);
+			ap2 = GenerateExpression(node->p[1], am_reg, cpu.sizeOfWord,1);
+			ap3 = GenerateExpression(node->p[2], am_reg, cpu.sizeOfWord,1);
 		}
 		ReleaseTempReg(ap3);
 		ReleaseTempReg(ap2);
@@ -891,7 +891,7 @@ Operand* CodeGenerator::GenerateDereference2(ENODE* node, TYP* tp, bool isRefTyp
 		if (false) {
 			return (GenerateDereference(node->p[0], flags, size, su, opt, 1));
 			ap2 = GetTempRegister();
-			ap1 = GenerateExpression(node, am_reg, sizeOfWord, 0);
+			ap1 = GenerateExpression(node, am_reg, cpu.sizeOfWord, 0);
 			ap1->isPtr = isRefType;
 			ap1->tp = tp;
 			ap1->segment = dataseg;
@@ -982,7 +982,7 @@ Operand *CodeGenerator::GenerateDereference(ENODE *node,int flags,int size, int 
 			ap1 = ap2;
 		}
 		else {
-			ap1 = GetTempRegister();// GenerateExpression(node->p[0], am_reg, sizeOfWord, 0);
+			ap1 = GetTempRegister();// GenerateExpression(node->p[0], am_reg, cpu.sizeOfWord, 0);
 		}
 	}
 //	ap1 = GenerateDereference2(node, node->tp, node->IsRefType(), flags, size, siz1, su, opt);
@@ -1460,7 +1460,7 @@ Operand *CodeGenerator::GenerateAssignMultiply(ENODE *node,int flags, int size, 
 			GenerateLoad(ap3, ap1, size, size);
 		ap2 = GenerateExpression(node->p[1], am_reg | am_imm, size, 1);
 		GenerateTriadic(op, 0, ap1, ap1, ap2);
-//		ap4 = GenerateExpression(ap1->offset->bit_offset, am_reg | am_imm | am_imm0, sizeOfWord, 1);
+//		ap4 = GenerateExpression(ap1->offset->bit_offset, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 //		if (ap4 < 0)
 //			GenerateBitfieldInsert(ap3, ap1, ap1->next, MakeImmediate(1));
 //		else
@@ -1614,10 +1614,10 @@ Operand *CodeGenerator::GenerateAssignModiv(ENODE *node,int flags,int size,int o
         GenerateLoad(ap1,ap2,siz1,siz1);
     //GenerateSignExtend(ap1,siz1,2,flags);
     if (isFP)
-        ap3 = GenerateExpression(node->p[1],am_reg,sizeOfWord, 1);
+        ap3 = GenerateExpression(node->p[1],am_reg,cpu.sizeOfWord, 1);
 		else {
 			// modu doesn't support immediate mode
-			ap3 = GenerateExpression(node->p[1], op==op_modu ? am_reg : am_reg | am_imm, sizeOfWord, 1);
+			ap3 = GenerateExpression(node->p[1], op==op_modu ? am_reg : am_reg | am_imm, cpu.sizeOfWord, 1);
 		}
 	if (op==op_fdiv) {
 		GenerateTriadic(op,siz1==4?'s':siz1==8?' ':siz1==12?'t':siz1==16?'q':'d',ap1,ap1,ap3);
@@ -1909,7 +1909,7 @@ void CodeGenerator::GenerateArrayAssign(TYP *tp, ENODE *node1, ENODE *node2, Ope
 			offset = base->offset->i;
 		ep1 = ep1->p[2];
 		while (ep1) {
-			ap1 = GenerateExpression(ep1,am_reg|am_imm,sizeOfWord,1);
+			ap1 = GenerateExpression(ep1,am_reg|am_imm,cpu.sizeOfWord,1);
 			ap2 = GetTempRegister();
 			if (ap1->mode == am_imm)
 				GenerateLoadConst(ap1, ap2);
@@ -1946,8 +1946,8 @@ Operand *CodeGenerator::GenerateAggregateAssign(ENODE *node1, ENODE *node2)
 	if (node1==nullptr || node2==nullptr)
 		return nullptr;
 	//DumpStructEnodes(node2);
-	base = GenerateExpression(node1,am_reg,sizeOfWord,0);
-	base2 = GenerateExpression(node2, am_reg, sizeOfWord,1);
+	base = GenerateExpression(node1,am_reg,cpu.sizeOfWord,0);
+	base2 = GenerateExpression(node2, am_reg, cpu.sizeOfWord,1);
 	GenerateMove(makereg(cpu.argregs[0]), base);
 	GenerateMove(makereg(cpu.argregs[1]), base2);
 	GenerateLoadConst(MakeImmediate(node2->esize), makereg(cpu.argregs[2]));
@@ -1964,7 +1964,7 @@ Operand *CodeGenerator::GenerateAggregateAssign(ENODE *node1, ENODE *node2)
 	ReleaseTempReg(base2);
 	currentFn->IsLeaf = false;
 	return (base);
-	//base = GenerateDereference(node1,am_mem,sizeOfWord,0);
+	//base = GenerateDereference(node1,am_mem,cpu.sizeOfWord,0);
 	tp = node1->tp;
 	if (tp==nullptr)
 		tp = &stdlong;
@@ -2000,17 +2000,17 @@ Operand* CodeGenerator::GenerateBigAssign(Operand* ap1, Operand* ap2, int size, 
 		}
 	}
 	else {
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(3 * sizeOfWord));
+		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(3 * cpu.sizeOfWord));
 		ap3 = GetTempRegister();
 		ap3->tp = ap2->tp;
 		GenerateDiadic(cpu.ldi_op, 0, ap3, MakeImmediate(size));
-		GenerateDiadic(cpu.sto_op, 0, ap3, MakeIndexed(2 * sizeOfWord, regSP));
+		GenerateDiadic(cpu.sto_op, 0, ap3, MakeIndexed(2 * cpu.sizeOfWord, regSP));
 		if (ap2->mode != am_reg) {
 			GenerateLoad(ap3, ap2, ssize, ssize);
-			GenerateDiadic(cpu.sto_op, 0, ap3, MakeIndexed(1 * sizeOfWord, regSP));
+			GenerateDiadic(cpu.sto_op, 0, ap3, MakeIndexed(1 * cpu.sizeOfWord, regSP));
 		}
 		else
-			GenerateDiadic(cpu.sto_op, 0, ap2, MakeIndexed(1 * sizeOfWord, regSP));
+			GenerateDiadic(cpu.sto_op, 0, ap2, MakeIndexed(1 * cpu.sizeOfWord, regSP));
 		if (ap1->mode != am_reg) {
 			GenerateLoad(ap3, ap1, ssize, ssize);
 			GenerateDiadic(cpu.sto_op, 0, ap3, MakeIndirect(regSP));
@@ -2101,7 +2101,7 @@ Operand* CodeGenerator::GenerateVregToVregAssign(ENODE* node, Operand* ap1, Oper
 	GenerateHint(2);
 	mask = nullptr;
 	if (node->mask)
-		mask = GenerateExpression(node->vmask, am_reg, sizeOfWord, 0);
+		mask = GenerateExpression(node->vmask, am_reg, cpu.sizeOfWord, 0);
 	if (node->p[0]->IsRefType() && node->p[1]->IsRefType()) {
 		ap3 = GetTempVectorRegister();
 		ap3->tp = ap2->tp;
@@ -2201,7 +2201,7 @@ Operand *CodeGenerator::GenerateAssign(ENODE *node, int flags, int64_t size)
 */
 	tp = node->p[0]->tp;
 	if (tp) {
-		if (tp->size > sizeOfWord) {
+		if (tp->size > cpu.sizeOfWord) {
 			if (node->p[0]->tp->IsAggregateType() || node->p[1]->nodetype == en_list || node->p[1]->nodetype == en_end_aggregate)
 				return GenerateAggregateAssign(node->p[0], node->p[1]);
 		}
@@ -2289,7 +2289,7 @@ Operand *CodeGenerator::GenerateAssign(ENODE *node, int flags, int64_t size)
 		}
 		else {
 			// Generate a memory to memory move? (struct assignments)
-			if (ssize > sizeOfWord)
+			if (ssize > cpu.sizeOfWord)
 				ap1 = GenerateBigAssign(ap1, ap2, size, ssize);
 			else {
 				Operand* ap4;
@@ -2378,12 +2378,12 @@ Operand *CodeGenerator::GenerateAutocon(ENODE *node, int flags, int64_t size, TY
 		if (nn == 1)
 			GenerateLoad(ap3, MakeIndirect(regFP), size, size);
 		else
-			GenerateLoad(ap3, MakeIndirect(regFP), sizeOfWord, sizeOfWord);	
+			GenerateLoad(ap3, MakeIndirect(regFP), cpu.sizeOfWord, cpu.sizeOfWord);	
 		for (--nn; nn > 0; nn--) {
 			if (nn == 1)
 				GenerateLoad(ap3, MakeIndirect(ap3->preg), size, size);
 			else
-				GenerateLoad(ap3, MakeIndirect(ap3->preg), sizeOfWord, sizeOfWord);
+				GenerateLoad(ap3, MakeIndirect(ap3->preg), cpu.sizeOfWord, cpu.sizeOfWord);
 		}
 		ReleaseTempRegister(ap3);
 		ap3->isPtr = node->etype == bt_pointer;
@@ -2737,13 +2737,13 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		goto retpt;
 	case en_addrof:
 		ap1 = GetTempRegister();
-		ap2 = GenerateExpression(node->p[0], flags, sizeOfPtr, rhs);
+		ap2 = GenerateExpression(node->p[0], flags, cpu.sizeOfPtr, rhs);
 		GenerateLea(ap1, ap2);
 		ReleaseTempReg(ap2);
 		goto retpt;
   case en_ref:
 		if (node->tp == nullptr)
-			tpsz = sizeOfWord;
+			tpsz = cpu.sizeOfWord;
 		else
 			tpsz = node->tp->size;
 		ap1 = GenerateDereference(node, flags, size, !node->isUnsigned, (flags & am_bf_assign) ? 0 : 1, rhs);
@@ -2751,6 +2751,8 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 			return (nullptr);
 		ap1->isPtr = TRUE;
 		ap1->rhs = rhs;
+		ap1->MakeLegal(flags, ap1->tp->size);
+		return(ap1);
 		goto retpt;
 	case en_fieldref:
 		ap1 = (flags & am_bf_assign) ? GenerateDereference(node,flags & ~am_bf_assign,node->tp->size,!node->isUnsigned, (flags & am_bf_assign) != 0, rhs)
@@ -2771,7 +2773,7 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		if (node->tp)
 			tpsz = node->tp->size;
 		else
-			tpsz = sizeOfWord;
+			tpsz = cpu.sizeOfWord;
 		ap1 = GenerateDereference(node, flags & ~am_bf_assign, tpsz, !node->isUnsigned, (flags & am_bf_assign) != 0, rhs);
 		ap1->isPtr = true;
 		goto retpt;
@@ -2857,7 +2859,7 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 			ap1 = node->GenerateUnary(flags,size,op_com);
 			goto retpt;
 	case en_not:	
-		ap1 = (node->GenerateUnary(flags, sizeOfWord, op_not));
+		ap1 = (node->GenerateUnary(flags, cpu.sizeOfWord, op_not));
 		goto retpt;
 	case en_i2p:
 		ap1 = GetTempFPRegister();
@@ -2882,13 +2884,13 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		goto retpt;
   case en_d2i:
     ap1 = GetTempRegister();	
-    ap2 = GenerateExpression(node->p[0],am_reg,sizeOfWord,rhs);
+    ap2 = GenerateExpression(node->p[0],am_reg,cpu.sizeOfWord,rhs);
     GenerateDiadic(op_ftoi,' ',ap1,ap2);
     ReleaseTempReg(ap2);
 		goto retpt;
 	case en_q2i:
 		ap1 = GetTempRegister();
-		ap2 = GenerateExpression(node->p[0],am_reg,sizeOfWord,rhs);
+		ap2 = GenerateExpression(node->p[0],am_reg,cpu.sizeOfWord,rhs);
 		GenerateDiadic(op_ftoi,'q',makereg(63),ap2);
 		//GenerateZeradic(op_nop);
 		//GenerateZeradic(op_nop);
@@ -2897,7 +2899,7 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		goto retpt;
 	case en_t2i:
 		ap1 = GetTempRegister();
-		ap2 = GenerateExpression(node->p[0],am_reg,sizeOfWord,rhs);
+		ap2 = GenerateExpression(node->p[0],am_reg,cpu.sizeOfWord,rhs);
 		GenerateDiadic(op_ftoi,'t',makereg(63),ap2);
 		//GenerateZeradic(op_nop);
 		//GenerateZeradic(op_nop);
@@ -2906,27 +2908,27 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		goto retpt;
 	case en_s2q:
 		ap1 = GetTempFPRegister();
-    ap2 = GenerateExpression(node->p[0],am_reg,sizeOfFPQ,rhs);
+    ap2 = GenerateExpression(node->p[0],am_reg,cpu.sizeOfFPQ,rhs);
     GenerateDiadic(op_fcvtsq,0,ap1,ap2);
 		ap1->typep = &stdquad;
 		ReleaseTempReg(ap2);
 		goto retpt;
 	case en_d2q:
 		ap1 = GetTempFPRegister();
-		ap2 = GenerateExpression(node->p[0], am_reg, sizeOfFPQ,rhs);
+		ap2 = GenerateExpression(node->p[0], am_reg, cpu.sizeOfFPQ,rhs);
 		GenerateFcvtdq(ap1, ap2);
 		ap1->typep = &stdquad;
 		ReleaseTempReg(ap2);
 		goto retpt;
 	case en_t2q:
 		ap1 = GetTempFPRegister();
-		ap2 = GenerateExpression(node->p[0], am_reg, sizeOfFPQ,rhs);
+		ap2 = GenerateExpression(node->p[0], am_reg, cpu.sizeOfFPQ,rhs);
 		GenerateDiadic(op_fcvttq, 0, ap1, ap2);
 		ap1->typep = &stdquad;
 		ReleaseTempReg(ap2);
 		goto retpt;
 	case en_sync:
-		ap1 = GenerateExpression(node->p[0], am_imm, sizeOfWord, rhs);
+		ap1 = GenerateExpression(node->p[0], am_imm, cpu.sizeOfWord, rhs);
 		GenerateMonadic(op_sync, 0, ap1);
 		goto retpt;
 
@@ -3020,14 +3022,14 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 	case en_bitoffset:
 		ap1 = GetTempRegister();
 		ip = currentFn->pl.tail;
-		ap2 = GenerateExpression(node->p[1], am_reg | am_imm | am_imm0, sizeOfWord, rhs);
-		ap3 = GenerateExpression(node->p[2], am_reg | am_imm | am_imm0, sizeOfWord, rhs);
+		ap2 = GenerateExpression(node->p[1], am_reg | am_imm | am_imm0, cpu.sizeOfWord, rhs);
+		ap3 = GenerateExpression(node->p[2], am_reg | am_imm | am_imm0, cpu.sizeOfWord, rhs);
 		if (ap2->mode != ap3->mode) {
 			ReleaseTempReg(ap3);
 			ReleaseTempReg(ap2);
 			currentFn->pl.tail = ip;
-			ap2 = GenerateExpression(node->p[1], am_reg, sizeOfWord,rhs);
-			ap3 = GenerateExpression(node->p[2], am_reg, sizeOfWord,rhs);
+			ap2 = GenerateExpression(node->p[1], am_reg, cpu.sizeOfWord,rhs);
+			ap3 = GenerateExpression(node->p[2], am_reg, cpu.sizeOfWord,rhs);
 		}
 		GenerateTriadic(op_ext, 0, ap1, ap2, ap3);
 		ReleaseTempReg(ap3);
@@ -3723,7 +3725,7 @@ int CodeGenerator::GeneratePrepareFunctionCall(ENODE* node, Function* sym, int* 
 	if (node->p[1]) {
 		for (hlst = lst = node->p[1]->ReverseList(node->p[1]); lst; lst = lst->nxt) {
 			en = lst->node;
-			if (en && en->esize > sizeOfWord) {
+			if (en && en->esize > cpu.sizeOfWord) {
 				if (en->etype == bt_struct || en->etype == bt_union || en->etype == bt_class) {
 					sz = roundWord(en->esize);
 					sum += sz;
@@ -3744,7 +3746,7 @@ int CodeGenerator::GeneratePrepareFunctionCall(ENODE* node, Function* sym, int* 
 		count++;
 	}
 
-	i = PushArguments(sym, node->p[1]) + (sum / sizeOfWord);
+	i = PushArguments(sym, node->p[1]) + (sum / cpu.sizeOfWord);
 	// If the symbol is unknown, assume a throw is present
 	if (sym) {
 		if (sym->DoesThrow)
@@ -3918,7 +3920,7 @@ Operand* CodeGenerator::GenerateFunctionCall(ENODE* node, int flags, int lab)
 						i = 1;
 				}
 		 */
-		ap = GenerateExpression(node->p[0], am_reg, sizeOfPtr, 0);
+		ap = GenerateExpression(node->p[0], am_reg, cpu.sizeOfPtr, 0);
 		if (ap->offset) {
 			if (ap->offset->sym)
 				sym = ap->offset->sym->fi;
@@ -4003,12 +4005,12 @@ void CodeGenerator::GenerateCoroutineExit(Function* func)
 
 	ap = GetTempRegister();
 	GenerateLoadConst(MakeStringAsNameConst((char*)MakeConame(*func->sym->mangledName, "first").c_str(), codeseg), ap);
-	GenerateStore(ap, MakeIndexedName(MakeConame(*func->sym->mangledName, "target"), regGP), sizeOfWord);
-	GenerateLoad(ap, MakeIndexedName(MakeConame(*func->sym->mangledName, "orig_lr"), regGP), sizeOfWord, sizeOfWord);
+	GenerateStore(ap, MakeIndexedName(MakeConame(*func->sym->mangledName, "target"), regGP), cpu.sizeOfWord);
+	GenerateLoad(ap, MakeIndexedName(MakeConame(*func->sym->mangledName, "orig_lr"), regGP), cpu.sizeOfWord, cpu.sizeOfWord);
 	GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
 	ReleaseTempRegister(ap);
-	GenerateLoad(makereg(regFP), MakeIndexedName(MakeConame(*func->sym->mangledName, "orig_fp"), regGP), sizeOfWord, sizeOfWord);
-	GenerateLoad(makereg(regSP), MakeIndexedName(MakeConame(*func->sym->mangledName, "orig_sp"), regGP), sizeOfWord, sizeOfWord);
+	GenerateLoad(makereg(regFP), MakeIndexedName(MakeConame(*func->sym->mangledName, "orig_fp"), regGP), cpu.sizeOfWord, cpu.sizeOfWord);
+	GenerateLoad(makereg(regSP), MakeIndexedName(MakeConame(*func->sym->mangledName, "orig_sp"), regGP), cpu.sizeOfWord, cpu.sizeOfWord);
 }
 
 // Generate a return statement.
@@ -4034,25 +4036,25 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 		isPosit = func->sym->tp->btpp && func->sym->tp->btpp->IsPositType();
 		isVector = func->sym->tp->btpp && func->sym->tp->btpp->IsVectorType();
 		if (isFloat)
-			ap = cg.GenerateExpression(stmt->exp, am_reg, sizeOfFP, 1);
+			ap = cg.GenerateExpression(stmt->exp, am_reg, cpu.sizeOfFP, 1);
 		else if (isPosit)
-			ap = cg.GenerateExpression(stmt->exp, am_reg, sizeOfPosit, 1);
+			ap = cg.GenerateExpression(stmt->exp, am_reg, cpu.sizeOfPosit, 1);
 		else if (isVector)
 			ap = cg.GenerateExpression(stmt->exp, am_vreg, 64, 1);
 		else
-			ap = cg.GenerateExpression(stmt->exp, am_reg | am_imm, sizeOfWord, 1);
+			ap = cg.GenerateExpression(stmt->exp, am_reg | am_imm, cpu.sizeOfWord, 1);
 		GenerateMonadic(op_hint, 0, MakeImmediate(2));
 		if (ap->mode == am_imm)
 			GenerateDiadic(cpu.ldi_op, 0, makereg(cpu.argregs[0]), ap);
 		else if (ap->mode == am_reg || ap->mode == am_vreg) {
 			if (func->sym->tp->btpp && (func->sym->tp->btpp->type == bt_struct || func->sym->tp->btpp->type == bt_union || func->sym->tp->btpp->type == bt_class)) {
-				if ((sz = func->sym->tp->btpp->size) > sizeOfWord) {
+				if ((sz = func->sym->tp->btpp->size) > cpu.sizeOfWord) {
 					p = func->params.Find("_pHiddenStructPtr", false);
 					if (p) {
 						if (p->IsRegister)
 							GenerateMove(makereg(cpu.argregs[0]), makereg(p->reg));
 						else
-							GenerateLoad(makereg(cpu.argregs[0]), MakeIndexed(p->value.i, regFP), sizeOfWord, sizeOfWord);
+							GenerateLoad(makereg(cpu.argregs[0]), MakeIndexed(p->value.i, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 						ap2 = GetTempRegister();
 						GenerateLoadConst(MakeImmediate(func->sym->tp->btpp->size), ap2);
 						if (cpu.SupportsPush) {
@@ -4061,16 +4063,16 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 							GenerateMonadic(op_push, 0, makereg(cpu.argregs[0]));
 						}
 						else {
-							GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(sizeOfWord * 3));
-							GenerateStore(makereg(cpu.argregs[0]), MakeIndirect(regSP), sizeOfWord);
-							GenerateStore(ap, MakeIndexed(sizeOfWord, regSP), sizeOfWord);
-							GenerateStore(ap2, MakeIndexed(sizeOfWord * 2, regSP), sizeOfWord);
+							GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
+							GenerateStore(makereg(cpu.argregs[0]), MakeIndirect(regSP), cpu.sizeOfWord);
+							GenerateStore(ap, MakeIndexed(cpu.sizeOfWord, regSP), cpu.sizeOfWord);
+							GenerateStore(ap2, MakeIndexed(cpu.sizeOfWord * 2, regSP), cpu.sizeOfWord);
 						}
 						ReleaseTempReg(ap2);
 						GenerateCall(MakeStringAsNameConst((char*)"__aacpy", codeseg));
 						GenerateMonadic(op_bex, 0, MakeDataLabel(throwlab, regZero));
 						if (!func->IsPascal)
-							GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(sizeOfWord * 3));
+							GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
 					}
 					else
 						throw new C64PException(ERR_MISSING_HIDDEN_STRUCTPTR,0);
@@ -4117,13 +4119,13 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 			if (isFloat)
 				GenerateDiadic(op_ldf, 'd', makereg(cpu.argregs[0]), ap);
 			else
-				GenerateLoad(makereg(cpu.argregs[0]), ap, sizeOfFPD, sizeOfFPD);
+				GenerateLoad(makereg(cpu.argregs[0]), ap, cpu.sizeOfFPD, cpu.sizeOfFPD);
 		}
 		else {
 			if (func->sym->tp->btpp->IsVectorType())
-				GenerateLoad(makevreg(cpu.vargregs[0]), ap, sizeOfWord, sizeOfWord, makereg(regZero | rt_invert));
+				GenerateLoad(makevreg(cpu.vargregs[0]), ap, cpu.sizeOfWord, cpu.sizeOfWord, makereg(regZero | rt_invert));
 			else
-				GenerateLoad(makereg(cpu.argregs[0]), ap, sizeOfWord, sizeOfWord);
+				GenerateLoad(makereg(cpu.argregs[0]), ap, cpu.sizeOfWord, cpu.sizeOfWord);
 		}
 		ReleaseTempRegister(ap);
 	}
@@ -4151,7 +4153,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	//		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(8));
 	//		GenerateDiadic(op_std, 0, makereg(regFirstArg), MakeIndirect(regSP));
 	//	}
-	//	GenerateDiadic(op_lea, 0, makereg(regFirstArg), MakeIndexed(-sizeOfWord, regFP));
+	//	GenerateDiadic(op_lea, 0, makereg(regFirstArg), MakeIndexed(-cpu.sizeOfWord, regFP));
 	//	GenerateMonadic(op_call, 0, MakeStringAsNameConst("__AddGarbage"));
 	//	GenerateDiadic(op_ldd, 0, makereg(regFirstArg), MakeIndirect(regSP));
 	//	GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(8));
@@ -4167,7 +4169,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	//	fpsave_mask->resetPtr();
 	//	for (nn = fpsave_mask->lastMember(); nn >= 1; nn = fpsave_mask->prevMember()) {
 	//		GenerateDiadic(op_lf, 'd', makefpreg(nregs - 1 - nn), MakeIndexed(cnt2 - cnt, regSP));
-	//		cnt -= sizeOfWord;
+	//		cnt -= cpu.sizeOfWord;
 	//	}
 	//	GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cnt2 + sizeOfFP));
 	//}
@@ -4231,19 +4233,19 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 				if (ta->preg[nn] && (ta->preg[nn] & 0x8000) == 0)
 					;
 				else
-					toAdd += sizeOfFPQ;
+					toAdd += cpu.sizeOfFPQ;
 				break;
 			case bt_double:
 				if (ta->preg[nn] && (ta->preg[nn] & 0x8000) == 0)
 					;
 				else
-					toAdd += sizeOfFPD;
+					toAdd += cpu.sizeOfFPD;
 				break;
 			case bt_posit:
 				if (ta->preg[nn] && (ta->preg[nn] & 0x8000) == 0)
 					;
 				else
-					toAdd += sizeOfPosit;
+					toAdd += cpu.sizeOfPosit;
 				break;
 			case bt_ellipsis:
 				break;
@@ -4251,7 +4253,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 				if (ta->preg[nn] && (ta->preg[nn] & 0x8000) == 0)
 					;
 				else
-					toAdd += sizeOfWord;
+					toAdd += cpu.sizeOfWord;
 			}
 		}
 	}
@@ -4277,9 +4279,9 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 				func->UnlinkStack(toAdd);
 			else {
 				GenerateMove(makereg(regSP), makereg(regFP));
-				GenerateLoad(makereg(regFP), MakeIndirect(regSP), sizeOfWord, sizeOfWord);
+				GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 				ap = GetTempRegister();
-				GenerateLoad(ap, MakeIndexed(2 * sizeOfWord, regFP), sizeOfWord, sizeOfWord);
+				GenerateLoad(ap, MakeIndexed(2 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
 				GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
 				ReleaseTempRegister(ap);
 				GenerateAddOnto(makereg(regSP), MakeImmediate(toAdd));
@@ -4566,7 +4568,7 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 			GenerateMonadic(op_enter, 0, MakeImmediate(32760));
 			ip = currentFn->pl.tail;
 			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 32760));
-			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
 			fn->alstk = true;
 		}
 	}
@@ -4580,15 +4582,15 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 		else {
 			GenerateMonadic(op_link, 0, MakeImmediate(32760));
 			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 32760));
-			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
 			fn->alstk = true;
 		}
 	}
 	else {
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
-		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), sizeOfWord);
+		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord);
 		cg.GenerateMove(makereg(regFP), makereg(regSP));
-		cg.GenerateStore(makereg(regLR), cg.MakeIndexed(sizeOfWord * 1, regFP), sizeOfWord);	// Store link register on stack
+		cg.GenerateStore(makereg(regLR), cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
 		fn->alstk = true;
 		fn->has_return_block = true;
@@ -4603,7 +4605,7 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 		n |= 2;
 		/*
 		if (alstk) {
-			GenerateDiadic(op_sto, 0, makereg(regLR), MakeIndexed(1 * sizeOfWord + stkspace, regSP));
+			GenerateDiadic(op_sto, 0, makereg(regLR), MakeIndexed(1 * cpu.sizeOfWord + stkspace, regSP));
 		}
 		else
 		*/
@@ -4613,12 +4615,12 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 			//ap = GetTempRegister();
 			//GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x3102));
 			//GenerateDiadic(op_mflk, 0, makereg(regLR), ap);
-			//cg.GenerateStore(makereg(regLR), MakeIndexed(2 * sizeOfWord, regFP), sizeOfWord);
+			//cg.GenerateStore(makereg(regLR), MakeIndexed(2 * cpu.sizeOfWord, regFP), cpu.sizeOfWord);
 			//ReleaseTempRegister(ap);
 			if (fn->IsFar) {
 				ap = GetTempRegister();
 				GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x3103));
-				cg.GenerateStore(ap, cg.MakeIndexed(3 * sizeOfWord, regFP), sizeOfWord);
+				cg.GenerateStore(ap, cg.MakeIndexed(3 * cpu.sizeOfWord, regFP), cpu.sizeOfWord);
 				ReleaseTempRegister(ap);
 			}
 		}
@@ -4626,9 +4628,9 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 	/*
 	switch (n) {
 	case 0:	break;
-	case 1:	GenerateDiadic(op_std, 0, makereg(regXLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
-	case 2:	GenerateDiadic(op_std, 0, makereg(regLR), MakeIndexed(3 * sizeOfWord, regSP)); break;
-	case 3:	GenerateTriadic(op_stdp, 0, makereg(regXLR), makereg(regLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
+	case 1:	GenerateDiadic(op_std, 0, makereg(regXLR), MakeIndexed(2 * cpu.sizeOfWord, regSP)); break;
+	case 2:	GenerateDiadic(op_std, 0, makereg(regLR), MakeIndexed(3 * cpu.sizeOfWord, regSP)); break;
+	case 3:	GenerateTriadic(op_stdp, 0, makereg(regXLR), makereg(regLR), MakeIndexed(2 * cpu.sizeOfWord, regSP)); break;
 	}
 	*/
 	retlab = nextlabel++;
@@ -4649,12 +4651,12 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 		GenerateDiadic(cpu.ldi_op, 0, ap, cg.MakeStringAsNameConst(buf, codeseg));
 		if (fn->IsFar)
 			GenerateMonadic(op_di, 0, MakeImmediate(2));
-		cg.GenerateStore(ap, cg.MakeIndexed((int64_t)32, regFP), sizeOfWord);
+		cg.GenerateStore(ap, cg.MakeIndexed((int64_t)32, regFP), cpu.sizeOfWord);
 		ReleaseTempRegister(ap);
 		if (fn->IsFar) {
 			ap = GetTempRegister();
 			GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x311F));	// CS
-			cg.GenerateStore(ap, cg.MakeIndexed((int64_t)40, regFP), sizeOfWord);
+			cg.GenerateStore(ap, cg.MakeIndexed((int64_t)40, regFP), cpu.sizeOfWord);
 			ReleaseTempRegister(ap);
 		}
 		//		GenerateDiadic(cpu.mov_op, 0, makereg(regAFP), makereg(regFP));

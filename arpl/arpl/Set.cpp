@@ -693,13 +693,13 @@ bool CSet::shr(int amt)
 		nc = c = 0;
 		for (i = size - 1; i >= 0; i--) {
 			v = map[i];
-			nc = (v & 1LL) << 63LL;
+			nc = (v & 1LL) << (sizeof(int) * 8 - 1);
 			v = (v >> 1LL) | c;
 			map[i] = v;
 			c = nc;
 		}
 	}
-	return (c >> 63LL);
+	return (c >> (sizeof(int)*8-1));
 }
 
 // Shift entire set to the left.

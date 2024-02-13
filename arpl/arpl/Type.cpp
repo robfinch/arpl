@@ -213,13 +213,13 @@ int64_t TYP::GetElementSize()
 		return 4;
 	case bt_int:
 	case bt_uint:
-		return sizeOfInt;
+		return cpu.sizeOfInt;
 	case bt_long:
 	case bt_ulong:
 	case bt_pointer:
-		return sizeOfWord;
+		return cpu.sizeOfWord;
 	case bt_decimal:
-		return sizeOfDecimal;
+		return cpu.sizeOfDecimal;
 	case bt_float:
 	case bt_double:
 	case bt_posit:
@@ -1631,7 +1631,7 @@ int64_t TYP::GenerateT(txtoStream& tfs, ENODE *node)
 				val = 0;
 			else
 				val = node->i;
-			nbytes = sizeOfPtr;
+			nbytes = cpu.sizeOfPtr;
 		}
 		//case bt_struct:	nbytes = InitializeStruct(); break;
 	}
@@ -1798,7 +1798,7 @@ int64_t TYP::Alignment()
 		if (val_flag)
 			return (btpp->Alignment());
 		else
-			return (sizeOfPtr);//isShort ? AL_SHORT : AL_POINTER);
+			return (cpu.sizeOfPtr);//isShort ? AL_SHORT : AL_POINTER);
 	case bt_float:          return AL_FLOAT;
 	case bt_double:         return AL_DOUBLE;
 	case bt_posit:					return AL_POSIT;
@@ -1844,7 +1844,7 @@ int64_t TYP::walignment()
 			goto xit;
 		}
 		else {
-			return (imax(sizeOfPtr, worstAlignment));
+			return (imax(cpu.sizeOfPtr, worstAlignment));
 			//				return (imax(AL_POINTER,worstAlignment));
 		}
 	case bt_float:          level--; return imax(AL_FLOAT, worstAlignment);

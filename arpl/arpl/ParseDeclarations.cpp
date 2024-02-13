@@ -127,7 +127,7 @@ void Declaration::SetType(Symbol *sp)
 		}
 	}
 	else {
-		sp->tp = TYP::Make(bt_int,sizeOfInt);
+		sp->tp = TYP::Make(bt_int,cpu.sizeOfInt);
 		sp->tp->lst.headp = sp;
 	}
 }
@@ -240,15 +240,15 @@ void Declaration::ParseLong()
 {
 	NextToken();
 	if (lastst==kw_int) {
-		head = (TYP*)TYP::Make(bt_long, sizeOfWord);
+		head = (TYP*)TYP::Make(bt_long, cpu.sizeOfWord);
 		tail = head;
 		bit_max = head->precision;
 		NextToken();
 	}
 	else if (lastst == kw_long) {
-		//head = (TYP*)TYP::Make(bt_i128, sizeOfWord * 2);
+		//head = (TYP*)TYP::Make(bt_i128, cpu.sizeOfWord * 2);
 		//bit_max = 128;
-		head = (TYP*)TYP::Make(bt_long, sizeOfWord);
+		head = (TYP*)TYP::Make(bt_long, cpu.sizeOfWord);
 		tail = head;
 		bit_max = 128;
 		NextToken();
@@ -256,7 +256,7 @@ void Declaration::ParseLong()
 			NextToken();
 	}
 	else if (lastst==kw_float) {
-		head = (TYP *)TYP::Make(bt_double,sizeOfFPD);
+		head = (TYP *)TYP::Make(bt_double,cpu.sizeOfFPD);
 		tail = head;
 		bit_max = head->precision;
 		NextToken();
@@ -276,12 +276,12 @@ void Declaration::ParseLong()
 	}
 	else {
 		if (isUnsigned) {
-			head =(TYP *)TYP::Make(bt_ulong,sizeOfWord);
+			head =(TYP *)TYP::Make(bt_ulong,cpu.sizeOfWord);
 			tail = head;
 			bit_max = head->precision;
 		}
 		else {
-			head = (TYP *)TYP::Make(bt_long,sizeOfWord);
+			head = (TYP *)TYP::Make(bt_long,cpu.sizeOfWord);
 			tail = head;
 			bit_max = head->precision;
 		}
@@ -311,11 +311,11 @@ void Declaration::ParseInt(bool nt)
 {
 //printf("Enter ParseInt\r\n");
 	if (isUnsigned) {
-		head = TYP::Make(bt_uint, sizeOfInt);
+		head = TYP::Make(bt_uint, cpu.sizeOfInt);
 		tail = head;
 	}
 	else {
-		head = TYP::Make(bt_int, sizeOfInt);
+		head = TYP::Make(bt_int, cpu.sizeOfInt);
 		tail = head;
 	}
 	bit_max = 128;
@@ -367,7 +367,7 @@ void Declaration::ParseInline()
 void Declaration::ParseBit()
 {
 	//printf("Enter ParseInt\r\n");
-	head = TYP::Make(bt_bit, sizeOfWord);
+	head = TYP::Make(bt_bit, cpu.sizeOfWord);
 	tail = head;
 	if (head == nullptr)
 		return;
@@ -377,13 +377,13 @@ void Declaration::ParseBit()
 	head->isBits = true;
 	NextToken();
 	head->size = 1;
-	bit_max = sizeOfWord;
+	bit_max = cpu.sizeOfWord;
 }
 
 void Declaration::ParseBool()
 {
 	//printf("Enter ParseInt\r\n");
-	head = TYP::Make(bt_bool, sizeOfWord);
+	head = TYP::Make(bt_bool, cpu.sizeOfWord);
 	tail = head;
 	if (head == nullptr)
 		return;
@@ -394,7 +394,7 @@ void Declaration::ParseBool()
 	NextToken();
 	head->size = 1;
 	head->precision = 8;
-	bit_max = sizeOfWord;
+	bit_max = cpu.sizeOfWord;
 }
 
 void Declaration::ParseFloat(int prec)
@@ -484,7 +484,7 @@ void Declaration::ParsePosit()
 				|| head->precision < 16
 				|| head->precision > 128) {
 				error(ERR_PRECISION);
-				head->precision = sizeOfWord * 8;
+				head->precision = cpu.sizeOfWord * 8;
 			}
 		}
 		else
@@ -556,7 +556,7 @@ void Declaration::ParseVector(TABLE* table, Symbol** sym, e_sc sc)
 		btp = head;
 	}
 	else {
-		btp = head = TYP::Make(bt_single, sizeOfFPS);
+		btp = head = TYP::Make(bt_single, cpu.sizeOfFPS);
 	}
 	head->isVolatile = isVolatile;
 	head->isIO = isIO;
@@ -569,7 +569,7 @@ void Declaration::ParseVector(TABLE* table, Symbol** sym, e_sc sc)
 
 void Declaration::ParseVectorMask()
 {
-	head = (TYP *)TYP::Make(bt_vector_mask,sizeOfWord);
+	head = (TYP *)TYP::Make(bt_vector_mask,cpu.sizeOfWord);
 	tail = head;
 	head->isVolatile = isVolatile;
 	head->isIO = isIO;
@@ -601,11 +601,11 @@ void Declaration::ParseInt32()
 void Declaration::ParseInt64()
 {
 	if (isUnsigned) {
-		head = (TYP *)TYP::Make(bt_uint,sizeOfInt);
+		head = (TYP *)TYP::Make(bt_uint,cpu.sizeOfInt);
 		tail = head;
 	}
 	else {
-		head = (TYP *)TYP::Make(bt_int,sizeOfInt);
+		head = (TYP *)TYP::Make(bt_int,cpu.sizeOfInt);
 		tail = head;
 	}
 	bit_max = 64;
@@ -740,7 +740,7 @@ Symbol *Declaration::ParseSpecifierId()
 		declid = nullptr;
 		sp = SymbolFactory::Make(
 			lastid,
-			TYP::Make(bt_int, sizeOfInt),
+			TYP::Make(bt_int, cpu.sizeOfInt),
 			nullptr,
 			currentFn->depth,
 			sc_type
@@ -751,7 +751,7 @@ Symbol *Declaration::ParseSpecifierId()
 
 	// Did we just have a symbol name by itself?
 	if (head == nullptr) {
-		head = (TYP*)TYP::Make(bt_int, sizeOfInt);
+		head = (TYP*)TYP::Make(bt_int, cpu.sizeOfInt);
 		tail = head;
 		bit_max = head->precision;
 	}
@@ -972,12 +972,12 @@ int Declaration::ParseSpecifier(TABLE* table, Symbol** sym, e_sc sc)
 				break;
 
 			case ellipsis:
-				head = (TYP *)TYP::Make(bt_ellipsis,sizeOfWord);
+				head = (TYP *)TYP::Make(bt_ellipsis,cpu.sizeOfWord);
 				tail = head;
 				head->isVolatile = isVolatile;
 				head->isIO = isIO;
 				NextToken();
-				bit_max = sizeOfWord/8;
+				bit_max = cpu.sizeOfWord/8;
 				goto lxit;
 
 			case id:	
@@ -1369,12 +1369,12 @@ j1:
 
 	case star:
 		dfs.printf("*");
-		bit_max = sizeOfPtr * 8;
+		bit_max = cpu.sizeOfPtr * 8;
 		dfs.putch('*');
 		NextToken();
 		temp2 = head;
 		temp3 = tail;
-		head = TYP::Make(bt_pointer, sizeOfPtr);
+		head = TYP::Make(bt_pointer, cpu.sizeOfPtr);
 		head->btpp = temp2;
 		if (tail == nullptr)
 			tail = head;
@@ -1462,7 +1462,7 @@ j1:
 				head = temp2;
 				tail = temp3;
 			//sp = symo;
-			//temp1 = TYP::Make(bt_pointer, sizeOfPtr);
+			//temp1 = TYP::Make(bt_pointer, cpu.sizeOfPtr);
 			//temp1->btp = head->GetIndex();
 			//temp1->btpp = head;
 			//head = temp1;
@@ -1541,7 +1541,7 @@ void Declaration::ParseSuffixOpenbr()
 				return;
 			}
 		}
-		dimen[nn] = (TYP*)TYP::Make(bt_pointer, sizeOfPtr);
+		dimen[nn] = (TYP*)TYP::Make(bt_pointer, cpu.sizeOfPtr);
 		dimen[nn]->val_flag = true;
 		dimen[nn]->isArray = true;
 		dimen[nn]->btpp = nullptr;
@@ -1582,7 +1582,7 @@ void Declaration::ParseSuffixOpenbr()
 	long sz2;
 
 	NextToken();
-	temp1 = (TYP *)TYP::Make(bt_pointer, sizeOfPtr);
+	temp1 = (TYP *)TYP::Make(bt_pointer, cpu.sizeOfPtr);
 	temp1->val_flag = 1;
 	temp1->isArray = TRUE;
 	if (tail)
@@ -3033,14 +3033,14 @@ j1:
 		  NextToken();
 		  if (lastst==id) {
 			  if (strcmp(lastid,"_pointers")==0)
-				  sizeOfPtr = 4;
+				  cpu.sizeOfPtr = 4;
 		  }
 	  }
 	  else if (lastst==kw_long) {
 		  NextToken();
 		  if (lastst==id) {
 			  if (strcmp(lastid,"_pointers")==0)
-				  sizeOfPtr = 12;
+				  cpu.sizeOfPtr = 12;
 		  }
 	  }
       break;

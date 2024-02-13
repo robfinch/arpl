@@ -335,7 +335,7 @@ void CSETable::InitializeTempRegs()
 			{
 				if (exptr->tp || true) {
 					initstack();
-					ap = cg.GenerateExpression(exptr, am_reg | am_vreg | am_imm | am_mem, exptr->tp ? exptr->tp->size : sizeOfInt, 1);
+					ap = cg.GenerateExpression(exptr, am_reg | am_vreg | am_imm | am_mem, exptr->tp ? exptr->tp->size : cpu.sizeOfInt, 1);
 					if (ap == nullptr)
 						continue;
 					if (csp->is_vector)
