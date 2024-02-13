@@ -190,7 +190,6 @@ extern int opt_nocgo;
 extern int opt_size;
 extern int opt_loop_invariant;
 extern int opt_rv5;
-extern int exceptions;
 extern int mixedSource;
 extern Function *currentFn;
 extern Symbol* currentSym;

@@ -710,6 +710,7 @@ Statement *Statement::ParseLabel(bool pt)
 	if (sp->storage_class == sc_label) {
 		snp->label = (int64_t *)sp->value.i;
 		snp->next = (Statement *)NULL;
+		snp->s1 = Parse(nullptr);
 		return (snp);
 	}
 	return (0);
@@ -744,7 +745,7 @@ Statement *Statement::ParseGoto()
 		error(ERR_LABEL);
 	else {
 		snp->stype = st_goto;
-		snp->label = (int64_t *)sp->value.i;
+		snp->exp = (ENODE *)sp->value.i;
 		snp->next = (Statement *)NULL;
 		return (snp);
 	}
@@ -783,9 +784,9 @@ j1:
 		stmtdepth++;
 		snp = ParseCompound(false);
 		stmtdepth--;
-		return snp;
+		goto xit;
 	case end:
-		return (snp);
+		goto xit;
 	case kw_check:
 		snp = ParseCheckStatement();
 		break;
@@ -818,13 +819,14 @@ j1:
 	case kw_throw: snp = ParseThrow(); break;
 	case kw_stop: snp = ParseStop(); break;
 	case kw_asm: snp = ParseAsm(); break;
-	case colon:	snp = ParseLabel(false); goto j1;
+	case colon:	snp = ParseLabel(false); break; goto j1;
 	case id:
 		SkipSpaces();
 		if (lastch == ':') {
 			snp = ParseLabel(true);
 			if (has_label)
 				*has_label = true;
+			break;
 			goto j1;
 		}
 		// else fall through to parse expression
@@ -832,6 +834,7 @@ j1:
 		snp = ParseExpression(node, symi);
 		break;
 	}
+xit:
 	if (snp != NULL) {
 		snp->next = (Statement *)NULL;
 		//snp->casevals = bf;
@@ -2067,9 +2070,15 @@ bool Statement::Generate(int opt)
 				ReleaseTempRegister(cg.GenerateExpression(sp->initexp, am_all, 8));
 			}
 		}*/
+j1:
 		stmt->GenMixedSource();
 		switch (stmt->stype)
 		{
+		case st_label:
+			GenerateLabel((int64_t)stmt->label);
+			if (stmt->s1)
+				stmt->s1->Generate();
+			break;
 		case st_funcbody:
 			stmt->GenerateFuncBody();
 			break;
@@ -2091,11 +2100,8 @@ bool Statement::Generate(int opt)
 		case st_asm:
 			stmt->GenerateAsm();
 			break;
-		case st_label:
-			GenerateLabel((int64_t)stmt->label);
-			break;
 		case st_goto:
-			GenerateMonadic(op_bra, 0, MakeCodeLabel((int64_t)stmt->label));
+			GenerateMonadic(op_bra, 0, MakeCodeLabel((int64_t)stmt->exp));
 			break;
 		case st_yield:
 			stmt->GenerateYield();

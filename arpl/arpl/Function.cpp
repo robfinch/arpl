@@ -919,121 +919,9 @@ int64_t Function::SizeofReturnBlock()
 }
 
 // For a leaf routine don't bother to store the link register.
-void Function::SetupReturnBlock()
+OCODE* Function::SetupReturnBlock()
 {
-	Operand *ap, *ap1;
-	int n;
-	char buf[300];
-	
-	alstk = false;
-	if (!cpu.SupportsEnter)
-		GenerateMonadic(op_hint,0,MakeImmediate(begin_return_block));
-	if (cpu.SupportsEnter)
-	{
-		if (stkspace < 32767) {
-			GenerateMonadic(op_enter, 0, MakeImmediate(-tempbot));
-			//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
-						//spAdjust = pl.tail;
-			alstk = true;
-		}
-		else {
-			GenerateMonadic(op_enter, 0, MakeImmediate(32760));
-			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(-tempbot - 32760));
-			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
-			alstk = true;
-		}
-	}
-	else if (cpu.SupportsLink) {
-		if (stkspace < 32767 - Compiler::GetReturnBlockSize()) {
-			GenerateMonadic(op_link, 0, MakeImmediate(Compiler::GetReturnBlockSize() + stkspace));
-//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
-			//spAdjust = pl.tail;
-			alstk = true;
-		}
-		else {
-			GenerateMonadic(op_link, 0, MakeImmediate(32760));
-			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + stkspace - 32760));
-			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * sizeOfWord));
-			alstk = true;
-		}
-	}
-	else {
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
-		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), sizeOfWord);
-		cg.GenerateMove(makereg(regFP), makereg(regSP));
-		cg.GenerateStore(makereg(regLR), MakeIndexed(sizeOfWord * 1, regFP), sizeOfWord);	// Store link register on stack
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(stkspace));
-		alstk = true;
-		has_return_block = true;
-	}
-	// Put this marker here so that storing the link register relative to the
-	// frame pointer counts as a frame pointer reference.
-	if (!cpu.SupportsEnter)
-		GenerateMonadic(op_hint, 0, MakeImmediate(end_return_block));
-	//	GenerateTriadic(op_stdp, 0, makereg(regFP), makereg(regZero), MakeIndirect(regSP));
-	n = 0;
-	if (!currentFn->IsLeaf && doesJAL) {
-		n |= 2;
-		/*
-		if (alstk) {
-			GenerateDiadic(op_sto, 0, makereg(regLR), MakeIndexed(1 * sizeOfWord + stkspace, regSP));
-		}
-		else
-		*/
-		if (!cpu.SupportsEnter) {
-			//if (IsFar)
-			//	GenerateMonadic(op_di, 0, MakeImmediate(2));
-			//ap = GetTempRegister();
-			//GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x3102));
-			//GenerateDiadic(op_mflk, 0, makereg(regLR), ap);
-			//cg.GenerateStore(makereg(regLR), MakeIndexed(2 * sizeOfWord, regFP), sizeOfWord);
-			//ReleaseTempRegister(ap);
-			if (IsFar) {
-				ap = GetTempRegister();
-				GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x3103));
-				cg.GenerateStore(ap, MakeIndexed(3 * sizeOfWord, regFP), sizeOfWord);
-				ReleaseTempRegister(ap);
-			}
-		}
-	}
-	/*
-	switch (n) {
-	case 0:	break;
-	case 1:	GenerateDiadic(op_std, 0, makereg(regXLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
-	case 2:	GenerateDiadic(op_std, 0, makereg(regLR), MakeIndexed(3 * sizeOfWord, regSP)); break;
-	case 3:	GenerateTriadic(op_stdp, 0, makereg(regXLR), makereg(regLR), MakeIndexed(2 * sizeOfWord, regSP)); break;
-	}
-	*/
-	retlab = nextlabel++;
-	ap = MakeDataLabel(retlab, regZero);
-	ap->mode = am_imm;
-	//if (!cpu.SupportsLink)
-	//	GenerateDiadic(op_mov, 0, makereg(regFP), makereg(regSP));
-	//if (!alstk) {
-	//	GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(stkspace));
-		//spAdjust = pl.tail;
-//	}
-	// Store the catch handler address at 16[$FP]
-	if (exceptions) {
-		ap = GetTempRegister();
-		sprintf_s(buf, sizeof(buf), ".%05lld", defCatchLabel);
-		DataLabels[defCatchLabel]++;
-		defCatchLabelPatchPoint = currentFn->pl.tail;
-		GenerateDiadic(cpu.ldi_op, 0, ap, MakeStringAsNameConst(buf, codeseg));
-		if (IsFar)
-			GenerateMonadic(op_di, 0, MakeImmediate(2));
-		cg.GenerateStore(ap, MakeIndexed((int64_t)32, regFP), sizeOfWord);
-		ReleaseTempRegister(ap);
-		if (IsFar) {
-			ap = GetTempRegister();
-			GenerateTriadic(op_csrrd, 0, ap, makereg(regZero), MakeImmediate(0x311F));	// CS
-			cg.GenerateStore(ap, MakeIndexed((int64_t)40, regFP), sizeOfWord);
-			ReleaseTempRegister(ap);
-		}
-//		GenerateDiadic(cpu.mov_op, 0, makereg(regAFP), makereg(regFP));
-		GenerateMonadic(op_bex, 0, cg.MakeCodeLabel(currentFn->defCatchLabel));
-	}
-	tryCount = 0;
+	return (pEnter = cg.GenerateReturnBlock(this));
 }
 
 void Function::GenerateCoroutineData()
@@ -1148,19 +1036,10 @@ void Function::Generate()
 		cg.GenerateInterruptSave(this);
 
 	// Setup the return block.
+	pEnter = nullptr;
 	if (!IsNocall && !prolog)
 		SetupReturnBlock();
-	stmt->CheckReferences(&sp, &bp, &gp, &gp1, &gp2);
-	//	if (!IsInline)
-	GenerateMonadic(op_hint, 0, MakeImmediate(start_funcbody));
-	/*
-	if (gp != 0)
-		cg.GenerateLoadDataPointer();
-	if (gp1 != 0)
-		cg.GenerateLoadRodataPointer();
-	if (gp2 != 0)
-		cg.GenerateLoadBssPointer();
-	*/
+
 	if (optimize)
 		currentFn->csetbl->Optimize(stmt);
 	if (prolog) {
@@ -1172,7 +1051,22 @@ void Function::Generate()
 		fpsave_mask = ::fpsave_mask;// CSet::MakeNew();
 		save_mask = ::save_mask;// CSet::MakeNew();
 		psave_mask = ::psave_mask;// CSet::MakeNew();
+		mask = ::save_mask;
 	}
+	if (pEnter)
+		pEnter->oper1 = MakeImmediate(mask->NumMember());
+
+	stmt->CheckReferences(&sp, &bp, &gp, &gp1, &gp2);
+	//	if (!IsInline)
+	GenerateMonadic(op_hint, 0, MakeImmediate(start_funcbody));
+	/*
+	if (gp != 0)
+		cg.GenerateLoadDataPointer();
+	if (gp1 != 0)
+		cg.GenerateLoadRodataPointer();
+	if (gp2 != 0)
+		cg.GenerateLoadBssPointer();
+	*/
 	stmt->Generate();
 	//for (ip2 = pl.head; ip2; ip2 = ip2->fwd)
 	//	if (ip2->opcode == op_not)
@@ -1194,12 +1088,12 @@ void Function::Generate()
 		cg.GenerateReturn(this,nullptr);
 
 	// Inline code needs to branch around the default exception handler.
-	if (exceptions && sym->IsInline)
+	if (compiler.exceptions && sym->IsInline)
 		GenerateMonadic(op_bra,0,MakeCodeLabel(lab0));
 	// Generate code for the hidden default catch
-	if (exceptions && !IsNocall)
+	if (compiler.exceptions && !IsNocall)
 		GenerateDefaultCatch();
-	if (exceptions && sym->IsInline)
+	if (compiler.exceptions && sym->IsInline)
 		GenerateLabel(lab0);
 
 	dfs.puts("<StaticRegs>");

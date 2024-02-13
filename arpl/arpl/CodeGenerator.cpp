@@ -4641,7 +4641,7 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 		//spAdjust = pl.tail;
 //	}
 	// Store the catch handler address at 16[$FP]
-	if (exceptions) {
+	if (compiler.exceptions) {
 		ap = GetTempRegister();
 		sprintf_s(buf, sizeof(buf), ".%05lld", fn->defCatchLabel);
 		DataLabels[fn->defCatchLabel]++;

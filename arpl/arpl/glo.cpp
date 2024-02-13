@@ -239,7 +239,6 @@ int opt_nocgo = FALSE;
 int opt_size = FALSE;
 int opt_vreg = FALSE;
 int opt_loop_invariant = TRUE;
-int exceptions = FALSE;
 int mixedSource = FALSE;
 Function *currentFn = nullptr;
 int callsFn = FALSE;

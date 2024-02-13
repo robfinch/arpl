@@ -1,0 +1,50 @@
+// Test the cache_type attribute
+//
+// cache_type::[type]
+// type is
+// 		none
+//		rd = read
+//		rda = read_allocate
+//		wt = writethru
+//		wta = writethru_allocate
+//		rwta = read_writethru_allocate
+//		wb = writeback
+//		wba = writeback_allocate
+//		rwba = read_writeback_allocate
+//		
+
+integer main()
+begin
+	integer a : cache::none = 10;
+	integer b : cache::rd = 1;
+	integer c : cache::rda = 2;
+	integer d : cache::wt = 3;
+	integer e : cache::wta = 4;
+	integer f : cache::rwta = 5;
+	integer g : cache::wb = 6;
+	integer h : cache::wba = 7;
+	integer i : cache::rwba = 8;
+	extern integer *mem;
+	
+	*mem = a;
+	*mem = b;
+	*mem = c;
+	*mem = d;
+	*mem = e;
+	*mem = f;
+	*mem = g;
+	*mem = h;
+	*mem = i;
+	
+	a = *mem;
+	b = *mem;
+	c = *mem;
+	d = *mem;
+	e = *mem;
+	f = *mem;
+	g = *mem;
+	h = *mem;
+	i = *mem;
+
+	return ( a ?? b : c : d : e );
+end

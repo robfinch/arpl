@@ -85,7 +85,11 @@ void StatementGenerator::GenerateCompound(Statement* stmt)
 	}
 	// Generate statement will process the entire list of statements in
 	// the block.
+//	if (stmt->label)
+//		cg.MakeCodeLabel((int)stmt->label);
 	stmt->s1->Generate();
+	if (stmt->s2)
+		stmt->s2->Generate();
 	cg.stmt = os;
 }
 

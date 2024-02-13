@@ -2529,6 +2529,7 @@ public:
 	bool nogcskips;
 	bool os_code;
 	int pollCount;
+	bool exceptions;
 	short int autoInline;
 	short int table_density;		// switch table density threshold as a percentage.
 public:

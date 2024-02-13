@@ -310,6 +310,10 @@ void PeepList::SetLabelReference()
 					if (p = PeepList::FindLabel(ct->cases[nn].label))
 						p->isReferenced = true;
 			}
+			if (q->opcode == op_bra) {
+				if (p = PeepList::FindLabel(q->oper1->offset->i))
+					p->isReferenced = true;
+			}
 		}
 	}
 }
@@ -318,7 +322,7 @@ void PeepList::SetLabelReference()
 void PeepList::EliminateUnreferencedLabels()
 {
 	OCODE *p;
-	return;
+
 	for (p = head; p; p = p->fwd) {
 		if (p->opcode == op_label)
 			p->remove = false;

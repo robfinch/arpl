@@ -312,7 +312,7 @@ void Function::PeepOpt()
 			pl.RemoveGPLoad();
 		pl.Remove();
 	}
-
+	
 	// Get rid of extra labels that clutter up the output
 	pl.SetLabelReference();
 	pl.EliminateUnreferencedLabels();

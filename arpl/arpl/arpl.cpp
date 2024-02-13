@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 	opt_nopeep = FALSE;
 	uctran_off = 0;
 	optimize =1;
-	exceptions=1;
+	compiler.exceptions=0;
 	compiler.nogcskips = true;
 	compiler.os_code = false;
 #ifdef QUPLS
@@ -316,7 +316,7 @@ int	options(char *s)
     }
 	else if (s[1]=='f') {
 		if (strcmp(&s[2],"no-exceptions")==0)
-			exceptions = 0;
+			compiler.exceptions = 0;
 //		if (strcmp(&s[2],"farcode")==0)
 //			farcode = 1;
 		if (strncmp(&s[2], "poll",4) == 0) {
