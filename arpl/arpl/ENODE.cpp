@@ -1659,43 +1659,75 @@ Operand* ENODE::GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg)
 //
 // No reason to ReleaseTempReg() because the registers used are transported
 // forward.
+// 
+// If we have nested indexes we really want the value from the inner index
+// array to use. Hence it is loaded.
 // ----------------------------------------------------------------------------
 Operand *ENODE::GenIndex(bool neg)
 {
-	Operand *ap1, *ap2, *ap3;
+	Operand *ap1, *ap2, *ap3, * ap4;
+	static int ndxlvl = 0;
 
+	ndxlvl++;
 //	if ((p[0]->nodetype == en_type || p[0]->nodetype == en_regvar)
 //		&& (p[1]->nodetype == en_type || p[1]->nodetype == en_regvar))
 	/* Both nodes are registers? */
-	if (p[0]->nodetype == en_regvar && p[1]->nodetype == en_regvar)
-		return (GenerateRegRegIndex());
+	if (p[0]->nodetype == en_regvar && p[1]->nodetype == en_regvar) {
+		ap1 = GenerateRegRegIndex();
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, esize, esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
 
 	GenerateHint(8);
 //	GenerateHint(begin_index);
 	ap1 = cg.GenerateExpression(p[0], am_reg | am_imm, sizeOfInt, 1);
-	if (ap1->mode == am_imm)
-		return (GenerateImmExprIndex(ap1, neg));
+	if (ap1->mode == am_imm) {
+		ap1 = GenerateImmExprIndex(ap1, neg);
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, esize, esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
 
 	ap2 = cg.GenerateExpression(p[1], am_all, 8, 1);   /* get right op */
 //	GenerateHint(end_index);
 	GenerateHint(9);
 
 	// Do we have reg+imm? If so make am_indx
-	if (ap2->mode == am_imm)
-		return (GenerateRegImmIndex(ap1, ap2, neg));
+	if (ap2->mode == am_imm) {
+		ap1 = GenerateRegImmIndex(ap1, ap2, neg);
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, esize, esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
 
 	if (ap2->mode == am_ind && ap1->mode == am_reg) {
-		if (cpu.SupportsIndexed) {
+		if (cpu.SupportsIndexed && ndxlvl==1) {
 			ap2->mode = am_indx2;
 			ap2->sreg = ap1->preg;
 			ap2->deep2 = ap1->deep;
 		}
 		else {
+			GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
 			GenerateTriadic(op_add, 0, ap2, ap1, ap2);
 			ap2->mode = am_indx;
 			ap2->deep2 = ap1->deep;
 			ap2->offset = makeinode(en_icon, 0);
+			if (ndxlvl > 1) {
+				GenerateLoad(makereg(ap2->preg), ap2, esize, esize);
+				ap2->mode = am_reg;
+			}
 		}
+		ndxlvl--;
 		return (ap2);
 	}
 
@@ -1704,12 +1736,17 @@ Operand *ENODE::GenIndex(bool neg)
 		ap2->mode = am_indx;
 		ap2->preg = ap1->preg;
 		ap2->deep = ap1->deep;
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap2->preg), ap2, esize, esize);
+			ap2->mode = am_reg;
+		}
+		ndxlvl--;
 		return (ap2);
 	}
 
 	// ap1->mode must be am_reg
 //	ap2->MakeLegal(am_reg, 8);
-	if (cpu.SupportsIndexed) {
+	if (cpu.SupportsIndexed && ndxlvl==1) {
 		ap1->mode = am_indx2;            /* make indexed */
 		ap1->sreg = ap2->preg;
 		ap1->deep2 = ap2->deep;
@@ -1717,12 +1754,29 @@ Operand *ENODE::GenIndex(bool neg)
 		ap1->scale = scale;
 	}
 	else {
-		GenerateTriadic(op_add, 0, ap1, ap1, ap2);
-		ap1->mode = am_indx;            /* make indexed */
+		ap1->mode = am_indx2;            /* make indexed */
 		ap1->sreg = ap2->preg;
 		ap1->deep2 = ap2->deep;
 		ap1->offset = makeinode(en_icon, 0);
+		/*
+		ap4 = GetTempRegister();
+		ap3 = GetTempRegister();
+		ap2->MakeLegal(am_reg, this->esize);
+		GenerateTriadic(op_mulu, 0, ap3, ap2, MakeImmediate(this->esize));
+		GenerateTriadic(op_add, 0, ap4, ap1, ap3);
+		ReleaseTempRegister(ap3);
+		*/
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, esize, esize);
+			ap1->mode = am_reg;
+		}
+//		ap1->mode = am_indx;            /* make indexed */
+//		ap1->deep2 = ap2->deep;
+//		ap1->offset = makeinode(en_icon, 0);
+		ndxlvl--;
+		return (ap1);                     /* return indexed */
 	}
+	ndxlvl--;
 	return (ap1);                     /* return indexed */
 }
 
@@ -2650,12 +2704,14 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 		break;
 	case en_nacon:
 #ifdef QUPLS
+		
 		if (lowhigh == 1)
 			ofs.write("<");
 		else if (lowhigh == 2)
 			ofs.write("?");
 		else if (lowhigh == 3)
 			ofs.write(">");
+		
 #endif
 		/* 
 		* The following uses a private namespace if sym is set, which is set for 

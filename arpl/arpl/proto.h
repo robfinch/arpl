@@ -139,7 +139,7 @@ void fatal(const char*);
 List* sortedList(List* head, ENODE* root);
 int IdentifyPrecision();
 
-extern void GenerateTriadic(int op, int len, Operand* ap1, Operand* ap2, Operand* ap3);
+extern OCODE* GenerateTriadic(int op, int len, Operand* ap1, Operand* ap2, Operand* ap3);
 extern void GenerateTriadicEx(int op, std::string* ext, Operand* ap1, Operand* ap2, Operand* ap3);
 void AppendFiles();
 char* GetPrivateNamespace();

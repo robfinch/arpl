@@ -49,7 +49,7 @@ class List;
 extern void GenerateZeradic(int op);
 extern void GenerateMonadic(int op, int len, Operand*);
 extern OCODE* GenerateDiadic(int op, int len, Operand* ap1, Operand* ap2);
-extern void GenerateTriadic(int op, int len, Operand* ap1, Operand* ap2, Operand* ap3);
+extern OCODE* GenerateTriadic(int op, int len, Operand* ap1, Operand* ap2, Operand* ap3);
 
 typedef struct tagCase {
 	bool first;
@@ -1489,6 +1489,9 @@ public:
 	virtual void GenerateSignExtendByte(Operand*, Operand*);
 	virtual void GenerateSignExtendWyde(Operand*, Operand*);
 	virtual void GenerateSignExtendTetra(Operand*, Operand*);
+	virtual void GenerateZeroExtendByte(Operand*, Operand*);
+	virtual void GenerateZeroExtendWyde(Operand*, Operand*);
+	virtual void GenerateZeroExtendTetra(Operand*, Operand*);
 	virtual int GetSegmentIndexReg(e_sg seg);
 
 	virtual OCODE* GenerateReturnBlock(Function* fn);

@@ -373,7 +373,7 @@ extern void GenerateMonadic(int op, int len, Operand *ap1);
 extern void GenerateMonadicNT(int op, int len, Operand *ap1);
 extern OCODE* GenerateDiadic(int op, int len, Operand *ap1, Operand *ap2);
 extern void GenerateDiadicNT(int op, int len, Operand *ap1, Operand *ap2);
-extern void GenerateTriadic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3);
+extern OCODE* GenerateTriadic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3);
 extern void Generate4adic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3, Operand *ap4);
 // Gencode.c
 extern Operand *MakeDataLabel(int lab);
@@ -410,7 +410,7 @@ extern BasicBlock *basicBlocks[10000];
 extern BasicBlock *sortedBlocks[10000];
 extern Forest forest;
 extern IGraph iGraph;
-extern Instruction opl[371];
+extern Instruction opl[374];
 extern BasicBlock *LastBlock;
 extern Instruction *GetInsn(int);
 extern char inpline[100000];

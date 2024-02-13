@@ -88,7 +88,6 @@ Operand* QuplsCodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
 {
 	Operand* ap1, * ap2, * ap4, * ap5;
 	int lab0;
-	OCODE* ip;
 
 	lab0 = nextlabel++;
 
@@ -115,9 +114,6 @@ Operand* QuplsCodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
 
 void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width)
 {
-	int nn;
-	uint64_t mask;
-
 	ap1->MakeLegal(am_reg, sizeOfWord);
 	ap2->MakeLegal(am_reg, sizeOfWord);
 	Generate4adic(op_dep, 0, ap1, ap2, MakeImmediate(offset), MakeImmediate(((int64_t)offset+width-1LL) & 0x3fLL));
@@ -1916,22 +1912,18 @@ void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 				ip = GenerateLoadFloatConst(ap1, ap2);
 			else {
 				if (ap1->offset) {
-					if (!ap1->offset->i128.IsNBit(21))
-						ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0x1fffffLL));
+					if (!ap1->offset->i128.IsNBit(24))
+						ip = GenerateTriadic(op_or, 0, ap2, makereg(regZero), MakeImmediate(ap1->offset->i128.low & 0xffffffLL));
 					else
-						ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0x1fffffLL));
-					if (!ap1->offset->i128.IsNBit(21)) {
-						if (ap1->offset->i128.low & 0x100000LL)
-							GenerateDiadic(op_addm, 0, ap2, MakeImmediate(ap1->offset->i128.low + 0x100000LL));
+						ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0xffffffLL));
+					if (!ap1->offset->i128.IsNBit(24)) {
+						if (!ap1->offset->i128.IsNBit(48))
+							GenerateTriadic(op_ors, 0, ap2, MakeImmediate((ap1->offset->i128.low >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
 						else
-							GenerateDiadic(op_addm, 0, ap2, MakeImmediate(ap1->offset->i128.low));
+							GenerateTriadic(op_adds, 0, ap2, MakeImmediate((ap1->offset->i128.low >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
 					}
-					if (!ap1->offset->i128.IsNBit(44)) {
-						if (ap1->offset->i128.low & 0x40000000000LL)
-							GenerateDiadic(op_addh, 0, ap2, MakeImmediate(ap1->offset->i128.low + 0x40000000000LL));
-						else
-							GenerateDiadic(op_addh, 0, ap2, MakeImmediate(ap1->offset->i128.low));
-					}
+					if (!ap1->offset->i128.IsNBit(48))
+						GenerateTriadic(op_adds, 0, ap2, MakeImmediate((ap1->offset->i128.low >> 48LL) & 0xffffffLL), MakeImmediate(2LL));
 					// ToDo handle constant >64 bits
 					/*
 					ip = GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0xffffLL));
@@ -1972,10 +1964,10 @@ void QuplsCodeGenerator::GenerateLoadDataPointer()
 	Operand* ap = GetTempRegister();
 
 	return;
-	if (address_bits > 21) {
+	if (address_bits > 24) {
 		cg.GenerateLoadAddress(makereg(regGP), MakeStringAsNameConst((char*)"<_start_data", dataseg));
-		GenerateDiadic(op_orm, 0, makereg(regGP), MakeStringAsNameConst((char*)"?_start_data", dataseg));
-		if (address_bits > 44)
+		GenerateDiadic(op_orm, 0, makereg(regGP), MakeStringAsNameConst((char*)"_start_data", dataseg));
+		if (address_bits > 48)
 			GenerateDiadic(op_orh, 0, makereg(regGP), MakeStringAsNameConst((char*)">_start_data", dataseg));
 	}
 	else
@@ -1991,10 +1983,10 @@ void QuplsCodeGenerator::GenerateLoadRodataPointer()
 	return;
 	//cg.GenerateLoadConst(MakeStringAsNameConst("__rodata_base", dataseg), ap);
 //	cg.GenerateLoadAddress(makereg(regGP1), MakeStringAsNameConst((char*)currentFn->sym->name->c_str(), codeseg));
-	if (address_bits > 21) {
+	if (address_bits > 24) {
 		cg.GenerateLoadAddress(makereg(regGP), MakeStringAsNameConst((char*)"<_start_rodata", rodataseg));
-		GenerateDiadic(op_orm, 0, makereg(regGP), MakeStringAsNameConst((char*)"?_start_rodata", rodataseg));
-		if (address_bits > 44)
+		GenerateDiadic(op_orm, 0, makereg(regGP), MakeStringAsNameConst((char*)"_start_rodata", rodataseg));
+		if (address_bits > 48)
 			GenerateDiadic(op_orh, 0, makereg(regGP), MakeStringAsNameConst((char*)">_start_rodata", rodataseg));
 	}
 	else
@@ -2010,10 +2002,10 @@ void QuplsCodeGenerator::GenerateLoadBssPointer()
 	Operand* ap = GetTempRegister();
 
 	return;
-	if (address_bits > 21) {
+	if (address_bits > 24) {
 		cg.GenerateLoadAddress(makereg(regGP1), MakeStringAsNameConst((char*)"<_start_bss", bssseg));
-		GenerateDiadic(op_orm, 0, makereg(regGP1), MakeStringAsNameConst((char*)"?_start_bss", bssseg));
-		if (address_bits > 44)
+		GenerateDiadic(op_orm, 0, makereg(regGP1), MakeStringAsNameConst((char*)"_start_bss", bssseg));
+		if (address_bits > 48)
 			GenerateDiadic(op_orh, 0, makereg(regGP1), MakeStringAsNameConst((char*)">_start_bss", bssseg));
 	}
 	else

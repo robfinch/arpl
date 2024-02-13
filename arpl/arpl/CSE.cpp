@@ -45,9 +45,9 @@ int CSE::OptimizationDesireability()
 		// zero can have r0 substituted.
 		if (exp->i == 0)
 			return (0);
-		if (exp->i128.IsNBit(21))
+		if (exp->i128.IsNBit(24))
 			return (0);
-		if (exp->i128.IsNBit(44))
+		if (exp->i128.IsNBit(48))
 			return (uses);
 		// Optimize large constants
 		return (uses * 2);

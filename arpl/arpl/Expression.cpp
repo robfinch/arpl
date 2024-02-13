@@ -1919,6 +1919,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	if (lastst == closebr)
 		undimensioned = true;
 	if (!undimensioned) {
+		/* one must be a pointer, the other a scalar type */
 		if (tp1->type == bt_pointer) {
 			tp2 = expression(&rnode, nullptr);
 			tp3 = tp1;
@@ -1927,11 +1928,19 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 				error(ERR_EXPREXPECT);
 				throw new C64PException(ERR_EXPREXPECT, 9);
 			}
+			if (!tp2->IsScalar()) {
+				error(ERR_BADARRAYNDX);
+				throw new C64PException(ERR_BADARRAYNDX, 12);
+			}
 		}
 		else {
 			tp2 = tp1;
 			rnode = pnode;
 			tp3 = expression(&pnode, nullptr);
+			if (tp3->type != bt_pointer) {
+				error(ERR_NOPOINTER);
+				throw new C64PException(ERR_NOPOINTER, 11);
+			}
 			if (tp3 == NULL) {
 				error(ERR_UNDEFINED);
 				throw new C64PException(ERR_UNDEFINED, 10);
@@ -1966,6 +1975,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	if (cnt == 0)
 		totsz = tp1->size;
 	if (tp1->type != bt_pointer) {
+		/* could be a bitfield spec on a scalar type */
 		if (lastst == colon) {
 			NextToken();
 			tp3 = expression(&qnode, nullptr);

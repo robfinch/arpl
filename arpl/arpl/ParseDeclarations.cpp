@@ -2005,6 +2005,8 @@ void Declaration::ParseAssign(Symbol *sp)
 	exp.tail = tail;
 	bool madenode;
 
+	dfs.printf("<ParseAssign>");
+
 	if (parsingParameterList) {
 		GetConstExpression(&ep2, sp);
 		sp->defval = ep2;
@@ -2013,13 +2015,16 @@ void Declaration::ParseAssign(Symbol *sp)
 		if (sp) {
 			if (sp->tp->isArray && !sp->IsExternal) {
 				doinit(sp, true);
+				dfs.printf("</ParseAssign>");
 				return;
 			}
 		}
 		NextToken();
 		ep1 = exp.MakeAutoNameNode(sp);
-		if (ep1 == nullptr)
+		if (ep1 == nullptr) {
+			dfs.printf("</ParseAssign>");
 			return;
+		}
 		ep1->constflag = false;
 		ep1->sym = sp;
 		tp1 = exp.CondDeref(&ep1, sp->tp);
@@ -2042,6 +2047,7 @@ void Declaration::ParseAssign(Symbol *sp)
 		sp->segment = (e_sg)ep1->segment;
 		sp->initexp = makenode(en_void, nullptr, ep1);
 	}
+	dfs.printf("</ParseAssign>");
 }
 
 

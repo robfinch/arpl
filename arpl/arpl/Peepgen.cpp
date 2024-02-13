@@ -126,7 +126,7 @@ OCODE* GenerateDiadic(int op, int len, Operand *ap1, Operand *ap2)
 	return (cd);
 }
 
-void GenerateTriadic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3)
+OCODE* GenerateTriadic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3)
 {
 	OCODE    *cd;
 	cd = (OCODE *)allocx(sizeof(OCODE));
@@ -140,6 +140,7 @@ void GenerateTriadic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3)
 	cd->loop_depth = looplevel;
 	//AddToPeepList(cd);
 	currentFn->pl.Add(cd);
+	return (cd);
 }
 
 void GenerateTriadicEx(int op, std::string* ext, Operand* ap1, Operand* ap2, Operand* ap3)

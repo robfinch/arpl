@@ -305,6 +305,7 @@ enum e_op {
 	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxw, op_zxt, op_bmap,
+	op_movzxb, op_movzxw, op_movzxt,
 	op_wydendx, op_sync,
 	op_phi, op_pfi,
 	op_verbatium,

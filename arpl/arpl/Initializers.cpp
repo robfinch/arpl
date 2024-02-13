@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -199,6 +199,8 @@ static std::string GetSegmentDecl(Symbol* sp)
 				decl.append("\t.bss\n");
 		}
 	}
+	else if (sp->isConst)
+		decl.append("\t.rodata");
 	return (decl);
 }
 
@@ -392,6 +394,7 @@ void doinit(Symbol *sp, bool gbls)
 	std::string init_str;
 	std::string saw;
 
+	dfs.printf("<doinit>");
 	old_ofs = &ofs;
 	ofname = ofs.name;
 	if (sp->storage_class != sc_global) {
@@ -440,15 +443,26 @@ void doinit(Symbol *sp, bool gbls)
 			SetDefaultAlign(sp, oseg);
 	}
 	
-	if (curseg != noseg)
+	if (curseg == noseg && sp->isConst)
+		oseg = rodataseg;
+	if (curseg != noseg && oseg==noseg)
 		oseg = (e_sg)curseg;
 
 	if (sp->storage_class == sc_static || sp->storage_class == sc_thread) {
+		int cs;
 		segdecl = "";
 		aligndecl = "";
 		objdecl = "";
 		skipfmtword = "";// GetSkipFormatWord(sp);
+		// put_label will set curseg, we want to keep the value.
+		cs = curseg;
+		// This seems due to an error earlier in the compiler. The segment is not
+		// being set. put_label also spits out .bytes for the data if there is
+		// no segment specified.
+		if (sp->isConst && sp->segment==noseg)
+			sp->segment = rodataseg;
 		sp->realname = my_strdup(put_label(ofs,(int)sp->value.i, (char *)sp->name->c_str(), GetPrivateNamespace(), 'D', sp->tp->size, sp->segment));
+		curseg = cs;
 		output_name = sp->realname;
 	}
 	else {
@@ -487,7 +501,7 @@ void doinit(Symbol *sp, bool gbls)
   }
 	else if( lastst != assign && !IsFuncptrAssign(sp)) {
 		hasPointer = sp->tp->FindPointer();
-		if (!sp->IsExternal && oseg != bssseg)
+		if (!sp->IsExternal && oseg != bssseg && oseg != rodataseg)
 			genstorage(ofs, sp->tp->size);
 	}
 	else {
@@ -625,6 +639,7 @@ xit:
 		ofs.close();
 		ofs.open(ofname, std::ios::out);// | std::ios::app);
 	}
+	dfs.printf("</doinit>");
 }
 
 
