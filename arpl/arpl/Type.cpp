@@ -127,7 +127,7 @@ TYP *TYP::Copy(TYP *src)
 	return (dst);
 }
 
-TYP *TYP::Make(int bt, int64_t siz)
+TYP *TYP::Make(e_bt bt, int64_t siz)
 {
 	TYP *tp;
 	dfs.puts("<TYP__Make>\n");
@@ -141,7 +141,7 @@ TYP *TYP::Make(int bt, int64_t siz)
 	tp->size = siz;
 	tp->type = bt;
 	tp->typeno = bt;
-	tp->precision = siz * 8;
+	tp->precision = (short)siz * 8;
 	if (bt == bt_pointer)
 		tp->isUnsigned = TRUE;
 	dfs.puts("</TYP__Make>\n");
@@ -852,7 +852,6 @@ int64_t TYP::Initialize(txtoStream& tfs, ENODE* pnode, TYP *tp2, int opt, Symbol
 	TYP *tp;
 	int base, nn;
 	int64_t sizes[100];
-	char idbuf[sizeof(lastid)+1];
 	Expression exp(cg.stmt);
 
 	for (base = typ_sp-1; base >= 0; base--) {
@@ -1643,7 +1642,6 @@ int64_t TYP::InitializeUnion(txtoStream& tfs, Symbol* symi, ENODE* node)
 {
 	Symbol *sp, *osp;
 	int64_t nbytes;
-	int64_t val;
 	bool found = false;
 	TYP *tp, *ntp;
 	int count;
@@ -1840,12 +1838,16 @@ int64_t TYP::walignment()
 	case bt_enum:           level--; return imax(AL_CHAR, worstAlignment);
 	case bt_pointer:
 		if (val_flag) {
-			retval = imax(btpp->Alignment(), worstAlignment);
+			if (btpp->Alignment() > worstAlignment)
+				retval = btpp->Alignment();
+			else
+				retval = worstAlignment;
 			goto xit;
 		}
 		else {
-			return (imax(cpu.sizeOfPtr, worstAlignment));
-			//				return (imax(AL_POINTER,worstAlignment));
+			if (cpu.sizeOfPtr > worstAlignment)
+				return (cpu.sizeOfPtr);
+			return (worstAlignment);
 		}
 	case bt_float:          level--; return imax(AL_FLOAT, worstAlignment);
 	case bt_double:         level--; return imax(AL_DOUBLE, worstAlignment);

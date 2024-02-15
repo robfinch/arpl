@@ -823,11 +823,6 @@ int Symbol::AdjustNbytes(int nbytes, int al, int ztype)
 int64_t Symbol::Initialize(txtoStream& tfs, ENODE* pnode, TYP* tp2, int opt)
 {
 	static int level = 0;
-	int64_t nbytes;
-	int base, nn;
-	int64_t sizes[100];
-	char idbuf[sizeof(lastid) + 1];
-	ENODE* node;
 	Expression exp(cg.stmt);
 	bool init_array = false;
 
@@ -907,7 +902,7 @@ int64_t Symbol::Initialize(txtoStream& tfs, ENODE* pnode, TYP* tp2, int opt)
 			break;
 	} while (0);
 	*/
-j2:
+//j2:
 	/*
 	if (init_array) {
 		while (lastst == end) {
@@ -924,7 +919,7 @@ j2:
 		}
 	}
 	*/
-	return (nbytes);
+//	return (nbytes);
 }
 
 int64_t Symbol::InitializeArray(txtoStream& tfs, ENODE* rootnode, TYP* tp)
@@ -1247,29 +1242,29 @@ int64_t Symbol::GenerateT(txtoStream& tfs, ENODE* node, TYP* ptp)
 	case bt_ichar:
 	case bt_char:
 	case bt_enum:
-		val = node->i;
+		val = node->i128.low;
 		nbytes = 2; GenerateChar(tfs, val); break;
 	case bt_iuchar:
 	case bt_uchar:
-		val = node->i;
+		val = node->i128.low;
 		nbytes = 2; GenerateChar(tfs, val); break;
 	case bt_short:
-		val = node->i;
+		val = node->i128.low;
 		nbytes = 4; GenerateHalf(tfs, val); break;
 	case bt_ushort:
-		val = node->i;
+		val = node->i128.low;
 		nbytes = 4; GenerateHalf(tfs, val); break;
 	case bt_int:
 	case bt_uint:
-		val = node->i;
-		nbytes = 8; GenerateInt(tfs, val); break;
+		val = node->i128.low;
+		nbytes = cpu.sizeOfInt; GenerateInt(tfs, val); break;
 	case bt_long:
-		val = node->i;
-		nbytes = 8; GenerateLong(tfs, val); break;
+		val = node->i128.low;
+		nbytes = 16; GenerateLong(tfs, val); break;
 	case bt_exception:
 	case bt_ulong:
-		val = node->i;
-		nbytes = 8; GenerateLong(tfs, val); break;
+		val = node->i128.low;
+		nbytes = 16; GenerateLong(tfs, val); break;
 	case bt_float:
 		nbytes = 8; GenerateFloat(tfs, (Float128*)&node->f128); break;
 	case bt_double:

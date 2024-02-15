@@ -35,7 +35,7 @@ static CELL *HighWaterMark = Region;
 int64_t tmpAlloc(int64_t size)
 {
 	CELL *start, *p;
-	int i;
+	int64_t i;
 
 	if (size == 0)
 		printf("INTERNAL, tmpAlloc: zero length region requested.\n");
@@ -86,10 +86,10 @@ int64_t tmpAlloc(int64_t size)
 void tmpFree(int64_t offset)
 {
 	CELL *p = Region + offset/SWIDTH;
-	int size;
+	int64_t size;
 
 	if (p < Region || p > HighWaterMark || !*p || *p == MARK)
-		printf("INTERNAL, tmpFree: Bad offset (%i64d)\n", offset);
+		printf("INTERNAL, tmpFree: Bad offset (%I64d)\n", offset);
 	else
 		for (size = *p; --size >= 0; *p++ = 0)
 			;

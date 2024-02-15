@@ -965,7 +965,7 @@ j1:
 		// Really working with pointers to functions.
 	case bt_func:
 	case bt_ifunc:
-		return srctp;
+		return typecast ? srctp : dsttp;
 	case bt_void:
 		return (dsttp);
 	case bt_vector:

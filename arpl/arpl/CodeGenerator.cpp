@@ -1659,7 +1659,7 @@ void DumpStructEnodes(ENODE *node)
 	ENODE *head;
 	TYP *tp;
 
-	lfs.printf("{");
+	lfs.puts("{");
 	head = node;
 	while (head) {
 		tp = head->tp;
@@ -1668,8 +1668,11 @@ void DumpStructEnodes(ENODE *node)
 		if (head->nodetype==en_aggregate) {
 			DumpStructEnodes(head->p[0]);
 		}
-		if (head->nodetype==en_icon)
-			lfs.printf((char *)"%d", head->i);
+		if (head->nodetype == en_icon) {
+			char buf[50];
+			sprintf_s(buf, sizeof(buf), "%d", head->i);
+			lfs.puts(buf);
+		}
 		head = head->p[1];
 	}
 	lfs.printf("}");
@@ -2741,6 +2744,7 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		GenerateLea(ap1, ap2);
 		ReleaseTempReg(ap2);
 		goto retpt;
+
   case en_ref:
 		if (node->tp == nullptr)
 			tpsz = cpu.sizeOfWord;
@@ -2754,6 +2758,7 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		ap1->MakeLegal(flags, ap1->tp->size);
 		return(ap1);
 		goto retpt;
+
 	case en_fieldref:
 		ap1 = (flags & am_bf_assign) ? GenerateDereference(node,flags & ~am_bf_assign,node->tp->size,!node->isUnsigned, (flags & am_bf_assign) != 0, rhs)
 			: GenerateBitfieldDereference(node, flags, node->tp->size, (flags & am_bf_assign) != 0);//!node->isUnsigned);

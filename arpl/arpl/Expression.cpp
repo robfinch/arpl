@@ -100,9 +100,7 @@ TYP* Expression::ParseFloatMax(ENODE** node)
 
 TYP* Expression::ParseRealConst(ENODE** node)
 {
-	float f;
-	double d;
-	ENODE* pnode, *qnode, *rnode, *snode, *tnode;
+	ENODE* pnode;
 	TYP* tptr;
 	int32_t *w;
 
@@ -561,7 +559,7 @@ bool Expression::ParseAggregateStruct(ENODE** node, ENODE* cnode, Symbol* symi, 
 		else
 			break;
 	}
-xit:
+
 	if (is_array) {
 		maxcount = ne;
 		// Find the union member matching the array, we need this to set the type.
@@ -599,11 +597,6 @@ void Expression::ParseAggregateHelper(ENODE** node, ENODE* cnode)
 {
 	bool cnst = true;
 	bool consistentType = true;
-	bool is_array;
-	TYP* tptr, *tptr2;
-	int64_t at_node;
-	int64_t sz;
-	int64_t order;
 	ENODE* pnode;
 
 	pnode = *node;
@@ -633,16 +626,13 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 	TYP* tptr, *btpp;
 	int64_t sz = 0;
 	ENODE* cnode, *hnode, *qnode;
+	Symbol* lst;
 	bool cnst = true;
 	bool consistentType = true;
 	TYP* tptr2;
-	int64_t n, at_node, order;
 	int64_t pos = 0;
-	Symbol* sp;
 	int count;
 	static int level = 0;
-	Symbol* lst, *hlst;
-	List* rlst;
 	bool is_array = false;
 	bool is_struct = false;
 	std::string str;
@@ -1321,8 +1311,8 @@ ENODE* Expression::ParseMulf(Symbol* symi)
 
 ENODE* Expression::ParseSync(Symbol* symi)
 {
-	ENODE* ep1, * ep2;
-	TYP* tp, * tp1, * tp2;
+	ENODE* ep1;
+	TYP* tp, * tp1;
 
 	NextToken();
 	needpunc(openpa, 46);
@@ -1399,8 +1389,8 @@ ENODE* Expression::ParseBmap(Symbol* symi)
 
 ENODE* Expression::ParseSaveContext(Symbol* symi)
 {
-	ENODE* ep1, * ep2;
-	TYP* tp, * tp1, * tp2;
+	ENODE* ep1;
+	TYP* tp;
 
 	NextToken();
 	needpunc(openpa, 81);
@@ -1745,7 +1735,7 @@ xit:
 
 ENODE* Expression::ParsePointsTo(TYP* tp1, ENODE* ep1)
 {
-	TYP* tp2, *tp3;
+	TYP* tp2;
 	ENODE* ep2;
 
 	ep2 = ep1;
@@ -1792,7 +1782,7 @@ ENODE* Expression::ParseOpenpa(TYP* tp1, ENODE* ep1, Symbol* symi)
 	TypeArray typearray;
 	ENODE* ep2, * ep3, * ep4;
 	TYP* tp2, * tp3;
-	Symbol* sp, *sy;
+	Symbol* sp;
 	char* name;
 	std::string nme;
 
@@ -1919,16 +1909,16 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	if (lastst == closebr)
 		undimensioned = true;
 	if (!undimensioned) {
-		/* one must be a pointer, the other a scalar type */
+		/* one must be a pointer, the other a integral type */
 		if (tp1->type == bt_pointer) {
-			tp2 = expression(&rnode, nullptr);
+			tp2 = ParseExpression(&rnode, nullptr);
 			tp3 = tp1;
 			tp4 = tp1;
 			if (rnode == nullptr) {
 				error(ERR_EXPREXPECT);
 				throw new C64PException(ERR_EXPREXPECT, 9);
 			}
-			if (!tp2->IsScalar()) {
+			if (!tp2->IsIntegralType()) {
 				error(ERR_BADARRAYNDX);
 				throw new C64PException(ERR_BADARRAYNDX, 12);
 			}
@@ -1936,10 +1926,11 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 		else {
 			tp2 = tp1;
 			rnode = pnode;
-			tp3 = expression(&pnode, nullptr);
+			tp3 = ParseExpression(&pnode, nullptr);
+			// Type transfers need to be improved for this to work.
 			if (tp3->type != bt_pointer) {
-				error(ERR_NOPOINTER);
-				throw new C64PException(ERR_NOPOINTER, 11);
+				//error(ERR_NOPOINTER);
+				//throw new C64PException(ERR_NOPOINTER, 11);
 			}
 			if (tp3 == NULL) {
 				error(ERR_UNDEFINED);
@@ -1978,7 +1969,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 		/* could be a bitfield spec on a scalar type */
 		if (lastst == colon) {
 			NextToken();
-			tp3 = expression(&qnode, nullptr);
+			tp3 = ParseExpression(&qnode, nullptr);
 			snode = qnode;
 			qnode = compiler.ef.Makenode(en_sub, pnode->Clone(), qnode);
 			//qnode = compiler.ef.Makenode(en_sub, qnode, makeinode(en_icon, 1));
@@ -2081,7 +2072,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 		if (cf && qnode->i==elesize && 
 			(elesize==1 || elesize==2 || elesize==4 || elesize==8 || elesize==16)) {
 			qnode = rnode;
-			qnode->scale = sz1;
+			qnode->scale = (char)sz1;
 		}
 		else
 			qnode = makenode(en_mulu, qnode, rnode);
@@ -2189,12 +2180,10 @@ TYP* Expression::ParseGenericSwitch(ENODE** node, Symbol* symi)
 	bool got_begin = false;
 	bool found = false;
 	Declaration decl;
-	Symbol* sp;
-	TYP* tp1, * tpa, *tp2, *tp, *tprh, *tprt;
+	TYP* tp1, *tp2, *tprh;
 	TYP* tp_found;
 	TYP* tph[100];
-	TYP* tpt[100];
-	ENODE* ep1, * ep2, *ep3, * ep4, *epr, *ep_def;
+	ENODE* ep1, * ep2, * ep4, *ep_def;
 	ENODE* ep_found;
 	short int count, defcount;
 	Statement* stmt;
@@ -2206,6 +2195,7 @@ TYP* Expression::ParseGenericSwitch(ENODE** node, Symbol* symi)
 	defcount = -1;
 
 	needpunc(e_sym::begin, 58);
+	ZeroMemory(tph, sizeof(tph));
 	ep2 = nullptr;
 	ep_found = nullptr;
 	for (count = 0; count < 100; count++) {
@@ -2239,7 +2229,6 @@ TYP* Expression::ParseGenericSwitch(ENODE** node, Symbol* symi)
 
 TYP* Expression::ParseSwitchExpr(ENODE** node, Symbol* symi)
 {
-	Statement* stmt;
 	int64_t* cv;
 	TYP* tp, *first_tp;
 	ENODE* ep1, *ep2;
@@ -2280,7 +2269,6 @@ TYP* Expression::ParseSwitchExpr(ENODE** node, Symbol* symi)
 
 TYP* Expression::ParseGenericCase(ENODE** node, Symbol* symi, TYP* tp1)
 {
-	int count;
 	Declaration decl;
 	TYP* tph, * tpt;
 	TYP* tp;

@@ -1,11 +1,11 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2021  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
 //
-// CC64 - 'C' derived language compiler
+// arpl - 'C' derived language compiler
 //  - 64 bit CPU
 //
 // This source file is free software: you can redistribute it and/or modify 
@@ -36,7 +36,7 @@ TypeArray::TypeArray()
 // The most significant bit of the register number indicates if register is
 // an auto var or not. auto vars consume stack space.
 
-void TypeArray::Add(int tp, __int16 regno)
+void TypeArray::Add(e_bt tp, __int16 regno)
 {
   if (this==nullptr)
     return;
@@ -50,7 +50,7 @@ void TypeArray::Add(int tp, __int16 regno)
 void TypeArray::Add(TYP *tp, __int16 regno)
 {
   if (tp) {
-    Add(tp->typeno, regno);
+    Add(tp->type, regno);
   }
   else {
     Add(0,0);
@@ -72,28 +72,28 @@ bool TypeArray::IsEmpty()
   return true;
 }
 
-bool TypeArray::IsByte(int typ)
+bool TypeArray::IsByte(e_bt typ)
 {
 	return (typ==bt_byte || typ==bt_ubyte);
 }
 
-bool TypeArray::IsChar(int typ)
+bool TypeArray::IsChar(e_bt typ)
 {
 	return (typ==bt_char || typ==bt_uchar || typ==bt_ichar || typ==bt_iuchar);
 }
-bool TypeArray::IsShort(int typ)
+bool TypeArray::IsShort(e_bt typ)
 {
 	return (typ==bt_short || typ==bt_ushort);
 }
-bool TypeArray::IsInt(int typ)
+bool TypeArray::IsInt(e_bt typ)
 {
   return (typ == bt_int || typ == bt_uint);
 }
-bool TypeArray::IsLong(int typ)
+bool TypeArray::IsLong(e_bt typ)
 {
 	return (typ==bt_long || typ==bt_ulong);
 }
-bool TypeArray::IsIntType(int typ)
+bool TypeArray::IsIntType(e_bt typ)
 {
 	return (IsChar(typ)||IsShort(typ)||IsLong(typ)||IsByte(typ)||IsInt(typ));
 }
@@ -102,7 +102,7 @@ bool TypeArray::IsEqual(TypeArray *ta)
 {
   int m;
   int nn;
-  int t,tat;
+  e_bt t,tat;
   
   dfs.printf("IsEqual:");
   if (this==ta) {

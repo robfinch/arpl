@@ -298,7 +298,7 @@ ENODE *makefqnode(int nt, Float128 *f128)
 
 char *GetStrConst()
 {
-	int len;
+	int64_t len;
 	char *str, *nstr;
 
 	len = MAX_STLP1 + 1;
@@ -950,7 +950,6 @@ TYP *Expression::nameref2(std::string name, ENODE **node,int nt,bool alloc,TypeA
 		}
 	}
 	else {
-j1:
 		dfs.puts("sp is not null\n");
 		typearray->Print();
 		if( (tp = sp->tp) == NULL ) {
@@ -1079,12 +1078,12 @@ ENODE *Expression::ParseArgumentList(ENODE *hidden, TypeArray *typearray, Symbol
 			}
 			if (typ == nullptr) {
 				//error(ERR_BADARG);
-				typearray->Add((int)bt_none, 0);
+				typearray->Add(bt_none, 0);
 			}
 			else {
 				// If a function pointer is passed, we want a pointer type
 				if (typ->typeno == bt_func || typ->typeno == bt_ifunc)
-					typearray->Add((int)bt_pointer, 0);
+					typearray->Add(bt_pointer, 0);
 				else
 					typearray->Add(typ, 0);
 			}
@@ -2287,7 +2286,7 @@ TYP *Expression::ParseAddOps(ENODE **node, Symbol* symi)
 	ENODE *ep1, *ep2, *ep3, *ep4;
   TYP *tp1, *tp2;
   int oper;
-	int sz1, sz2;
+	int64_t sz1, sz2;
 	bool isScalar = true;
 	bool onePtr = false;
 
@@ -3153,7 +3152,8 @@ ascomm2:
 					//}
 					//else
 					{
-						tp1 = forcefit(&ep2, tp2, &ep1, tp1, true, true);
+						// The destination type does not change on an assignment.
+						forcefit(&ep2, tp2, &ep1, tp1, true, false);
 						ep1 = makenode(op, ep1, ep2);
 						ep1->tp = tp1;
 						ep1->esize = tp1->size;
@@ -3244,17 +3244,16 @@ TYP *Expression::ParseNonAssignExpression(ENODE **node, Symbol* symi)
 {
 	TYP *tp;
 	pep1 = nullptr;
-	Enter("NonAssignExpression");
-    *node = (ENODE *)NULL;
-    tp = ParseConditionalOps(node, symi);
-		if (tp == nullptr) {
-			*node = nullptr;
-			return (nullptr);
-		}
-    Leave("NonAssignExpression",tp ? tp->type : 0);
-     if (*node)
-     	(*node)->SetType(tp);
-    return tp;
+	Enter("<NonAssignExpression>");
+  *node = (ENODE *)NULL;
+  tp = ParseConditionalOps(node, symi);
+	if (tp == nullptr) {
+		*node = nullptr;
+	}
+  if (*node)
+    (*node)->SetType(tp);
+	Leave("</NonAssignExpression>", tp ? tp->type : 0);
+	return (tp);
 }
 
 // ----------------------------------------------------------------------------
@@ -3264,23 +3263,27 @@ TYP *Expression::ParseNonAssignExpression(ENODE **node, Symbol* symi)
 // ----------------------------------------------------------------------------
 TYP *Expression::ParseNonCommaExpression(ENODE **node, Symbol* symi)
 {
-	TYP *tp;
+	TYP *tp = nullptr;
 	ENODE *o_pfl = postfixList;
 
-	postfixList = nullptr;
-	pep1 = nullptr;
-	Enter("NonCommaExpression");
-  *node = (ENODE *)NULL;
-  tp = ParseAssignOps(node, symi);
-  if( tp == (TYP *)NULL )
-    *node =(ENODE *)NULL;
-  Leave("NonCommaExpression",tp ? tp->type : 0);
-	if (postfixList)
-		(*node)->pfl = postfixList;
-	postfixList = o_pfl;
-	if (*node)
-    (*node)->SetType(tp);
-  return (tp);
+	Enter("<NonCommaExpression>");
+	try {
+		postfixList = nullptr;
+		pep1 = nullptr;
+		*node = (ENODE*)NULL;
+		tp = ParseAssignOps(node, symi);
+		if (tp == (TYP*)NULL)
+			*node = (ENODE*)NULL;
+		if (postfixList)
+			(*node)->pfl = postfixList;
+		postfixList = o_pfl;
+		if (*node)
+			(*node)->SetType(tp);
+	}
+	catch (C64PException* exc) {
+	}
+	Leave("</NonCommaExpression>", tp ? tp->type : 0);
+	return (tp);
 }
 
 /*
@@ -3354,26 +3357,30 @@ static void Safize(ENODE* nd)
 
 TYP *Expression::ParseExpression(ENODE **node, Symbol* symi)
 {
-	TYP *tp;
+	TYP *tp = nullptr;
+	int val = 0;
 
-	Enter("<expression>");
-	pep1 = nullptr;
-  *node = (ENODE *)NULL;
-  tp = ParseCommaOp(node, symi);
-  if( tp == (TYP *)NULL )
-      *node = (ENODE *)NULL;
-  TRACE(printf("leave exp\r\n"));
-	if (!ExpressionHasReference) {
-		Safize(*node);
+	Enter("<Expression>");
+	try {
+		pep1 = nullptr;
+		*node = (ENODE*)NULL;
+		tp = ParseCommaOp(node, symi);
+		if (tp == (TYP*)NULL)
+			*node = (ENODE*)NULL;
+		TRACE(printf("leave exp\r\n"));
+		if (!ExpressionHasReference) {
+			Safize(*node);
+		}
+		if (tp) {
+			if (*node)
+				(*node)->SetType(tp);
+			val = tp->type;
+		}
 	}
-  if (tp) {
-     if (*node)
-        (*node)->SetType(tp);
-      Leave("Expression",tp->type);
-  }
-  else
-  Leave("</Expression>",0);
-  return tp;
+	catch (C64PException* exc) {
+	}
+	Leave("</Expression>", val);
+	return (tp);
 }
 
 TYP *expression(ENODE **node, Symbol* symi)

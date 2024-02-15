@@ -2333,6 +2333,7 @@ Operand* QuplsCodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
 	ap1->isUnsigned = node->isUnsigned;
 	ap1->tp = node->tp;
 	ap1->MakeLegal(flags, size);
+	return (ap1);
 }
 
 Operand* QuplsCodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)

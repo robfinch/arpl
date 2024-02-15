@@ -35,7 +35,7 @@ public:
 		printf((char*)fmt, n);
 	};
 	void printf(char *fmt, int n, int m);
-	void printf(char *fmt, __int64 n);
+	void printf(const char *fmt, __int64 n);
 	void putch(char ch) { 
 	    if (level) {
 	     buf[0] = ch;

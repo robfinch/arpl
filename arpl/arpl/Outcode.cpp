@@ -319,14 +319,14 @@ Instruction opl[374] =
 { "regs", op_reglist,1,1,false,am_imm,0,0,0 },
 { "rem", op_rem,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "remu",op_remu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
-{ "ret", op_ret,1,0,am_imm,0,0,0 },
+{ "ret", op_ret,1,0,false,am_imm,0,0,0 },
 { "rol", op_rol,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "ror", op_ror,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "rtd", op_rtd,1,0,false,am_reg,am_reg,am_reg,am_reg|am_imm },
 { "rte", op_rte,2,0 },
 { "rti", op_rti,2,0 },
-{ "rtl", op_rtl,1,0,am_imm,0,0,0 },
-{ "rts", op_rts,1,0,am_imm,0,0,0 },
+{ "rtl", op_rtl,1,0,false,am_imm,0,0,0 },
+{ "rts", op_rts,1,0,false,am_imm,0,0,0 },
 { "rtx", op_rtx,1,0,0,0,0,0 },
 { "sand",op_sand,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "sb",op_sb,4,0,true,am_reg,am_mem,0,0 },
@@ -759,15 +759,15 @@ void GenerateChar(txtoStream& tfs, int64_t val)
 void GenerateHalf(txtoStream& tfs, int64_t val)
 {
 	if( gentype == halfgen && outcol < 60) {
-        tfs.printf(",%ld",(long)(val & 0xffffffffLL));
+        tfs.printf(",%ld",(int32_t)(val & 0xffffffffLL));
         outcol += 10;
     }
     else {
         nl(tfs);
 				if (syntax == MOT)
-					tfs.printf("\tdc.l\t%ld", (long)(val & 0xffffffffLL));
+					tfs.printf("\tdc.l\t%ld", (int32_t)(val & 0xffffffffLL));
 				else
-	        tfs.printf("\t.4byte\t%ld",(long)(val & 0xffffffffLL));
+	        tfs.printf("\t.4byte\t%ld",(int32_t)(val & 0xffffffffLL));
         gentype = halfgen;
         outcol = 25;
     }
@@ -794,20 +794,29 @@ void GenerateWord(txtoStream& tfs, int64_t val)
 
 void GenerateLong(txtoStream& tfs, Int128 val)
 { 
+	char buf[100];
+
 	if( gentype == longgen && outcol < 56) {
-                tfs.printf((char *)",%I64d,%I64d",val.low,val.high);
-                outcol += 10;
-                }
-        else    {
-                nl(tfs);
-								if (syntax == MOT)
-									tfs.printf((char*)"\tdc.q\t%I64d,%I64d", val.low, val.high);
-								else
-	                tfs.printf((char *)"\t.8byte\t%I64d,%I64d",val.low,val.high);
-                gentype = longgen;
-                outcol = 25;
-                }
-		genst_cumulative += 16;
+		sprintf_s(buf, sizeof(buf), ",%I64x,%I64x", val.low, val.high);
+		tfs.puts(buf);
+		outcol += strlen(buf);
+  }
+  else {
+    nl(tfs);
+		if (syntax == MOT) {
+			sprintf_s(buf, sizeof(buf), "\tdc.q\t%I64d,%I64d", val.low, val.high);
+			tfs.puts(buf);
+			outcol += strlen(buf);
+		}
+		else {
+			sprintf_s(buf, sizeof(buf), "\t.8byte\t%I64d,%I64d", val.low, val.high);
+			tfs.puts(buf);
+			outcol += strlen(buf);
+		}
+    gentype = longgen;
+    outcol = 25;
+  }
+	genst_cumulative += 16;
 }
 
 void GenerateInt(txtoStream& tfs, int64_t val)

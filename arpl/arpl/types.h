@@ -587,7 +587,7 @@ public:
 
 class TYP {
 public:
-  int type;
+  e_bt type;
 	__int16 typeno;			// number of the type
 	bool val_flag;       /* is it a value type */
 	bool isArray;
@@ -607,7 +607,7 @@ public:
 	int64_t align;
 	int64_t struct_offset;
 	int8_t dimen;
-	int numele;					// number of elements in array / vector length
+	int64_t numele;					// number of elements in array / vector length
 	TABLE lst;
 	TYP* btpp;
 	std::string* rd_cache;	// cache-ability specifiers
@@ -621,7 +621,7 @@ public:
 	static int GetBasicType(int num);
 	std::string *sname;
 	unsigned int alignment;
-	static TYP *Make(int bt, int64_t siz);
+	static TYP *Make(e_bt bt, int64_t siz);
 	static TYP *Copy(TYP *src);
 	bool IsScalar();
 	static bool IsScalar(e_sym kw);
@@ -649,7 +649,7 @@ public:
 			type == bt_unsigned || type == bt_exception
 			;
 	};
-	static int IsIntrinsicType(int st)
+	static int IsIntrinsicType(e_bt st)
 	{
 		return
 			st == bt_byte || st == bt_char || st == bt_short || st == bt_int || st == bt_void ||
@@ -657,7 +657,17 @@ public:
 			st == bt_long || st == bt_float || st == bt_double || st == bt_quad || st == bt_ulong ||
 			st == bt_enum || st == bt_struct || st == bt_union || st == bt_bool ||
 			st == bt_ichar || st == bt_iuchar || st == bt_decimal ||
-			st == bt_unsigned || st == bt_exception
+			st == bt_unsigned || st == bt_exception || st==bt_bitfield
+			;
+	};
+	bool IsIntegralType() {
+		return
+			type == bt_byte || type == bt_char || type == bt_short || type == bt_int ||
+			type == bt_ubyte || type == bt_uchar || type == bt_ushort || type == bt_uint ||
+			type == bt_long || type == bt_ulong ||
+			type == bt_enum || type == bt_bool ||
+			type == bt_ichar || type == bt_iuchar ||
+			type == bt_unsigned || type == bt_exception || type == bt_bitfield
 			;
 	};
 	bool IsFunc() const { if (this == nullptr) return (false); return (type == bt_func || type == bt_ifunc); };
@@ -699,20 +709,20 @@ public:
 class TypeArray
 {
 public:
-	int types[40];
+	e_bt types[40];
 	__int16 preg[40];
 	int length;
 	TypeArray();
-	void Add(int tp, __int16 regno);
+	void Add(e_bt tp, __int16 regno);
 	void Add(TYP *tp, __int16 regno);
 	bool IsEmpty();
 	bool IsEqual(TypeArray *);
-	bool IsLong(int);
-	bool IsShort(int);
-	bool IsInt(int);
-	bool IsChar(int);
-	bool IsByte(int);
-	bool IsIntType(int);
+	bool IsLong(e_bt);
+	bool IsShort(e_bt);
+	bool IsInt(e_bt);
+	bool IsChar(e_bt);
+	bool IsByte(e_bt);
+	bool IsIntType(e_bt);
 	void Clear();
 	TypeArray *Alloc();
 	void Print(txtoStream *);
