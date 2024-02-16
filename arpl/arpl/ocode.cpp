@@ -662,6 +662,8 @@ void OCODE::OptLoadWord()
 	OCODE *ip;
 	int rg1, rg2;
 
+	/* This function is now redundant - and will be removed. */
+	return;
 	for (ip = fwd; ip; ip = ip->fwd) {
 		if (ip->insn->IsFlowControl())
 			goto j1;
@@ -726,9 +728,12 @@ void OCODE::OptDefUse()
 	}
 	// If we get to the end, and no use, then eliminate
 	// But, do not remove frame pointer load at end of function.
-	if (oper1->preg != regFP) {
-		MarkRemove();
-		optimized++;
+	if (!isVolatile) {
+		if (oper1->preg != regFP
+			&& oper1->preg != regLR) {
+			MarkRemove();
+			optimized++;
+		}
 	}
 j1:
 	;
@@ -750,13 +755,15 @@ void OCODE::OptNoUse()
 	}
 	// If we get to the end, and no use, then eliminate
 	// But, do not remove frame pointer load at end of function.
-	if (oper1->preg != regFP 
-		&& !IsArgReg(oper1->preg)
-		&& !IsSavedReg(oper1->preg)
-		&& oper1->preg != regLR
-		) {
-		MarkRemove();
-		optimized++;
+	if (!isVolatile) {
+		if (oper1->preg != regFP
+			&& !IsArgReg(oper1->preg)
+			&& !IsSavedReg(oper1->preg)
+			&& oper1->preg != regLR
+			) {
+			MarkRemove();
+			optimized++;
+		}
 	}
 j1:
 	;
