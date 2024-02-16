@@ -1540,7 +1540,10 @@ void dumplits(txtoStream& tfs)
 #ifdef LOCAL_LABELS
 			put_label(tfs, lit->label, strip_crlf(&lit->str[1]), ""/*lit->nmspace*/, 'D', ln, curseg);
 #else
-			put_label(tfs, lit->label, strip_crlf(&lit->str[1]), lit->nmspace, 'D', ln, curseg);
+			if (lit->sym->storage_class == sc_global)
+				put_label(tfs, -1, strip_crlf(&lit->str[1]), lit->sym->name->c_str(), 'D', ln, curseg);
+			else
+				put_label(tfs, lit->label, strip_crlf(&lit->str[1]), lit->nmspace, 'D', ln, curseg);
 #endif
 		}
 		if (lit->isString) {

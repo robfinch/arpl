@@ -427,7 +427,7 @@ void Compiler::storeTables()
 
 	oofs = new txtoStream();
 	oofs->open(irfile, std::ios::out);
-	oofs->printf("; CC64 Hex Intermediate Representation File\n");
+	oofs->printf("; Arpl Hex Intermediate Representation File\n");
 	oofs->printf("; This is an automatically generated file.\n");
 	storeHex(*oofs);
 	oofs->close();

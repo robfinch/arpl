@@ -2728,8 +2728,8 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 			e_sc sc;
 
 			sc = s->storage_class;
-			if (sc == sc_member) {
-					sc = pn->sc;
+ 			if (sc == sc_member) {
+				sc = pn->sc;
 			}
 			if (sc == sc_global)
 				sprintf_s(buf, sizeof(buf), "%s", (char*)sp->c_str());

@@ -207,6 +207,7 @@ TYP* Expression::ParseStringConst(ENODE** node, Symbol* sym)
 	char* str;
 	ENODE* pnode;
 	TYP* tptr;
+	Symbol* sp;
 
 	str = GetStrConst();
 //	if (sizeof_flag) {
@@ -223,7 +224,9 @@ TYP* Expression::ParseStringConst(ENODE** node, Symbol* sym)
 	*/
 	pnode = makenodei(en_labcon, (ENODE*)NULL, 0);
 	if (sizeof_flag == 0) {
-		pnode->i = stringlit(str, sym);
+		sp = sym->Copy(sym);
+		sp->storage_class = sc_const;
+		pnode->i = stringlit(str, sp);
 		pnode->sp = new std::string(&str[1]);
 		if (sym)
 			sym->value.i = pnode->i;
