@@ -702,7 +702,6 @@ Operand *GetTempRegister()
 	Operand *ap;
   Function *sym = currentFn;
 	int number;
-	int nr, nn;
 
 	number = compiler.reg_in_use[cpu.tmpregs[next_reg]];
 	if (number >= 0) {// && number < rap[wrapno]) {
@@ -729,6 +728,7 @@ Operand *GetTempRegister()
   ap->preg = cpu.tmpregs[next_reg];
 	ap->pdeep = ap->deep;
   ap->deep = reg_alloc_ptr;
+	compiler.temp_in_use.add(ap->preg);
   reg_alloc[reg_alloc_ptr].reg = cpu.tmpregs[next_reg];
   reg_alloc[reg_alloc_ptr].Operand = ap;
   reg_alloc[reg_alloc_ptr].f.isPushed = 'F';

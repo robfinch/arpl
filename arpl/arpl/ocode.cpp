@@ -749,7 +749,9 @@ void OCODE::OptNoUse()
 
 	if (!HasTargetReg())
 		return;
-	for (ip = fwd; ip; ip = ip->fwd) {
+	for (ip = currentFn->pl.head; ip; ip = ip->fwd) {
+		if (ip == this)
+			continue;
 		if (ip->HasSourceReg(oper1->preg))
 			goto j1;
 	}

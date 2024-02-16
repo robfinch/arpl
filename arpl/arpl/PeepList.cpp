@@ -1398,3 +1398,101 @@ void PeepList::Dump(char *msg)
 	dfs.printf("</PeepList>\n");
 }
 
+void PeepList::OptTempRegs()
+{
+	OCODE* ip;
+	int rg;
+	short int map[256];
+	bool in_unlink = false;
+	bool do_remove = true;
+
+	/* under construction */
+	return;
+	ZeroMemory(map, sizeof(map));
+	rg = compiler.GetUnusedTemp();
+	if (rg)
+	{
+		for (ip = currentFn->pl.head; ip; ip = ip->fwd) {
+			if (ip->opcode == op_label || ip->opcode == op_remark)
+				continue;
+			if (ip->oper1) {
+				if (IsSavedReg(ip->oper1->preg)) {
+					if (map[ip->oper1->preg])
+						ip->oper1->preg = map[ip->oper1->preg];
+					else {
+						if (rg) {
+							map[ip->oper1->preg] = rg;
+							ip->oper1->preg = map[ip->oper1->preg];
+							rg = compiler.GetUnusedTemp();
+						}
+					}
+				}
+			}
+			if (ip->oper2) {
+				if (IsSavedReg(ip->oper2->preg)) {
+					if (map[ip->oper2->preg])
+						ip->oper2->preg = map[ip->oper2->preg];
+					else {
+						if (rg) {
+							map[ip->oper2->preg] = rg;
+							ip->oper2->preg = map[ip->oper2->preg];
+							rg = compiler.GetUnusedTemp();
+						}
+					}
+				}
+			}
+			if (ip->oper3) {
+				if (IsSavedReg(ip->oper3->preg)) {
+					if (map[ip->oper3->preg])
+						ip->oper3->preg = map[ip->oper3->preg];
+					else {
+						if (rg) {
+							map[ip->oper3->preg] = rg;
+							ip->oper3->preg = map[ip->oper3->preg];
+							rg = compiler.GetUnusedTemp();
+						}
+					}
+				}
+			}
+			if (ip->oper4) {
+				if (IsSavedReg(ip->oper4->preg)) {
+					if (map[ip->oper4->preg])
+						ip->oper4->preg = map[ip->oper4->preg];
+					else {
+						if (rg) {
+							map[ip->oper4->preg] = rg;
+							ip->oper4->preg = map[ip->oper4->preg];
+							rg = compiler.GetUnusedTemp();
+						}
+					}
+				}
+			}
+		}
+		
+		/* Dead code. The stack may be needed if the address of a var is taken.
+		for (ip = currentFn->pl.head; ip; ip = ip->fwd) {
+			if (ip->opcode != op_label && ip->opcode != op_remark) {
+				if (do_remove) {
+					if (ip->oper1 && IsTempReg(ip->oper1->preg)) {
+						ip->MarkRemove();
+						optimized++;
+					}
+				}
+				if (ip->opcode == op_hint && ip->oper1 && ip->oper1->offset->i == begin_regvar_init) {
+					do_remove = false;
+					continue;
+				}
+				if (in_unlink) {
+					if (ip->oper1 && IsTempReg(ip->oper1->preg)) {
+						ip->MarkRemove();
+						optimized++;
+					}
+				}
+			}
+			if (ip->opcode == op_hint && ip->oper1 && ip->oper1->offset->i == begin_restore_regvars) {
+				in_unlink = true;
+			}
+		}
+		*/
+	}
+}

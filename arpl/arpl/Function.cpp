@@ -987,6 +987,7 @@ void Function::Generate()
 	extern bool first_dataseg;
 	first_dataseg = true;
 	ZeroMemory(seg_aligned, sizeof(seg_aligned));
+	compiler.temp_in_use.clear();
 
 	if (opt_vreg)
 		cpu.SetVirtualRegisters();

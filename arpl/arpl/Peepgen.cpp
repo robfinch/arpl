@@ -273,6 +273,8 @@ void Function::PeepOpt()
 
 	if (!::opt_nopeep) {
 
+		pl.OptTempRegs();
+
 		pl.OptBranchToNext();
 
 		// Performing peephole optimizations may lead to further optimizations so do

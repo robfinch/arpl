@@ -283,6 +283,7 @@ public:
 	void RemoveReturnBlock();
 
 	// Optimizations
+	void OptTempRegs();
 	void OptInstructions();
 	void OptBranchToNext();
 	void OptIncrBranch();
@@ -2548,6 +2549,7 @@ public:
 	short int autoInline;
 	short int table_density;		// switch table density threshold as a percentage.
 	short int reg_in_use[256];
+	CSet temp_in_use;
 	char firstid[128];
 	char lastid[128];
 public:
