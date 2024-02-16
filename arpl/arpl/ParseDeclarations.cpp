@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -318,7 +318,7 @@ void Declaration::ParseInt(bool nt)
 		head = TYP::Make(bt_int, cpu.sizeOfInt);
 		tail = head;
 	}
-	bit_max = 128;
+	bit_max = cpu.sizeOfInt * 8;
 	if (head==nullptr)
 		return;
 	head->isUnsigned = isUnsigned;
@@ -1099,12 +1099,12 @@ void Declaration::ParseBitfieldSpec(bool isUnion)
 	switch (lastst) {
 	case id: ParseVarAttribute(); return;
 	case kw_align: ParseAlign(); return;
-	case kw_long: bit_width = 128; NextToken(); break;
-	case kw_short: bit_width = 32; NextToken(); break;
-	case kw_quad: bit_width = 128; NextToken(); break;
-	case kw_double: bit_width = 64; NextToken(); break;
-	case kw_single: bit_width = 32; NextToken(); break;
-	case kw_half: bit_width = 16; NextToken(); break;
+	case kw_long: bit_width = cpu.sizeOfInt * 16; NextToken(); break;
+	case kw_short: bit_width = cpu.sizeOfInt * 4; NextToken(); break;
+	case kw_quad: bit_width = cpu.sizeOfFPQ * 8; NextToken(); break;
+	case kw_double: bit_width = cpu.sizeOfFPD * 8; NextToken(); break;
+	case kw_single: bit_width = cpu.sizeOfFPS * 8; NextToken(); break;
+	case kw_half: bit_width = cpu.sizeOfFPS * 4; NextToken(); break;
 	case kw_byte: bit_width = 8; NextToken(); break;
 	case kw_bit: bit_width = 1; NextToken(); break;
 	default:

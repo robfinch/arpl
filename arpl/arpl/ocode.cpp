@@ -282,10 +282,39 @@ void OCODE::OptVmask()
 
 void OCODE::OptMove()
 {
+	OCODE* pbk;
+
 	if (OCODE::IsEqualOperand(oper1, oper2)) {
 		MarkRemove();
 		optimized++;
 		return;
+	}
+	
+	/* under construction */
+	// look for
+	//		add Rt,Ra,Rb
+	//		mov Rn,Rt
+	// substitute
+	//		add Rt,Ra,Rb
+	//		add Rn,Ra,Rb
+	// should allow the compiler to remove the first add
+	for (pbk = back; pbk && (pbk->opcode == op_hint || pbk->opcode == op_remark); pbk = pbk->back)
+		;
+	if (pbk && pbk->oper1 && pbk->HasTargetReg()) {
+		if (pbk->oper1->mode == am_reg && oper2->mode == am_reg) {
+			if (pbk->oper1->preg == oper2->preg) {
+				OCODE* p;
+				p = pbk->Clone(pbk);
+				p->oper1 = oper1;
+				p->fwd = fwd;
+				p->back = pbk;
+				if (fwd)
+					fwd->back = p;
+				pbk->fwd = p;
+				optimized++;
+				return;
+			}
+		}
 	}
 }
 
@@ -634,24 +663,97 @@ void OCODE::OptLoadWord()
 	int rg1, rg2;
 
 	for (ip = fwd; ip; ip = ip->fwd) {
-		if (ip->opcode == op_label)
+		if (ip->insn->IsFlowControl())
 			goto j1;
 		if (ip->opcode == op_call || ip->opcode == op_jsr || ip->opcode == op_jal)
 			goto j1;
-		if (ip->opcode == op_hint || ip->opcode == op_remark)
+		if (ip->opcode == op_hint) {
+			// Do not remove the reloads of callee saved registers.
+			if (ip->oper1->offset->i == begin_stack_unlink)
+				goto j1;
 			continue;
+		}
+		if (ip->opcode == op_remark) {
+			continue;
+		}
 		if (ip->HasSourceReg(oper1->preg))
 			goto j1;
 		if (ip->HasTargetReg()) {
 			ip->GetTargetReg(&rg1, &rg2);
-			if (rg1 == oper1->preg || rg2 == oper1->preg) {
-				MarkRemove();
-				optimized++;
+			if (rg1 == oper1->preg || rg2 == oper1->preg)
 				break;
-			}
 		}
 	}
 	// If we get to the end, and no use, then eliminate
+	// But, do not remove frame pointer load at end of function.
+	if (oper1->preg != regFP) {
+		MarkRemove();
+		optimized++;
+	}
+j1:
+	;
+}
+
+/*
+* Search for defs that are overwritten by later defs before they are used.
+*/
+void OCODE::OptDefUse()
+{
+	OCODE* ip;
+	int rg1, rg2;
+
+	if (!HasTargetReg())
+		return;
+	for (ip = fwd; ip; ip = ip->fwd) {
+		if (ip->insn->IsFlowControl())
+			goto j1;
+		if (ip->opcode == op_hint) {
+			// Do not remove the reloads of callee saved registers.
+			if (ip->oper1->offset->i == begin_stack_unlink)
+				goto j1;
+			continue;
+		}
+		if (ip->opcode == op_remark) {
+			continue;
+		}
+		if (ip->HasSourceReg(oper1->preg))
+			goto j1;
+		if (ip->HasTargetReg()) {
+			ip->GetTargetReg(&rg1, &rg2);
+			if (rg1 == oper1->preg || rg2 == oper1->preg)
+				break;
+		}
+	}
+	// If we get to the end, and no use, then eliminate
+	// But, do not remove frame pointer load at end of function.
+	if (oper1->preg != regFP) {
+		MarkRemove();
+		optimized++;
+	}
+j1:
+	;
+}
+
+/*
+* Search for defs wothout a usage.
+*/
+void OCODE::OptNoUse()
+{
+	OCODE* ip;
+	int rg1, rg2;
+
+	if (!HasTargetReg())
+		return;
+	for (ip = fwd; ip; ip = ip->fwd) {
+		if (ip->HasSourceReg(oper1->preg))
+			goto j1;
+	}
+	// If we get to the end, and no use, then eliminate
+	// But, do not remove frame pointer load at end of function.
+	if (oper1->preg != regFP && !IsArgReg(oper1->preg) && !IsSavedReg(oper1->preg)) {
+		MarkRemove();
+		optimized++;
+	}
 j1:
 	;
 }

@@ -2183,7 +2183,7 @@ Operand *CodeGenerator::GenerateAssign(ENODE *node, int flags, int64_t size)
 
     if (node->p[0]->IsBitfield()) {
       Leave((char *)"GenAssign",0);
-		return (node->GenerateBitfieldAssign(flags|am_bf_assign, size));
+			return (node->GenerateBitfieldAssign(flags|am_bf_assign, size));
     }
 
 	ssize = node->p[0]->GetReferenceSize();
@@ -2982,16 +2982,16 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		GenerateLabel(lab1);
 		return (ap1);
 		*/
-		ap1 = (node->GenLand(flags, op_and, !ExpressionHasReference));
+		ap1 = (node->GenerateLand(flags, op_and, !ExpressionHasReference));
 		goto retpt;
 	case en_lor:
-		ap1 = (node->GenLand(flags, op_or, !ExpressionHasReference));
+		ap1 = (node->GenerateLand(flags, op_or, !ExpressionHasReference));
 		goto retpt;
 	case en_land_safe:
-		ap1 = (node->GenLand(flags, op_and, true));
+		ap1 = (node->GenerateLand(flags, op_and, true));
 		goto retpt;
 	case en_lor_safe:
-		ap1 = (node->GenLand(flags, op_or, true));
+		ap1 = (node->GenerateLand(flags, op_or, true));
 		goto retpt;
 
 	case en_isnullptr:	ap1 = node->GenerateUnary(flags, size, op_isnullptr); goto retpt;
@@ -3270,10 +3270,12 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		ReleaseTempReg(ap2);
 		goto retpt;
 		*/
+		ap1 = GenerateExpression(node->p[0], am_reg | am_imm, 8, rhs);
+		return (ap1);
 		ap1 = GetTempRegister();
 		ap2 = GenerateExpression(node->p[0], am_reg|am_imm, 8, rhs);
 		if (ap2->mode != am_imm) {
-			Generate4adic(op_sbx, 0, ap1, ap2, MakeImmediate(63), MakeImmediate(127));
+//			Generate4adic(op_sbx, 0, ap1, ap2, MakeImmediate(63), MakeImmediate(127));
 			ReleaseTempRegister(ap2);
 		}
 		else {
@@ -4369,8 +4371,16 @@ Operand* CodeGenerator::GenerateBinary(ENODE* node, int flags, int size, int op)
 		ap3 = GetTempRegister();
 		if (ENODE::IsEqual(node->p[0], node->p[1]) && !opt_nocgo) {
 			// Duh, subtract operand from itself, result would be zero.
-			if (op == op_sub || op == op_ptrdif || op == op_eor)
+			if (op == op_sub || op == op_ptrdif || op == op_eor) {
 				GenerateMove(ap3, makereg(0));
+				ap3->isConst = true;
+				if (ap3->offset == nullptr)
+					ap3->offset = makeinode(en_icon, 0);
+				else {
+					ap3->offset->i128.low = 0;
+					ap3->offset->i128.high = 0;
+				}
+			}
 			else {
 				ap1 = cg.GenerateExpression(node->p[0], am_reg, size, 0);
 				GenerateTriadic(op, 0, ap3, ap1, ap1);
@@ -4386,11 +4396,11 @@ Operand* CodeGenerator::GenerateBinary(ENODE* node, int flags, int size, int op)
 			}
 			else {
 				if (ap2->mode == am_imm) {
-					// Check if an immediate value will fit into the 21-bit immediate field. If
+					// Check if an immediate value will fit into the 24-bit immediate field. If
 					// not it needs to be loaded into a register.
 					ap5 = nullptr;
 					if (ap2->offset) {
-						if (!ap2->offset->i128.IsNBit(21)) {
+						if (!ap2->offset->i128.IsNBit(cpu.RIimmSize)) {
 							ap5 = GetTempRegister();
 							cg.GenerateLoadConst(ap2, ap5);
 						}
@@ -4670,3 +4680,28 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 	fn->tryCount = 0;
 	return (ip);
 }
+
+Operand* CodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool safe)
+{
+	Operand* ap1, * ap2;
+	int lab0, lab1;
+
+	if (safe)
+		return (cg.GenerateSafeLand(node, flags, op));
+	lab0 = nextlabel++;
+	lab1 = nextlabel++;
+	ap1 = GetTempRegister();
+	ap2 = cg.GenerateExpression(node, flags, cpu.sizeOfWord, 1);
+	ap1 = cg.MakeBoolean(ap2);
+	ReleaseTempReg(ap2);
+	/*
+	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(1));
+	cg.GenerateFalseJump(this, lab0, 0);
+	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(0));
+	GenerateLabel(lab0);
+	*/
+	ap1->MakeLegal(flags, 8);
+	ap1->isBool = true;
+	return (ap1);
+}
+

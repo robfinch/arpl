@@ -764,6 +764,8 @@ void PeepList::OptInstructions()
 	for (ip = head; ip != NULL; ip = ip->fwd)
 	{
 		if (!ip->remove) {
+			ip->OptNoUse();
+			ip->OptDefUse();
 			switch (ip->opcode & 0x7fff)
 			{
 			case op_remark:

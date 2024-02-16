@@ -146,7 +146,6 @@
     <ClCompile Include="Function.cpp" />
     <ClCompile Include="FunctionFactory.cpp" />
     <ClCompile Include="GenerateBitfield.cpp" />
-    <ClCompile Include="GenerateStatement.cpp" />
     <ClCompile Include="glo.cpp" />
     <ClCompile Include="IdentifyKeyword.cpp" />
     <ClCompile Include="IGraph.cpp" />

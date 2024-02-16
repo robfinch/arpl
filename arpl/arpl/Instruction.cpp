@@ -25,7 +25,7 @@
 //
 #include "stdafx.h"
 
-static short int opmap[op_last+1];
+static int64_t opmap[op_last+1];
 static CSet* es;
 
 void Instruction::SetMap()
@@ -52,6 +52,8 @@ void Instruction::SetMap()
 // brk and rti ???
 bool Instruction::IsFlowControl()
 {
+	if (this == nullptr)
+		return (false);
 	if (opcode == op_jal ||
 		opcode == op_bal ||
 		opcode == op_jmp ||
@@ -230,7 +232,7 @@ Instruction *Instruction::GetMapping(int op)
 	return (nullptr);
 }
 
-int Instruction::store(txtoStream& ofs)
+size_t Instruction::store(txtoStream& ofs)
 {
 //	if (strnicmp(mnem, ";empty", 6)==0)
 //		printf("hi");
@@ -255,13 +257,13 @@ int Instruction::store(txtoStream& ofs)
 	return (strlen(mnem));
 }
 
-int Instruction::storeHRR(txtoStream& ofs)
+size_t Instruction::storeHRR(txtoStream& ofs)
 {
 	ofs.write(mnem);
 	return (strlen(mnem));
 }
 
-int Instruction::storeHex(txtoStream& ofs)
+size_t Instruction::storeHex(txtoStream& ofs)
 {
 	char buf[20];
 

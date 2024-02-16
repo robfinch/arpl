@@ -885,7 +885,7 @@ public:
 	Operand *GenerateAssignShift(int flags, int size, int op);
 	Operand *GenerateAssignAdd(int flags, int size, int op);
 	Operand *GenerateAssignLogic(int flags, int size, int op);
-	Operand *GenLand(int flags, int op, bool safe);
+	Operand *GenerateLand(int flags, int op, bool safe);
 	Operand* GenerateBitfieldDereference(int flags, int size, int opt);
 	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width);
 	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, Operand* width);
@@ -1243,6 +1243,8 @@ public:
 	void OptLoadHalf();
 	void OptStoreHalf();
 	void OptLoadWord();
+	void OptNoUse();
+	void OptDefUse();
 	void OptStore();
 	void OptSxb();
 	void OptBra();
@@ -1367,6 +1369,7 @@ public:
 	virtual void GenerateStore(Operand* ap1, Operand* ap3, int size, Operand* mask = nullptr);
 	Operand* GenerateMux(ENODE*, int flags, int size);
 	Operand* GenerateHook(ENODE*, int flags, int size);
+	virtual Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
 	Operand* GenerateSafeLand(ENODE*, int flags, int op) { return (nullptr); };
 	virtual void GenerateBranchTrue(Operand* ap, int label) {};
 	virtual void GenerateBranchFalse(Operand* ap, int label) {};
@@ -1585,6 +1588,7 @@ class QuplsCodeGenerator : public CodeGenerator
 {
 public:
 	Operand* MakeBoolean(Operand* oper);
+	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
 	void GenerateLea(Operand* ap1, Operand* ap2);
 	void GenerateBranchTrue(Operand* ap, int label);
 	void GenerateBranchFalse(Operand* ap, int label);
@@ -2061,7 +2065,7 @@ public:
 	const char *mnem;		// mnemonic
 	short opcode;	// matches OCODE opcode
 	short extime;	// execution time, divide may take hundreds of cycles
-	unsigned int targetCount : 2;	// number of target operands
+	uint8_t targetCount;		// number of target operands
 	bool memacc;	// instruction accesses memory
 	unsigned int amclass1;	// address mode class, one for each possible operand
 	unsigned int amclass2;
@@ -2085,9 +2089,9 @@ public:
 	static Instruction *FindByMnem(std::string& mn);
 	static Instruction *Get(int op);
 	inline bool HasTarget() { return (targetCount != 0); };
-	int store(txtoStream& ofs);
-	int storeHex(txtoStream& ofs);	// hex intermediate representation
-	int storeHRR(txtoStream& ofs);	// human readable representation
+	size_t store(txtoStream& ofs);
+	size_t storeHex(txtoStream& ofs);	// hex intermediate representation
+	size_t storeHRR(txtoStream& ofs);	// human readable representation
 	static Instruction *loadHex(std::ifstream& fp);
 	int load(std::ifstream& ifs, Instruction **p);
 };
@@ -2656,6 +2660,7 @@ public:
 	int sizeOfInt;
 	int sizeOfDecimal;
 	int sizeOfPosit;
+	int RIimmSize;			// size in bits of immediate field for RI instructions
 	CPU();
 	void InitRegs();
 };
@@ -2663,6 +2668,11 @@ public:
 class QuplsCPU : public CPU
 {
 	QuplsCPU();
+};
+
+class RiscvCPU : public CPU
+{
+	RiscvCPU();
 };
 
 //#define SYM     struct sym

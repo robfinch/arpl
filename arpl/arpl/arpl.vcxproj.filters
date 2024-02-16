@@ -72,9 +72,6 @@
     <ClCompile Include="GenerateBitfield.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GenerateStatement.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="glo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

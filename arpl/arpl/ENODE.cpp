@@ -1205,7 +1205,9 @@ CSE *ENODE::OptInsertRef(int duse)
 		csp = currentFn->csetbl->InsertNode(this, duse, &first);
 		// take care: the non-derereferenced use of the autocon node may
 		// already be in the list. In this case, set voidf to 1
-		if (currentFn->csetbl->Search(p[0]) != NULL || currentFn->csetbl->Search(p[1]) != NULL) {
+		if (currentFn->csetbl->Search(p[0]) != NULL
+			|| currentFn->csetbl->Search(p[1]) != NULL
+			|| currentFn->csetbl->Search(p[2]) != NULL) {	// might be a triple
 			csp->voidf = 1;
 			p[0]->scanexpr(1);
 			vmask->scanexpr(1);
@@ -2319,7 +2321,7 @@ j1:
 	return (ap1);
 }
 
-Operand *ENODE::GenLand(int flags, int op, bool safe)
+Operand *ENODE::GenerateLand(int flags, int op, bool safe)
 {
 	Operand *ap1, *ap2, *ap3, *ap4, *ap5;
 	int lab0, lab1;

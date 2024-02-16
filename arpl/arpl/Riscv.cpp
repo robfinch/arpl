@@ -25,6 +25,21 @@
 //
 #include "stdafx.h"
 
+RiscvCPU::RiscvCPU() {
+	sizeOfWord = 8;
+	sizeOfPtr = 8;
+	sizeOfFP = 8;
+	sizeOfFPS = 4;
+	sizeOfFPT = 12;
+	sizeOfFPD = 8;
+	sizeOfFPQ = 16;
+	sizeOfInt = 8;
+	sizeOfDecimal = 16;
+	sizeOfPosit = 8;
+	RIimmSize = 12;
+}
+
+
 Operand* RiscvCodeGenerator::GetTempFPRegister()
 {
 	return (::GetTempFPRegister());

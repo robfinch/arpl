@@ -45,7 +45,7 @@ int CSE::OptimizationDesireability()
 		// zero can have r0 substituted.
 		if (exp->i == 0)
 			return (0);
-		if (exp->i128.IsNBit(24))
+		if (exp->i128.IsNBit(cpu.RIimmSize))
 			return (0);
 		if (exp->i128.IsNBit(48))
 			return (uses);
@@ -64,8 +64,12 @@ int CSE::OptimizationDesireability()
 	if (exp->nodetype == en_nacon)
 		return (0);
 	// Duh, lets not optimize to replace one regvar with another.
-	if (exp->nodetype == en_regvar)
-		return (0);
+	if (exp->nodetype == en_regvar) {
+		if (!IsTempReg(exp->rg))
+			return (0);
+		else
+			return (100);
+	}
 	// No value to optimizing function call names, the called function
 	// address will typically fit in a single 32/48 bit opcode. It's faster
 	// to call a fixed label rather than an address in a register, because

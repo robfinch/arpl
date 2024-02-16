@@ -49,6 +49,7 @@ QuplsCPU::QuplsCPU() {
 	sizeOfInt = 8;
 	sizeOfDecimal = 16;
 	sizeOfPosit = 8;
+	RIimmSize = 24;
 }
 
 void QuplsCodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
@@ -169,6 +170,23 @@ void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENOD
 	Operand* op_end;
 	OCODE* ip;
 
+	// If the field being inserted occupies the entire target, just use a move
+	// instruction.
+	if (offset->i128.low == 0 && offset->i128.high == 0) {
+		if (width->i128.low >= cpu.sizeOfWord || (ap1->tp && width->i128.low >= ap1->tp->size)) {
+			switch (ap2->mode) {
+			case am_reg:
+				GenerateDiadic(op_mov, 0, ap1, ap2);
+				return;
+			case am_imm:
+				GenerateLoadConst(ap1, ap2);
+				return;
+			default:
+				GenerateLoad(ap1, ap2, ap1->tp->size, ap1->tp->size);
+				return;
+			}
+		}
+	}
 	ap3 = GenerateExpression(offset, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ap4 = GenerateExpression(width, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ConvertOffsetWidthToBeginEnd(ap3, ap4, &op_begin, &op_end);
@@ -1721,9 +1739,9 @@ void QuplsCodeGenerator::GenerateTrueJump(ENODE* node, int label, unsigned int p
 			if (IsArgReg(ap1->preg))
 				GenerateDiadic(op_bnez, 0, ap1, MakeCodeLabel(label));
 			else {
-				ap2 = MakeBoolean(ap1);
-				ReleaseTempReg(ap1);
-				GenerateBranchTrue(ap2, label);
+				//ap2 = MakeBoolean(ap1);
+				//ReleaseTempReg(ap1);
+				GenerateBranchTrue(ap1, label);
 			}
 		}
 		break;
@@ -1802,9 +1820,9 @@ void QuplsCodeGenerator::GenerateFalseJump(ENODE* node, int label, unsigned int 
 				//					GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 				//				else
 				{
-					ap1 = MakeBoolean(ap);
-					ReleaseTempReg(ap);
-					GenerateBranchFalse(ap1, label);
+					//ap1 = MakeBoolean(ap);
+					//ReleaseTempReg(ap);
+					GenerateBranchFalse(ap, label);
 				}
 			}
 		}
@@ -2089,13 +2107,15 @@ void QuplsCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 		ap2 = ap1->Clone();
 		ap2->lowhigh = 2;
 		ap2->mode = am_imm;
-		GenerateDiadic(op_orm, 0, ap3, ap2);
+		if (!ap2->offset->i128.IsNBit(address_bits))
+			GenerateDiadic(op_orm, 0, ap3, ap2);
 	}
 	if (address_bits > 48) {
 		ap4 = ap1->Clone();
 		ap4->lowhigh = 2;
 		ap4->mode = am_imm;
-		GenerateDiadic(op_orh, 0, ap3, ap4);
+		if (!ap4->offset->i128.IsNBit(address_bits))
+			GenerateDiadic(op_orh, 0, ap3, ap4);
 	}
 }
 
@@ -2423,7 +2443,8 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
 		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord);
 		cg.GenerateMove(makereg(regFP), makereg(regSP));
-		cg.GenerateStore(makereg(regLR), cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
+		if (!currentFn->IsLeaf)
+			cg.GenerateStore(makereg(regLR), cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
 		fn->alstk = true;
 		fn->has_return_block = true;
@@ -2475,3 +2496,28 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 	fn->tryCount = 0;
 	return (ip);
 }
+
+Operand* QuplsCodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool safe)
+{
+	Operand* ap1, * ap2;
+	int lab0, lab1;
+
+	if (safe)
+		return (cg.GenerateSafeLand(node, flags, op));
+	lab0 = nextlabel++;
+	lab1 = nextlabel++;
+	ap1 = GetTempRegister();
+	ap2 = cg.GenerateExpression(node, flags, cpu.sizeOfWord, 1);
+	ap1 = cg.MakeBoolean(ap2);
+	ReleaseTempReg(ap2);
+	/*
+	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(1));
+	cg.GenerateFalseJump(this, lab0, 0);
+	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(0));
+	GenerateLabel(lab0);
+	*/
+	ap1->MakeLegal(flags, 8);
+	ap1->isBool = true;
+	return (ap1);
+}
+
