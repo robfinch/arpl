@@ -11,7 +11,7 @@ _x:
 
 	.sdreg	29
 _main00119:
-  lda t1,00119.00000[gp]
+  lda t1,_x[gp]
   ldo t2,0x3c00[gp]
   ;empty t0,t1,t2,1
   mov a0,t0

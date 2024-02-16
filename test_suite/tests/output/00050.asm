@@ -26,7 +26,8 @@ _v:
 	.sdreg	29
 _main00050:
 ; if(v.a != 1)
-  lda t1,00050.00000[gp]
+  lda t1,_v[gp]
+  ldo t1,0[t1]
   ldi t2,1
   beq t1,t2,.00026
 ; return 1;
@@ -35,8 +36,8 @@ _main00050:
   rts 
 .00026:
 ; if(v.b != 2)
-  lda t1,00050.00056[gp]
-  ldou t1,8[t1]
+  lda t1,_v[gp]
+  ldo t1,8[t1]
   ldi t2,2
   beq t1,t2,.00028
 ; return 2;
@@ -44,12 +45,12 @@ _main00050:
   bra .00025
 .00028:
 ; if(v.c != 3 || v.d != 3)
-  lda t1,00050.00056[gp]
-  ldou t1,16[t1]
+  lda t1,_v[gp]
+  ldo t1,16[t1]
   ldi t2,3
   bne t1,t2,.00032
-  lda t2,00050.00056[gp]
-  ldou t2,16[t2]
+  lda t2,_v[gp]
+  ldo t2,16[t2]
   ldi t3,3
   beq t2,t3,.00030
 .00032:
@@ -58,9 +59,9 @@ _main00050:
   bra .00025
 .00030:
 ; if(v.s.a != 4)
-  lda t2,00050.00056[gp]
+  lda t2,_v[gp]
   add t1,t2,24
-  ldou t1,24[t1]
+  ldo t1,24[t1]
   ldi t2,4
   beq t1,t2,.00033
 ; return 4;
@@ -68,9 +69,9 @@ _main00050:
   bra .00025
 .00033:
 ; if(v.s.b != 5)
-  lda t2,00050.00056[gp]
+  lda t2,_v[gp]
   add t1,t2,24
-  ldou t1,32[t1]
+  ldo t1,32[t1]
   ldi t2,5
   beq t1,t2,.00035
 ; return 5;

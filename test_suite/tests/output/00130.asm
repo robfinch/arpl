@@ -44,8 +44,8 @@ _main00130:
   rtd 32,0
 .00019:
 ; if (p[1][3] != 2)
-  ldo t1,2[s3]
-  ldo t2,2[s3]
+  ldo t1,1[s3]
+  ldo t2,1[s3]
   extu t3,t2,3,3
   ldi t4,2
   beq t3,t4,.00021

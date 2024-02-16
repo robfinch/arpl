@@ -35,8 +35,17 @@ __noname_var3:
 
 	.sdreg	29
 _should_compile:
+  sub sp,sp,32
+  sto fp,[sp]
+  mov fp,sp
+  sub sp,sp,32
+  ldou t0,32[fp]
+  ldi t1,0
+  sto t1,0[t0]
 .00010:
-  rts 
+  mov sp,fp
+  ldo fp,[sp]
+  rtd 40,0
 	.type	_should_compile,@function
 	.size	_should_compile,$-_should_compile
 
@@ -47,7 +56,7 @@ _should_compile:
 
 	.sdreg	29
 _it_real_fn:
-  lda a0,00170.00128[r56]
+  lda a0,_TWO[r56]
 .00020:
   rts 
 	.type	_it_real_fn,@function

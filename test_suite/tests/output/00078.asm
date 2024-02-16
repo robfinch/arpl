@@ -44,6 +44,7 @@ _main00078:
 ; return 1;
   ldi a0,1
 .00022:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

@@ -29,7 +29,7 @@ _main00127:
   ldi t0,1
   beqz t0,.00023
 ; if(c)
-  lda t0,00127.00000[gp]
+  lda t0,_c[gp]
   beqz t0,.00025
 ; return 1;
   ldi a0,1

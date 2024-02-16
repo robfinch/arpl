@@ -11,7 +11,7 @@ _x:
 
 	.sdreg	29
 _main00107:
-  lda t1,00107.00008[gp]
+  lda t1,_x[gp]
   sub a0,t1,1
 .00010:
   rts 

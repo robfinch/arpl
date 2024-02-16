@@ -493,7 +493,7 @@ public:
 	char nameext[4];
 	char *realname;
 	char *stkname;
-  e_sc storage_class;
+	e_sc storage_class;
 	e_sg segment;
 	unsigned int IsInline : 1;
 	unsigned int pos : 4;			// position of the symbol (param, auto or return type)
@@ -783,6 +783,7 @@ public:
 	ENODE* p[4];
 	ENODE* pfl;			// postfix list
 	int8_t mask;						// vector mask register
+	e_sc sc;				// storage class
 
 	ENODE* Clone();
 
@@ -2546,6 +2547,8 @@ public:
 	bool exceptions;
 	short int autoInline;
 	short int table_density;		// switch table density threshold as a percentage.
+	char firstid[128];
+	char lastid[128];
 public:
 	Compiler() { 
 		int i;

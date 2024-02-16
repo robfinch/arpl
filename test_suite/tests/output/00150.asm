@@ -24,7 +24,7 @@ _s:
 	.8byte	_s_data
 _s_data:
 ,1,2
-	.8byte	00150.00056
+	.8byte	_gs1
 	.8byte	0
 
 	.8byte	1,2
@@ -36,8 +36,9 @@ _s_data:
 	.sdreg	29
 _main00150:
 ; if(s->s1.a != 1)
-  lda t1,00150.00072[gp]
-  ldo t1,[t1]
+  lda t2,_s[gp]
+  add t1,t2,r0
+  ldo t1,0[t1]
   ldi t2,1
   beq t1,t2,.00030
 ; return 1;
@@ -46,8 +47,9 @@ _main00150:
   rts 
 .00030:
 ; if(s->s1.b != 2)
-  lda t1,00150.00072[gp]
-  ldou t1,128[t1]
+  lda t2,_s[gp]
+  add t1,t2,r0
+  ldo t1,8[t1]
   ldi t2,2
   beq t1,t2,.00032
 ; return 2;
@@ -55,9 +57,9 @@ _main00150:
   bra .00029
 .00032:
 ; if(s->ps1->a != 1)
-  lda t1,00150.00072[gp]
-  ldou t1,640[t1]
-  ldo t1,[t1]
+  lda t1,_s[gp]
+  ldo t1,16[t1]
+  ldo t1,0[t1]
   ldi t2,1
   beq t1,t2,.00034
 ; return 3;
@@ -65,9 +67,9 @@ _main00150:
   bra .00029
 .00034:
 ; if(s->ps1->b != 2)
-  lda t1,00150.00072[gp]
-  ldo t1,640[t1]
-  ldou t1,8[t1]
+  lda t1,_s[gp]
+  ldo t1,16[t1]
+  ldo t1,8[t1]
   ldi t2,2
   beq t1,t2,.00036
 ; return 4;
@@ -75,7 +77,7 @@ _main00150:
   bra .00029
 .00036:
 ; if(s->arr[0] != 1)
-  lda t2,00150.00072[gp]
+  lda t2,_s[gp]
   add t1,t2,24
   ldo t1,0[t1]
   ldi t2,1
@@ -85,7 +87,7 @@ _main00150:
   bra .00029
 .00038:
 ; if(s->arr[1] != 2)
-  lda t2,00150.00072[gp]
+  lda t2,_s[gp]
   add t1,t2,24
   ldo t1,1[t1]
   ldi t2,2

@@ -18,7 +18,7 @@ _f1:
   sto s0,[sp]
   ldw s0,128[fp]
 ; if (f.i != p->i)
-  ldo t1,[fp]
+  lda t1,32[fp]
   ldo t1,0[t1]
   beq t1,s0,.00013
 .00013:
@@ -45,14 +45,12 @@ _main00140:
   sto lr0,8[fp]
   sub sp,sp,40
   sto s0,[sp]
-  lda t0,-96[fp]
   lda s0,-96[fp]
 ; f.i = f.j = 1;
-  ldo t0,[fp]
-  ldi t1,1
-  sto t1,768[s0]
-  ldo t1,768[s0]
-  sto t1,-96[t0]
+  ldi t0,1
+  sto t0,8[s0]
+  ldo t0,8[s0]
+  sto t0,0[s0]
 ; f1(f, &f, 2);
   sub sp,sp,16
   lea t0,0[sp]

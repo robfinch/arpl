@@ -364,12 +364,12 @@ Statement *Statement::ParseCatch()
 	node = makenode(sp->storage_class == sc_static ? en_labcon : en_autocon, NULL, NULL);
 	node->bit_offset = sp->tp->bit_offset;
 	node->bit_width = sp->tp->bit_width;
-	// nameref looks up the symbol using lastid, so we need to back it up and
+	// nameref looks up the symbol using compiler.lastid, so we need to back it up and
 	// restore it.
-	strncpy_s(buf, sizeof(buf), lastid, 199);
-	strncpy_s(lastid, sizeof(lastid), ad.declid->c_str(), sizeof(lastid) - 1);
+	strncpy_s(buf, sizeof(buf), compiler.lastid, 199);
+	strncpy_s(compiler.lastid, sizeof(compiler.lastid), ad.declid->c_str(), sizeof(compiler.lastid) - 1);
 	exp.nameref(&node, FALSE, sp);
-	strcpy_s(lastid, sizeof(lastid), buf);
+	strcpy_s(compiler.lastid, sizeof(compiler.lastid), buf);
 	snp->s1 = Statement::Parse();
 	snp->exp = node;	// save name reference
 	if (sp->tp->typeno >= bt_last)
@@ -446,7 +446,7 @@ Statement *Statement::ParseContinue()
 
 	snp = MakeStatement(st_continue, TRUE);
 	if (lastst == id) {
-		snp->label = (int64_t*)stringlit(lastid,nullptr);
+		snp->label = (int64_t*)stringlit(compiler.lastid,nullptr);
 		NextToken();
 	}
 	if (lastst != end)
@@ -611,12 +611,12 @@ Statement *Statement::ParseCompound(bool assign_cf)
 	head = 0;
 	if (lastst == colon) {
 		NextToken();
-		TRACE(printf("Compound <%s>\r\n", lastid);)
-			if (strcmp(lastid, "clockbug") == 0)
+		TRACE(printf("Compound <%s>\r\n", compiler.lastid);)
+			if (strcmp(compiler.lastid, "clockbug") == 0)
 				printf("clockbug\r\n");
 		if (lastst == id) {
-			snp->name = new std::string(lastid);
-			snp->label = (int64_t*)stringlit(lastid,nullptr);
+			snp->name = new std::string(compiler.lastid);
+			snp->label = (int64_t*)stringlit(compiler.lastid,nullptr);
 		}
 		NextToken();
 	}
@@ -689,9 +689,9 @@ Statement *Statement::ParseLabel(bool pt)
 	Symbol *sp;
 
 	snp = MakeStatement(st_label, FALSE);
-	if ((sp = currentFn->sym->lsyms.Find(lastid, false, bt_label)) == NULL) {
+	if ((sp = currentFn->sym->lsyms.Find(compiler.lastid, false, bt_label)) == NULL) {
 		sp = Symbol::alloc();
-		sp->SetName(*(new std::string(lastid)));
+		sp->SetName(*(new std::string(compiler.lastid)));
 		sp->storage_class = sc_label;
 		sp->tp = TYP::Make(bt_label, 0);
 		sp->value.i = nextlabel++;
@@ -730,9 +730,9 @@ Statement *Statement::ParseGoto()
 		return ((Statement *)NULL);
 	}
 	snp = MakeStatement(st_goto, FALSE);
-	if ((sp = currentFn->sym->lsyms.Find(lastid, false, bt_label)) == NULL) {
+	if ((sp = currentFn->sym->lsyms.Find(compiler.lastid, false, bt_label)) == NULL) {
 		sp = Symbol::alloc();
-		sp->SetName(*(new std::string(lastid)));
+		sp->SetName(*(new std::string(compiler.lastid)));
 		sp->value.i = nextlabel++;
 		sp->storage_class = sc_ulabel;
 		sp->tp = TYP::Make(bt_label, cpu.sizeOfWord);

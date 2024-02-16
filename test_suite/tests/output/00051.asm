@@ -12,16 +12,16 @@ _x:
 	.sdreg	29
 _main00051:
 ; switch(x)
-  lda t0,00051.00000[gp]
+  lda t0,_x[gp]
 ; case 0:
   bne t0,0,.00041
 .00041:
 ; switch(x)
-  lda t0,00051.00000[gp]
+  lda t0,_x[gp]
 ; case 0:
   bne t0,0,.00044
 ; switch(x) {
-  lda t0,00051.00000[gp]
+  lda t0,_x[gp]
 ; case 0:
   bne t0,0,.00004
 ; goto next;
@@ -34,7 +34,7 @@ _main00051:
   rts 
 .00002:
 ; switch(x)
-  lda t0,00051.00000[gp]
+  lda t0,_x[gp]
 ; case 1:
   bne t0,1,.00050
 ; return 1;

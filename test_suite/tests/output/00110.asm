@@ -11,7 +11,7 @@ _x:
 
 	.sdreg	29
 _main00110:
-  lda a0,00110.00000[gp]
+  lda a0,_x[gp]
 .00010:
   rts 
 	.type	_main00110,@function

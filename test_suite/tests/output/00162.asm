@@ -11,7 +11,7 @@ _fooc:
   sub sp,sp,32
   ldo t0,24[fp]
   ldi t1,42
-  sto t1,24[t0]
+  sto t1,3[t0]
 .00010:
   mov sp,fp
   ldo fp,[sp]

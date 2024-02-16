@@ -51,12 +51,12 @@ void Declaration::ParseEnum(TABLE *table)
   Expression exp;
 
   if(lastst == id) {
-//    if((sp = search(std::string(lastid),&tagtable)) == NULL) {
-    if ((sp = exp.gsearch2(std::string(lastid), bt_int, nullptr, false)) == nullptr) {
+//    if((sp = search(std::string(compiler.lastid),&tagtable)) == NULL) {
+    if ((sp = exp.gsearch2(std::string(compiler.lastid), bt_int, nullptr, false)) == nullptr) {
         sp = Symbol::alloc();
       sp->tp = TYP::Make(bt_enum,2);
       sp->storage_class = sc_type;
-      sp->SetName(*(new std::string(lastid)));
+      sp->SetName(*(new std::string(compiler.lastid)));
       sp->tp->sname = new std::string(*sp->name);
       NextToken();
       if (lastst == openpa) {
@@ -114,7 +114,7 @@ void Declaration::ParseEnumerationList(TABLE *table, Float128 amt, Symbol *paren
     evalue = Float128::Zero();
   while(lastst == id) {
     sp = Symbol::alloc();
-    sp->SetName(*(new std::string(lastid)));
+    sp->SetName(*(new std::string(compiler.lastid)));
     sp->storage_class = sc_const;
     sp->tp = &stdenum;
 		if (parent)

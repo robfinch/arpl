@@ -133,7 +133,7 @@ int dodefine()
             }
     ++global_flag;          /* always do #define as globals */
     sp = Symbol::alloc();
-    sp->SetName(std::string(lastid));
+    sp->SetName(std::string(compiler.lastid));
     sp->value.s = my_strdup(lptr-1);
     defsyms.insert(sp);
     --global_flag;
@@ -153,7 +153,7 @@ int doifdef()
         return getline(incldepth == 0);
     }
 	endifCount++;
-	sp = defsyms.Find(lastid,false);
+	sp = defsyms.Find(compiler.lastid,false);
 	if (sp == NULL) {
 		do
 			rv = getline(incldepth == 0);
@@ -173,7 +173,7 @@ int doifndef()
         return getline(incldepth == 0);
     }
 	endifCount++;
-	sp = defsyms.Find(lastid,false);
+	sp = defsyms.Find(compiler.lastid,false);
 	if (sp != NULL) {
 		do
 			rv = getline(incldepth == 0);

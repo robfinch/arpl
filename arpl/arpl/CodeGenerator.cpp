@@ -2368,7 +2368,10 @@ Operand *CodeGenerator::GenerateAutocon(ENODE *node, int flags, int64_t size, TY
 	ap2->offset = node;     /* use as constant node */
 	ap2->bit_offset = node->bit_offset;
 	ap2->bit_width = node->bit_width;
-	DataLabels[ap2->offset->i]++;
+	/* offset->i is negative here. Why are data labels being updated? 
+	* Autocon nodes should be SP relative.... I think its a copu error.
+	*/
+	//DataLabels[ap2->offset->i]++;
 //	ap2->type = type;
 	ap2->tp = node->tp;
 //	ap1->type = &stdint;

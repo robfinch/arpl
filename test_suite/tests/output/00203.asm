@@ -26,6 +26,7 @@ _main00203:
   ldi a0,1
 .00017:
   ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

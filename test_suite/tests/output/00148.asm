@@ -18,7 +18,7 @@ _arr:
 	.sdreg	29
 _main00148:
 ; if(arr[0].a != 1)
-  lda t1,00148.00016[gp]
+  lda t1,_arr[gp]
   ldo t1,0[t1]
   ldi t2,1
   beq t1,t2,.00022
@@ -28,8 +28,7 @@ _main00148:
   rts 
 .00022:
 ; if(arr[0].b != 2)
-  lda t2,00148.00016[gp]
-  add t1,t2,r0
+  lda t1,_arr[gp]
   ldo t1,8[t1]
   ldi t2,2
   beq t1,t2,.00024
@@ -38,8 +37,8 @@ _main00148:
   bra .00021
 .00024:
 ; if(arr[1].a != 3)
-  lda t1,00148.00016[gp]
-  ldo t1,1[t1]
+  lda t1,_arr[gp]
+  ldo t1,0[t1]
   ldi t2,3
   beq t1,t2,.00026
 ; return 3;
@@ -47,8 +46,7 @@ _main00148:
   bra .00021
 .00026:
 ; if(arr[1].b != 4)
-  lda t2,00148.00016[gp]
-  add t1,t2,1
+  lda t1,_arr[gp]
   ldo t1,8[t1]
   ldi t2,4
   beq t1,t2,.00028

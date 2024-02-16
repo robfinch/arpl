@@ -561,7 +561,7 @@ void doinit(Symbol *sp, bool gbls)
 				push_typ(tp);
 			}
 			brace_level = 0;
-			strncpy_s(lastid, sizeof(lastid), sp->name->c_str(), sizeof(lastid));
+			strncpy_s(compiler.lastid, sizeof(compiler.lastid), sp->name->c_str(), sizeof(compiler.lastid));
 			s2 = currentSym;
 			et = exp.ParseExpression(&node, sp);	// Collect up aggregate initializers
 			opt_const_unchecked(&node);			// This should reduce to a single integer expression
@@ -790,7 +790,7 @@ int64_t InitializePointer(TYP *tp2, int opt, Symbol* symi)
 				/*
         if( lastst != id)
             error(ERR_IDEXPECT);
-		else if( (sp = gsearch(lastid)) == NULL)
+		else if( (sp = gsearch(compiler.lastid)) == NULL)
             error(ERR_UNDEFINED);
         else {
             NextToken();
@@ -819,7 +819,7 @@ int64_t InitializePointer(TYP *tp2, int opt, Symbol* symi)
 			NextToken();
 		}
 	//else if (lastst == id) {
-	//	sp = gsearch(lastid);
+	//	sp = gsearch(compiler.lastid);
 	//	if (sp->tp->type == bt_func || sp->tp->type == bt_ifunc) {
 	//		NextToken();
 	//		GenerateReference(sp,0);

@@ -14,7 +14,7 @@ _y:
 _p:
 	.type	_p,@object
 	.size	_p,8
-	.8byte	00045.00000
+	.8byte	_x
  
 	.text
 
@@ -23,7 +23,7 @@ _p:
 	.sdreg	29
 _main00045:
 ; if (x != 5)
-  lda t1,00045.00000[gp]
+  lda t1,_x[gp]
   ldi t2,5
   beq t1,t2,.00017
 ; return 1;
@@ -32,7 +32,7 @@ _main00045:
   rts 
 .00017:
 ; if (y != 6)
-  lda t1,00045.00008[gp]
+  lda t1,_y[gp]
   ldi t2,6
   beq t1,t2,.00019
 ; return 2;
@@ -40,7 +40,7 @@ _main00045:
   bra .00016
 .00019:
 ; if (*p != 5)
-  lda t1,00045.00016[gp]
+  lda t1,_p[gp]
   ldo t1,[t1]
   ldi t2,5
   beq t1,t2,.00021

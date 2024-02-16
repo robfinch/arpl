@@ -166,9 +166,8 @@ _main00205:
   sto t0,0[sp]
   sto s0,8[sp]
   sto s1,16[sp]
-  lda t1,00205.00204[gp]
-  mulu t2,s0,72
-  add t0,t1,t2
+  lda t1,_cases[gp]
+  add t0,t1,r0
   ldo t0,0[t0+s1*]
   sto t0,24[sp]
   bsr _printf
@@ -182,9 +181,7 @@ _main00205:
   lda t0,_main00205.00004[gp]
   sto t0,0[sp]
   sto s0,8[sp]
-  lda t1,00205.00204[gp]
-  mulu t2,s0,72
-  add t0,t1,t2
+  lda t0,_cases[gp]
   ldo t0,32[t0]
   sto t0,16[sp]
   bsr _printf
@@ -194,9 +191,7 @@ _main00205:
   lda t0,_main00205.00005[gp]
   sto t0,0[sp]
   sto s0,8[sp]
-  lda t1,00205.00204[gp]
-  mulu t2,s0,72
-  add t0,t1,t2
+  lda t0,_cases[gp]
   ldo t0,40[t0]
   sto t0,16[sp]
   bsr _printf
@@ -206,9 +201,7 @@ _main00205:
   lda t0,_main00205.00006[gp]
   sto t0,0[sp]
   sto s0,8[sp]
-  lda t1,00205.00204[gp]
-  mulu t2,s0,72
-  add t0,t1,t2
+  lda t0,_cases[gp]
   ldo t0,48[t0]
   sto t0,16[sp]
   bsr _printf

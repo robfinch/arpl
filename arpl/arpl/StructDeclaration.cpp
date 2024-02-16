@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2021  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -41,9 +41,9 @@ int StructDeclaration::ParseTag(TABLE* table, e_bt ztype, Symbol** sym)
   ENODE* pnd = &nd;
   int ret = 0;
 
-  if ((sp = tagtable.Find(lastid, false)) == NULL) {
+  if ((sp = tagtable.Find(compiler.lastid, false)) == NULL) {
     sp = Symbol::alloc();
-    sp->SetName(*(new std::string(lastid)));
+    sp->SetName(*(new std::string(compiler.lastid)));
     sp->tp = allocTYP();
     sp->tp->type = (e_bt)ztype;
     sp->tp->typeno = typeno++;

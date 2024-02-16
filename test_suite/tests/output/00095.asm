@@ -37,7 +37,7 @@ _foo:
 	.sdreg	29
 _main00095:
 ; if (x != 3)
-  lda t1,00095.00016[gp]
+  lda t1,_x[gp]
   ldi t2,3
   beq t1,t2,.00023
 ; return 0;
@@ -46,10 +46,10 @@ _main00095:
   rts 
 .00023:
 ; x = 0;
-  lda t0,00095.00016[gp]
+  lda t0,_x[gp]
   sto r0,[t0]
 ; return x;
-  lda a0,00095.00016[gp]
+  lda a0,_x[gp]
   bra .00022
 	.type	_main00095,@function
 	.size	_main00095,$-_main00095

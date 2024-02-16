@@ -53,6 +53,7 @@ _main00031:
 .00046:
   ldo s0,[sp]
   ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

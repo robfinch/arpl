@@ -867,11 +867,11 @@ int64_t Symbol::Initialize(txtoStream& tfs, ENODE* pnode, TYP* tp2, int opt)
 		case bt_exception:
 		case bt_ulong:
 		case bt_long:
-			//strncpy(idbuf, lastid, sizeof(lastid));
-			//strncpy(lastid, pnode->sym->name->c_str(), sizeof(lastid));
+			//strncpy(idbuf, compiler.lastid, sizeof(compiler.lastid));
+			//strncpy(compiler.lastid, pnode->sym->name->c_str(), sizeof(compiler.lastid));
 			//gNameRefNode = exp.ParseNameRef();
 			nbytes = initlong(this, opt);
-			//strncpy(lastid, idbuf, sizeof(lastid));
+			//strncpy(compiler.lastid, idbuf, sizeof(compiler.lastid));
 			break;
 		case bt_struct:
 			nbytes = InitializeStruct(pnode);

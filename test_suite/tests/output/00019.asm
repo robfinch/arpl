@@ -8,24 +8,22 @@ _main00019:
   sub sp,sp,32
   sto fp,[sp]
   mov fp,sp
-  sub sp,sp,48
+  sub sp,sp,40
   sto s0,[sp]
-  sto s1,8[sp]
-  lda t0,-16[fp]
-  lda s1,-16[fp]
+  lda s0,-16[fp]
 ; s.x = 0;
-  sto r0,128[s1]
+  sto r0,8[s0]
 ; s.p = &s;
-  mov s0,s1
+  sto s0,0[s0]
 ; return s.p->p->p->p->p->x;
-  ldo t0,[s0]
-  ldo t0,[t0]
-  ldo t0,[t0]
-  ldou t0,128[t0]
-  ldou a0,128[t0]
+  ldo s0,0[s0]
+  ldo s0,0[s0]
+  ldo s0,0[s0]
+  ldo s0,0[s0]
+  ldo s0,0[s0]
+  ldo a0,8[s0]
 .00010:
   ldo s0,[sp]
-  ldo s1,8[sp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

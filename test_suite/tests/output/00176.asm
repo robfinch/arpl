@@ -21,15 +21,15 @@ _swap:
   ldo s0,40[fp]
   ldo s1,32[fp]
 ; int tmp  = array[a];
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldo s2,0[t0+s1*]
 ; array[a] = array[b];
-  lda t0,00176.00116[gp]
-  lda t1,00176.00116[gp]
+  lda t0,_array[gp]
+  lda t1,_array[gp]
   ldo t2,0[t1+s0*]
   sto t2,0[t0+s1*]
 ; array[b] = tmp;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   sto s2,0[t0+s0*]
 .00010:
   ldo s0,[sp]
@@ -57,7 +57,7 @@ _partition:
   ldo s1,8[sp]
   ldo s2,0[sp]
   ldo s4,0[sp]
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldo s5,0[t0+s4*]
   mov s3,s2
 ; swap(pivotIndex, right);
@@ -70,7 +70,7 @@ _partition:
   bge s0,s1,.00027
 .00026:
 ; if(array[i] < pivotValue)
-  lda t1,00176.00116[gp]
+  lda t1,_array[gp]
   ldo t1,0[t1+s0*]
   bge t1,s5,.00029
 ; swap(i, index);
@@ -130,6 +130,7 @@ _quicksort:
   ldo s0,[sp]
   ldo s1,8[sp]
   ldo s2,16[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 48,0
@@ -164,67 +165,67 @@ _main00176:
   sub sp,sp,40
   sto s0,[sp]
 ; array[0] = 62;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,62
   sto t1,0[t0]
 ; array[1] = 83;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,83
   sto t1,1[t0]
 ; array[2] = 4;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,4
   sto t1,2[t0]
 ; array[3] = 89;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,89
   sto t1,3[t0]
 ; array[4] = 36;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,36
   sto t1,4[t0]
 ; array[5] = 21;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,21
   sto t1,5[t0]
 ; array[6] = 74;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,74
   sto t1,6[t0]
 ; array[7] = 37;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,37
   sto t1,7[t0]
 ; array[8] = 65;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,65
   sto t1,8[t0]
 ; array[9] = 33;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,33
   sto t1,9[t0]
 ; array[10] = 96;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,96
   sto t1,10[t0]
 ; array[11] = 38;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,38
   sto t1,11[t0]
 ; array[12] = 53;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,53
   sto t1,12[t0]
 ; array[13] = 16;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,16
   sto t1,13[t0]
 ; array[14] = 74;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,74
   sto t1,14[t0]
 ; array[15] = 55;
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldi t1,55
   sto t1,15[t0]
 ; for (i = 0; i < 16; i++)
@@ -236,7 +237,7 @@ _main00176:
   sub sp,sp,16
   lda t0,_main00176.00045[gp]
   sto t0,0[sp]
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldo t0,0[t0+s0*]
   sto t0,8[sp]
   bsr _printf
@@ -261,7 +262,7 @@ _main00176:
   sub sp,sp,16
   lda t0,_main00176.00047[gp]
   sto t0,0[sp]
-  lda t0,00176.00116[gp]
+  lda t0,_array[gp]
   ldo t0,0[t0+s0*]
   sto t0,8[sp]
   bsr _printf

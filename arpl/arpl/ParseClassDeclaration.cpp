@@ -79,10 +79,10 @@ int ClassDeclaration::Parse(int ztype)
 		goto lxit;
 	}
 //	ws = Symbol::alloc();
-	idsave = my_strdup(lastid);
+	idsave = my_strdup(compiler.lastid);
 //	ws->name = idsave;
 //	ws->storage_class = sc_typedef;
-	// Passes lastid onto struct parsing
+	// Passes compiler.lastid onto struct parsing
 
 	psd = isStructDecl;
 	isStructDecl++;
@@ -92,11 +92,11 @@ int ClassDeclaration::Parse(int ztype)
 	bit_width = -1;
 
   dfs.printf("---------------------------------");
-  dfs.printf("Class decl:%s\n", lastid);
+  dfs.printf("Class decl:%s\n", compiler.lastid);
   dfs.printf("---------------------------------");
-	if((sp = tagtable.Find(std::string(lastid),false)) == NULL) {
+	if((sp = tagtable.Find(std::string(compiler.lastid),false)) == NULL) {
     sp = Symbol::alloc();
-    sp->SetName(*(new std::string(lastid)));
+    sp->SetName(*(new std::string(compiler.lastid)));
 		sp->tp = nullptr;
     NextToken();
     dfs.printf("A");
@@ -132,7 +132,7 @@ int ClassDeclaration::Parse(int ztype)
 				error(ERR_SYNTAX);
 				goto lxit;
 			}
-			bcsp = tagtable.Find(std::string(lastid),false);
+			bcsp = tagtable.Find(std::string(compiler.lastid),false);
 			if (bcsp==nullptr) {
 				error(ERR_UNDEFINED);
 				goto lxit;

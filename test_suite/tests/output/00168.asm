@@ -19,6 +19,7 @@ _factorial:
   mov a0,s0
 .00012:
   ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 40,0

@@ -12,7 +12,8 @@ _s:
 	.sdreg	29
 _main00047:
 ; if (s.a != 1)
-  lda t1,00047.00000[gp]
+  lda t1,_s[gp]
+  ldo t1,0[t1]
   ldi t2,1
   beq t1,t2,.00019
 ; return 1;
@@ -21,8 +22,8 @@ _main00047:
   rts 
 .00019:
 ; if (s.b != 2)
-  lda t1,00047.00000[gp]
-  ldou t1,8[t1]
+  lda t1,_s[gp]
+  ldo t1,8[t1]
   ldi t2,2
   beq t1,t2,.00021
 ; return 2;
@@ -30,8 +31,8 @@ _main00047:
   bra .00018
 .00021:
 ; if (s.c != 3)
-  lda t1,00047.00000[gp]
-  ldou t1,16[t1]
+  lda t1,_s[gp]
+  ldo t1,16[t1]
   ldi t2,3
   beq t1,t2,.00023
 ; return 3;

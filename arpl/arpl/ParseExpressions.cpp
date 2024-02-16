@@ -934,7 +934,7 @@ TYP *Expression::nameref2(std::string name, ENODE **node,int nt,bool alloc,TypeA
 			getch();
 		if (lastch == '(') {
 			ENODE* args;
-			std::string nm(lastid);//???
+			std::string nm(compiler.lastid);//???
 			NextToken();
 			NextToken();
 			args = ParseArgumentList(nullptr, typearray, symi);
@@ -996,10 +996,10 @@ TYP *Expression::nameref(ENODE **node,int nt, Symbol* symi)
 	bool found = false;
 
 	dfs.puts("<Nameref>");
-	dfs.printf("GSearchfor:%s|",lastid);
+	dfs.printf("GSearchfor:%s|",compiler.lastid);
 	// Search locally first
-	nme = lastid;// *Symbol::GetFullNameByFunc(lastid);
-	sp = gsearch2(lastid, (__int16)bt_int, nullptr, false);
+	nme = compiler.lastid;// *Symbol::GetFullNameByFunc(compiler.lastid);
+	sp = gsearch2(compiler.lastid, (__int16)bt_int, nullptr, false);
 	if (sp == nullptr)
 		sp = gsearch2(nme, (__int16)bt_int, nullptr, false);
 	else
@@ -1007,7 +1007,7 @@ TYP *Expression::nameref(ENODE **node,int nt, Symbol* symi)
 	if (TABLE::matchno == 0) {
 		str = GetNamespace();
 		str = "";
-		str += lastid;
+		str += compiler.lastid;
 		sp = gsearch2(str.c_str(), (__int16)bt_int, nullptr, false);
 		tp = nameref2(str.c_str(), node, nt, true, nullptr, nullptr, symi);
 	}
@@ -1026,7 +1026,7 @@ TYP *Expression::nameref(ENODE **node,int nt, Symbol* symi)
 			}
 		}
 		if (found)
-			tp = nameref2(lastid, node, nt, true, nullptr, nullptr, symi);
+			tp = nameref2(compiler.lastid, node, nt, true, nullptr, nullptr, symi);
 		else
 			tp = nameref2(nme, node, nt, true, nullptr, nullptr, symi);
 	}
@@ -1036,7 +1036,7 @@ TYP *Expression::nameref(ENODE **node,int nt, Symbol* symi)
 }
 /*
       // Look for a function
-  		gsearch2(lastid,(__int16)bt_long,nullptr,false);
+  		gsearch2(compiler.lastid,(__int16)bt_long,nullptr,false);
 			while( my_isspace(lastch) )
 				getch();
 			if(lastch == '(') {
@@ -1119,9 +1119,9 @@ bool IsBeginningOfTypecast(int st)
 {
 	Symbol *sp;
 	if (st==id) {
-		sp = tagtable.Find(lastid,false);
+		sp = tagtable.Find(compiler.lastid,false);
 		if (sp == nullptr)
-			sp = gsyms[0].Find(lastid,false);
+			sp = gsyms[0].Find(compiler.lastid,false);
 		if (sp)
 			return (sp->storage_class==sc_typedef || sp->storage_class==sc_type);
 		return (false);
@@ -1244,6 +1244,7 @@ TYP *Expression::ParsePrimaryExpression(ENODE **node, int got_pa, Symbol* symi)
   TYP *tptr;
 	TypeArray typearray;
 	bool wasBr = false;
+	Symbol* sp;
 
 	qnode1 = (ENODE *)NULL;
 	qnode2 = (ENODE *)NULL;
@@ -1285,47 +1286,51 @@ j1:
 
 	case ellipsis:
 	case id:
-		if (strcmp(lastid, "_L") == 0 || strcmp(lastid, "_l") == 0) {
+		if (strcmp(compiler.lastid, "_L") == 0 || strcmp(compiler.lastid, "_l") == 0) {
 			if (lastch == '\'') {
 				NextToken();
 				tptr = ParseCharConst(&pnode, cpu.sizeOfWord);
 				break;
 			}
 		}
-		else if (strcmp(lastid, "_B") == 0 || strcmp(lastid, "_b") == 0) {
+		else if (strcmp(compiler.lastid, "_B") == 0 || strcmp(compiler.lastid, "_b") == 0) {
 			if (lastch == '\'') {
 				NextToken();
 				tptr = ParseCharConst(&pnode, 1);
 				break;
 			}
 		}
-		else if (strcmp(lastid, "_W") == 0 || strcmp(lastid, "_w") == 0) {
+		else if (strcmp(compiler.lastid, "_W") == 0 || strcmp(compiler.lastid, "_w") == 0) {
 			if (lastch == '\'') {
 				NextToken();
 				tptr = ParseCharConst(&pnode, 2);
 				break;
 			}
 		}
-		else if (strcmp(lastid, "_T") == 0 || strcmp(lastid, "_t") == 0) {
+		else if (strcmp(compiler.lastid, "_T") == 0 || strcmp(compiler.lastid, "_t") == 0) {
 			if (lastch == '\'') {
 				NextToken();
 				tptr = ParseCharConst(&pnode, 4);
 				break;
 			}
 		}
-		else if (strcmp(lastid, "_O") == 0 || strcmp(lastid, "_o") == 0) {
+		else if (strcmp(compiler.lastid, "_O") == 0 || strcmp(compiler.lastid, "_o") == 0) {
 			if (lastch == '\'') {
 				NextToken();
 				tptr = ParseCharConst(&pnode, 8);
 				break;
 			}
 		}
+		/*
 		if (symi && symi->fi)
 			currentSym = symi;
-		tptr = ParseNameRef(&pnode, symi);
+		*/
+		sp = gsearch2(compiler.lastid, bt_int, nullptr, false);
+		tptr = ParseNameRef(&pnode, sp);
 		if (tptr == nullptr || pnode == nullptr)
 			return (nullptr);
 		pnode->constflag = false;
+		pnode->sc = sp->storage_class;
 		break;
 
 	case cconst:
@@ -1704,14 +1709,14 @@ ENODE* Expression::AdjustForBitArray(int pop, TYP*tp1, ENODE* ep1)
 //		postfix_expression--
 // ----------------------------------------------------------------------------
 
-TYP *Expression::ParsePostfixExpression(ENODE **node, int got_pa, Symbol* symi)
+TYP* Expression::ParsePostfixExpression(ENODE** node, int got_pa, Symbol* symi)
 {
-	TYP *tp1, *firstType = nullptr, *tp2;
-	ENODE *ep1, *ep2;
+	TYP* tp1, * firstType = nullptr, * tp2;
+	ENODE* ep1, * ep2;
 	bool classdet = false;
 	bool wasBr = false;
 
-  Enter("<ParsePostfix>");
+	Enter("<ParsePostfix>");
 	ep1 = nullptr;
 	tp1 = nullptr;
 	*node = nullptr;
@@ -1728,7 +1733,9 @@ TYP *Expression::ParsePostfixExpression(ENODE **node, int got_pa, Symbol* symi)
 		Leave("</ParsePostfix>", 0);
 		return (nullptr);
 	}
+	strcpy_s(compiler.firstid, sizeof(compiler.firstid), compiler.lastid);
 	pep1 = nullptr;
+	ep2 = ep1;
 	cnt = 0;
 	// Note that tp1, ep1 is passed to items in this list as they build on
 	// previous values.
@@ -1754,20 +1761,22 @@ TYP *Expression::ParsePostfixExpression(ENODE **node, int got_pa, Symbol* symi)
 		case pointsto:
 			cnt = 0;
 			wasBr = false;
-			ep1 = AdjustForBitArray(pop, tp1, ep1);
+			ep1 = AdjustForBitArray(pop, tp1, ep2);
 			ep1 = ParsePointsTo(tp1, ep1);
 			ep1 = ParseDotOperator(ep1->tp, ep1, symi);
 			tp1 = ep1->tp;
 			ep1->constflag = true;
+			ep2 = ep1;
 			break;
 
 		case dot:
 			cnt = 0;
 			wasBr = false;
-			ep1 = AdjustForBitArray(pop, tp1, ep1);
+			ep1 = AdjustForBitArray(pop, tp1, ep2);
 			ep1 = ParseDotOperator(tp1, ep1, symi);
 			ep1->constflag = true;
 			tp1 = ep1->tp;
+			ep2 = ep1;
 			break;
 
 		case autodec:

@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -79,7 +79,7 @@ void slide_window()
     rval128_window[0] = rval128;
     rval_window[0] = rval;
     ival_window[0] = ival;
-    id_window[0] = std::string(lastid);
+    id_window[0] = std::string(compiler.lastid);
   }
 }
 
@@ -104,7 +104,7 @@ void push_token()
 		rval128_stack[token_sp] = rval128;
 		rval_stack[token_sp] = rval;
 		ival_stack[token_sp] = ival;
-		id_stack[token_sp] = _strdup(lastid);
+		id_stack[token_sp] = _strdup(compiler.lastid);
 		token_sp++;
 	}
 }
@@ -118,7 +118,7 @@ void pop_token()
 		rval128 = rval128_stack[token_sp];
 		rval = rval_stack[token_sp];
 		ival = ival_stack[token_sp];
-		strcpy_s(lastid, sizeof(lastid), id_stack[token_sp]);
+		strcpy_s(compiler.lastid, sizeof(compiler.lastid), id_stack[token_sp]);
 	}
 }
 
@@ -207,17 +207,17 @@ void getid()
 {
 	int    i;
     i = 0;
-    lastid[0] = '_';
+    compiler.lastid[0] = '_';
     while(isidch(lastch)) {
 		if(i < 120) {
 			lastkw[i] = lastch;
 			i++;
-			lastid[i] = lastch;
+			compiler.lastid[i] = lastch;
         }
 		getch();
     }
     lastkw[i] = '\0';
-    lastid[i+1] = '\0';
+    compiler.lastid[i+1] = '\0';
     lastst = id;
 }
  
@@ -627,7 +627,7 @@ void SkipSpaces()
  *      lastch:         A look behind buffer.
  *      lastst:         type of last symbol read.
  *      laststr:        last string constant read.
- *      lastid:         last identifier read.
+ *      compiler.lastid:         last identifier read.
  *      ival:           last integer constant read.
  *      rval:           last real constant read.
  *
@@ -641,7 +641,7 @@ void NextToken(int typ)
 restart:        /* we come back here after comments */
   if (window_pos >= 0) {
     lastch = ch_window[window_pos];
-    strncpy_s(lastid, sizeof(lastid), id_window[window_pos].c_str(), sizeof(lastid));
+    strncpy_s(compiler.lastid, sizeof(compiler.lastid), id_window[window_pos].c_str(), sizeof(compiler.lastid));
     rval128 = rval128_window[window_pos];
     rval = rval_window[window_pos];
     ival = ival_window[window_pos];
@@ -671,10 +671,10 @@ restart:        /* we come back here after comments */
   }
   else if(isidch(lastch)) {
 		getid();
-		if (lastch == '"' && lastid[0] == '_' && (lastid[1]=='B' || lastid[1]=='W' || lastid[1]=='T' || lastid[1]=='O'
-			|| lastid[1] == 'b' || lastid[1] == 'w' || lastid[1] == 't' || lastid[1] == 'o' || lastid[1]=='L' || lastid[1]=='l')) {
+		if (lastch == '"' && compiler.lastid[0] == '_' && (compiler.lastid[1]=='B' || compiler.lastid[1]=='W' || compiler.lastid[1]=='T' || compiler.lastid[1]=='O'
+			|| compiler.lastid[1] == 'b' || compiler.lastid[1] == 'w' || compiler.lastid[1] == 't' || compiler.lastid[1] == 'o' || compiler.lastid[1]=='L' || compiler.lastid[1]=='l')) {
 			getch();
-			laststr[0] = toupper(lastid[1]);
+			laststr[0] = toupper(compiler.lastid[1]);
 			for (i = 1; i < MAX_STRLEN; ++i) {
 				if (lastch == '\"')
 					break;
@@ -690,7 +690,7 @@ restart:        /* we come back here after comments */
 			else
 				getch();
 		}
-		else if (lastch == '"' && lastid[0]=='_' && lastid[1]=='I' && lastid[2]=='\0') {
+		else if (lastch == '"' && compiler.lastid[0]=='_' && compiler.lastid[1]=='I' && compiler.lastid[2]=='\0') {
 			getch();
 			laststr[0] = 'W';
 			for (i = 1; i < MAX_STRLEN; ++i) {
@@ -710,7 +710,7 @@ restart:        /* we come back here after comments */
 		}
 		else {
 
-			if ((sp = defsyms.Find(lastid, false)) != NULL) {
+			if ((sp = defsyms.Find(compiler.lastid, false)) != NULL) {
 				tch = lastch;
 				if (!(lastch == ')' && sp->value.s[0] == '(')) {
 					if (lstackptr < 19) {
@@ -941,7 +941,7 @@ restart:        /* we come back here after comments */
 							if (lastch=='.') {
 								getch();
 								lastst = ellipsis;
-								strcpy_s(lastid, sizeof(lastid), "...");
+								strcpy_s(compiler.lastid, sizeof(compiler.lastid), "...");
 							}
 						}
                         break;
@@ -1037,7 +1037,7 @@ restart:        /* we come back here after comments */
 
 //	printf("token: %d",lastst);
 //	if (lastst==id)
-//		printf("lastid=%s| ", lastid);
+//		printf("compiler.lastid=%s| ", compiler.lastid);
 }
 
 void needpunc(enum e_sym p,int clue)

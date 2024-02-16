@@ -22,11 +22,11 @@ _arr:
 
 	.sdreg	29
 _main00151:
-  lda t4,00151.00000[gp]
+  lda t4,_arr[gp]
   add t3,t4,r0
   add t2,t3,r0
   ldo t2,4[t2]
-  lda t5,00151.00000[gp]
+  lda t5,_arr[gp]
   add t4,t5,40
   add t3,t4,r0
   ldo t3,4[t3]

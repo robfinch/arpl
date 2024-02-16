@@ -46,7 +46,7 @@ _PrintAll:
   sub sp,sp,16
   lda t0,_PrintAll.00002[gp]
   sto t0,0[sp]
-  lda t0,00181.00158[r56]
+  lda t0,_A[r56]
   ldo t0,0[t0+s0*]
   sto t0,8[sp]
   bsr _printf
@@ -69,7 +69,7 @@ _PrintAll:
   sub sp,sp,16
   lda t0,_PrintAll.00005[gp]
   sto t0,0[sp]
-  lda t0,00181.00192[r56]
+  lda t0,_B[r56]
   ldo t0,0[t0+s0*]
   sto t0,8[sp]
   bsr _printf
@@ -91,7 +91,7 @@ _PrintAll:
   sub sp,sp,16
   lda t0,_PrintAll.00008[gp]
   sto t0,0[sp]
-  lda t0,00181.00224[gp]
+  lda t0,_C[gp]
   ldo t0,0[t0+s0*]
   sto t0,8[sp]
   bsr _printf
@@ -210,6 +210,7 @@ _Hanoi:
   bsr _Move
 .00100:
   ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 64,0
@@ -257,7 +258,7 @@ _main00181:
   mov s0,r0
   ldi t1,4
   bge s0,t1,.00126
-  lda t0,00181.00158[r56]
+  lda t0,_A[r56]
   add t1,s0,1
   sto t1,0[t0+s0*]
   ldi t1,4
@@ -265,14 +266,14 @@ _main00181:
 ; for(i=0;i<4;i++)B[i]=0;
   mov s0,r0
   bge s0,t1,.00129
-  lda t0,00181.00192[r56]
+  lda t0,_B[r56]
   sto r0,0[t0+s0*]
 .00129:
 ; for(i=0;i<4;i++)C[i]=0;
   mov s0,r0
   bge s0,t1,.00132
 .00131:
-  lda t0,00181.00224[gp]
+  lda t0,_C[gp]
   sto r0,0[t0+s0*]
   iblt s0,t1,.00131
 .00132:
@@ -299,11 +300,11 @@ _main00181:
   sub sp,sp,32
   ldi t0,4
   sto t0,0[sp]
-  lda t0,00181.00158[r56]
+  lda t0,_A[r56]
   sto t0,8[sp]
-  lda t0,00181.00192[r56]
+  lda t0,_B[r56]
   sto t0,16[sp]
-  lda t0,00181.00224[gp]
+  lda t0,_C[gp]
   sto t0,24[sp]
   bsr _Hanoi
 ; return 0;

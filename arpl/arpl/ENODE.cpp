@@ -1640,7 +1640,8 @@ Operand* ENODE::GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg)
 			ap1->offset2->i = -ap1->offset2->i;
 	}
 	// Scale a constant index by the type size.
-	if (!ap1->is_scaled && pass == 1) {
+	// ????
+	if (!ap1->is_scaled && pass == 1 && ap1->tp && ap1->tp->isArray) {
 		int sz;
 		if (ap1->tp) {
 			if (ap1->tp->type == bt_pointer)
@@ -2721,8 +2722,20 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 		* rodata items and are made local to the file with GetPrivateNamespace().
 		* A matching label is output when the literal table is dumped.
 		*/
-		if (sym)
-			sprintf_s(buf, sizeof(buf), "%.400s.%05d", (char*)GetPrivateNamespace(), sym->value.i);
+		if (sym) {
+			Symbol* s = sym;
+			ENODE* pn = this;
+			e_sc sc;
+
+			sc = s->storage_class;
+			if (sc == sc_member) {
+					sc = pn->sc;
+			}
+			if (sc == sc_global)
+				sprintf_s(buf, sizeof(buf), "%s", (char*)sp->c_str());
+			else
+				sprintf_s(buf, sizeof(buf), "%.400s.%05d", (char*)GetPrivateNamespace(), sym->value.i);
+		}
 		else
 			sprintf_s(buf, sizeof(buf), "%s", (char*)sp->c_str());
 		ofs.write(buf);

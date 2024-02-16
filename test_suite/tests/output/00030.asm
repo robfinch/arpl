@@ -32,6 +32,7 @@ _main00030:
 ; return 1;
   ldi a0,1
 .00032:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

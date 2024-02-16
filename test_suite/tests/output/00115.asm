@@ -12,7 +12,7 @@ _s:
 	.sdreg	29
 _main00115:
 ; if (s[0] != 'a')
-  lda t1,00115.00001[gp]
+  lda t1,_s[gp]
   ldw t1,0[t1]
   ldi t2,97
   beq t1,t2,.00020
@@ -22,7 +22,7 @@ _main00115:
   rts 
 .00020:
 ; if (s[1] != 'b')
-  lda t1,00115.00001[gp]
+  lda t1,_s[gp]
   ldw t1,1[t1]
   ldi t2,98
   beq t1,t2,.00022
@@ -31,7 +31,7 @@ _main00115:
   bra .00019
 .00022:
 ; if (s[2] != 'c')
-  lda t1,00115.00001[gp]
+  lda t1,_s[gp]
   ldw t1,2[t1]
   ldi t2,99
   beq t1,t2,.00024
@@ -40,7 +40,7 @@ _main00115:
   bra .00019
 .00024:
 ; if (s[3] != '\0')
-  lda t1,00115.00001[gp]
+  lda t1,_s[gp]
   ldw t1,3[t1]
   beq t1,r0,.00026
 ; return 4;

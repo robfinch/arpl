@@ -26,6 +26,7 @@ _f1:
   bnez s0,.00019
 .00016:
   ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 40,0

@@ -12,14 +12,16 @@ _main00053:
   sto s0,[sp]
   sto s1,8[sp]
   lda s0,-16[fp]
+  lda s1,-8[fp]
 ; s1.x = 1;
-  ldi s1,1
-; s2.y = 1;
   ldi t0,1
-  sto t0,64[s0]
+  sto t0,0[s1]
+; s2.y = 1;
+  sto t0,8[s0]
 ; if (s1.x - s2.y != 0)
-  ldo t2,64[s0]
-  sub t1,s1,t2
+  ldo t2,0[s1]
+  ldo t3,8[s0]
+  sub t1,t2,t3
   beq t1,r0,.00013
 ; return 1;
   ldi a0,1

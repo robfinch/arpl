@@ -193,7 +193,7 @@ void Declaration::ParseInterrupt()
 			DoesContextSave = GetIntegerExpression(nullptr,nullptr,0).low;
 		}
 		needpunc(closepa,49);
-		//stkname = my_strdup(lastid);
+		//stkname = my_strdup(compiler.lastid);
 	}
 }
 
@@ -707,9 +707,9 @@ Symbol *Declaration::ParseSpecifierId()
 {
 	Symbol *sp;
 
-	dfs.printf("<ParseSpecifierId>%s",lastid);
-	declid = new std::string(lastid);
-	sp = tagtable.Find(lastid,false);//gsyms[0].Find(lastid);
+	dfs.printf("<ParseSpecifierId>%s",compiler.lastid);
+	declid = new std::string(compiler.lastid);
+	sp = tagtable.Find(compiler.lastid,false);//gsyms[0].Find(compiler.lastid);
 	if (sp) {
 		NextToken();
 		dfs.printf("Found: type (struct, union or class).\n");
@@ -720,7 +720,7 @@ Symbol *Declaration::ParseSpecifierId()
 		}
 	}
 	if (sp == nullptr) {
-		sp = gsyms[0].Find(lastid, false);
+		sp = gsyms[0].Find(compiler.lastid, false);
 		if (sp) {
 			
 			if (sp->storage_class != sc_typedef && sp->storage_class != sc_type) {
@@ -739,7 +739,7 @@ Symbol *Declaration::ParseSpecifierId()
 	if (sp == nullptr) {
 		declid = nullptr;
 		sp = SymbolFactory::Make(
-			lastid,
+			compiler.lastid,
 			TYP::Make(bt_int, cpu.sizeOfInt),
 			nullptr,
 			currentFn->depth,
@@ -1066,9 +1066,9 @@ void Declaration::ParseDoubleColon(Symbol *sp)
 
 	while (lastst==double_colon) {
 		gotDouble = true;
-		sym = tagtable.Find(lastid,false);
+		sym = tagtable.Find(compiler.lastid,false);
 		if (sym) {
-			sp->parent = sym->GetIndex();//gsearch(lastid);
+			sp->parent = sym->GetIndex();//gsearch(compiler.lastid);
 			sp->parentp = sym;
 		}
 		else {
@@ -1127,43 +1127,43 @@ void Declaration::ParseBitfieldSpec(bool isUnion)
 void Declaration::ParseVarAttribute()
 {
 	do {
-		if (strcmp(lastid, "_cache") == 0) {
+		if (strcmp(compiler.lastid, "_cache") == 0) {
 			NextToken();
 			needpunc(double_colon, 86);
 			if (lastst == id) {
-				if (strcmp(lastid, "_none") == 0) {
+				if (strcmp(compiler.lastid, "_none") == 0) {
 					head->rd_cache = new std::string(".none");
 					head->wr_cache = new std::string(".none");
 				}
-				else if (strcmp(lastid, "_rd") == 0) {
+				else if (strcmp(compiler.lastid, "_rd") == 0) {
 					head->rd_cache = new std::string(".rd");
 					head->wr_cache = new std::string(".none");
 				}
-				else if (strcmp(lastid, "_rda") == 0) {
+				else if (strcmp(compiler.lastid, "_rda") == 0) {
 					head->rd_cache = new std::string(".rda");
 					head->wr_cache = new std::string(".none");
 				}
-				else if (strcmp(lastid, "_wt") == 0) {
+				else if (strcmp(compiler.lastid, "_wt") == 0) {
 					head->rd_cache = new std::string(".rd");
 					head->wr_cache = new std::string(".wt");
 				}
-				else if (strcmp(lastid, "_wta") == 0) {
+				else if (strcmp(compiler.lastid, "_wta") == 0) {
 					head->rd_cache = new std::string(".rd");
 					head->wr_cache = new std::string(".wta");
 				}
-				else if (strcmp(lastid, "_rwta") == 0) {
+				else if (strcmp(compiler.lastid, "_rwta") == 0) {
 					head->rd_cache = new std::string(".rda");
 					head->wr_cache = new std::string(".wta");
 				}
-				else if (strcmp(lastid, "_wb") == 0) {
+				else if (strcmp(compiler.lastid, "_wb") == 0) {
 					head->rd_cache = new std::string(".rd");
 					head->wr_cache = new std::string(".wb");
 				}
-				else if (strcmp(lastid, "_wba") == 0) {
+				else if (strcmp(compiler.lastid, "_wba") == 0) {
 					head->rd_cache = new std::string(".rd");
 					head->wr_cache = new std::string(".wba");
 				}
-				else if (strcmp(lastid, "_rwba") == 0) {
+				else if (strcmp(compiler.lastid, "_rwba") == 0) {
 					head->rd_cache = new std::string(".rda");
 					head->wr_cache = new std::string(".wba");
 				}
@@ -1206,9 +1206,9 @@ Symbol *Declaration::ParsePrefixId(Symbol* symi)
 
 	dfs.puts("<ParsePrefixId>");
 	if (declid) delete declid;
-	declid = new std::string(lastid);
+	declid = new std::string(compiler.lastid);
 	dfs.printf("B|%s|",(char *)declid->c_str());
-	sp = exp.gsearch2(std::string(lastid), bt_int, nullptr, false);
+	sp = exp.gsearch2(std::string(compiler.lastid), bt_int, nullptr, false);
 	if (symi) {
 		sp = symi;
 	}
@@ -1233,7 +1233,7 @@ Symbol *Declaration::ParsePrefixId(Symbol* symi)
 	NextToken();
 	ParseDoubleColon(sp);
 	if (declid) delete declid;
-	declid = new std::string(lastid);
+	declid = new std::string(compiler.lastid);
 	sp->SetName(*declid);
 	dfs.printf("E"); 
 	if (lastst == colon) {
@@ -1920,7 +1920,7 @@ Symbol *Declaration::ParseSuffix(Symbol *sp)
 				sp1 = Symbol::alloc();
 				sp1->fi = MakeFunction(sp1->number, sp1, defaultcc == 1, isInline);
 //				sp1->SetName(*UnknownFuncName());
-				sp1->SetName(std::string(lastid));
+				sp1->SetName(std::string(compiler.lastid));
 				sp1->tp = TYP::Copy(&stdfunc);
 				sp1->tp->type = bt_func;
 				sp1->tp->btpp = head;
@@ -2785,7 +2785,7 @@ void GlobalDeclaration::Parse()
 			NextToken();
 			GetNamespace();
 			if (lastst == id)
-				strcpy_s(nmspace[0],sizeof(nmspace[0]), lastid);
+				strcpy_s(nmspace[0],sizeof(nmspace[0]), compiler.lastid);
 			break;
 		*/
 		case kw_leaf:
@@ -3002,29 +3002,29 @@ j1:
     case kw_using:
       NextToken();
       if (lastst==id) {
-        if (strcmp(lastid,"_name")==0) {
+        if (strcmp(compiler.lastid,"_name")==0) {
           NextToken();
           if (lastst==id) {
-            if (strcmp(lastid, "_mangler")==0) {
+            if (strcmp(compiler.lastid, "_mangler")==0) {
               NextToken();
               mangledNames = !notVal;
             }
           }
         }
-        else if (strcmp(lastid,"_real")==0) {
+        else if (strcmp(compiler.lastid,"_real")==0) {
           NextToken();
           if (lastst==id) {
-            if (strcmp(lastid,"_names")==0) {
+            if (strcmp(compiler.lastid,"_names")==0) {
               NextToken();
               mangledNames = notVal;
             }
           }
         }
-				else if (strcmp(lastid, "___cdecl") == 0) {
+				else if (strcmp(compiler.lastid, "___cdecl") == 0) {
 					NextToken();
 					defaultcc = 0;
 				}
-				else if (strcmp(lastid, "_pascal") == 0) {
+				else if (strcmp(compiler.lastid, "_pascal") == 0) {
 					NextToken();
 					defaultcc = 1;
 				}
@@ -3032,14 +3032,14 @@ j1:
 	  else if (lastst==kw_short) {
 		  NextToken();
 		  if (lastst==id) {
-			  if (strcmp(lastid,"_pointers")==0)
+			  if (strcmp(compiler.lastid,"_pointers")==0)
 				  cpu.sizeOfPtr = 4;
 		  }
 	  }
 	  else if (lastst==kw_long) {
 		  NextToken();
 		  if (lastst==id) {
-			  if (strcmp(lastid,"_pointers")==0)
+			  if (strcmp(compiler.lastid,"_pointers")==0)
 				  cpu.sizeOfPtr = 12;
 		  }
 	  }
@@ -3062,13 +3062,13 @@ int AutoDeclaration::ParseId(Symbol* parent, TABLE* ssyms, Statement* st)
 	Symbol* sp, *symo;
 	int nn;
 
-	dfs.printf("Found %s\n", lastid);
-	sp = tagtable.Find(lastid, false);
+	dfs.printf("Found %s\n", compiler.lastid);
+	sp = tagtable.Find(compiler.lastid, false);
 	if (sp)
 		dfs.printf("Found in tagtable");
 	if (sp == nullptr) {
-		//sp = gsearch2(lastid, (__int16)bt_long, nullptr, false);
-		sp = gsyms[0].Find(lastid, false);
+		//sp = gsearch2(compiler.lastid, (__int16)bt_long, nullptr, false);
+		sp = gsyms[0].Find(compiler.lastid, false);
 		if (TABLE::matchno > 1) {
 			for (nn = 0; nn < TABLE::matchno; nn++) {
 				sp = TABLE::match[nn];

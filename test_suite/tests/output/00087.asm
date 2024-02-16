@@ -30,10 +30,10 @@ _main00087:
   sto lr0,8[fp]
   sub sp,sp,40
   sto s0,[sp]
+  lda s0,-8[fp]
 ; v.fptr = foo;
-  ldi s0,0
-; return v.fptr();
-  jsr [s0]
+  ldi t0,0
+  sto t0,0[s0]
 .00020:
   ldo s0,[sp]
   mov sp,fp

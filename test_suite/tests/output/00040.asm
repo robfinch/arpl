@@ -34,13 +34,13 @@ _chk:
   bge s0,t1,.00039
 .00038:
 ; r = r + t[x + 8*i];
-  lda t1,00040.00078[gp]
+  lda t1,_t[gp]
   asl t3,s0,3
   add t2,s2,t3
   ldo t1,0[t1+t2*]
   add s1,s1,t1
 ; r = r + t[i + 8*y];
-  lda t1,00040.00078[gp]
+  lda t1,_t[gp]
   asl t3,s3,3
   add t2,s0,t3
   ldo t1,0[t1+t2*]
@@ -53,7 +53,7 @@ _chk:
   and t0,t1,t2
   beqz t0,.00041
 ; r = r + t[x+i + 8*(y+i)];
-  lda t1,00040.00078[gp]
+  lda t1,_t[gp]
   add t3,s2,s0
   add t5,s3,s0
   asl t4,t5,3
@@ -69,7 +69,7 @@ _chk:
   and t0,t1,t2
   beqz t0,.00047
 ; r = r + t[x+i + 8*(y-i)];
-  lda t1,00040.00078[gp]
+  lda t1,_t[gp]
   add t3,s2,s0
   sub t5,s3,s0
   asl t4,t5,3
@@ -85,7 +85,7 @@ _chk:
   and t0,t1,t2
   beqz t0,.00053
 ; r = r + t[x-i + 8*(y+i)];
-  lda t1,00040.00078[gp]
+  lda t1,_t[gp]
   sub t3,s2,s0
   add t5,s3,s0
   asl t4,t5,3
@@ -101,7 +101,7 @@ _chk:
   and t0,t1,t2
   beqz t0,.00059
 ; r = r + t[x-i + 8*(y-i)];
-  lda t1,00040.00078[gp]
+  lda t1,_t[gp]
   sub t3,s2,s0
   sub t5,s3,s0
   asl t4,t5,3
@@ -147,13 +147,14 @@ _go:
   ldi t1,8
   bne s2,t1,.00085
 ; N++;
-  lda t0,00040.00070[gp]
+  lda t0,_N[gp]
 ; return 0;
   mov a0,r0
 .00084:
   ldo s0,[sp]
   ldo s1,8[sp]
   ldo s2,16[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 56,0
@@ -203,7 +204,7 @@ _main00040:
   sto lr0,8[fp]
   sub sp,sp,32
 ; t = calloc(64, sizeof(int));
-  lda t0,00040.00078[gp]
+  lda t0,_t[gp]
   sto t0,-32[fp]
   sub sp,sp,16
   ldi t1,64
@@ -220,12 +221,13 @@ _main00040:
   sto r0,16[sp]
   bsr _go
 ; if(N != 92)
-  lda t1,00040.00070[gp]
+  lda t1,_N[gp]
   ldi t2,92
   beq t1,t2,.00107
 ; return 1;
   ldi a0,1
 .00106:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

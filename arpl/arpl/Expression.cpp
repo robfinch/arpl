@@ -513,7 +513,7 @@ bool Expression::ParseAggregateStruct(ENODE** node, ENODE* cnode, Symbol* symi, 
 			needpunc(assign, 56);
 			ndx = 0;
 			for (tmp = tp->lst.headp; tmp; tmp = tmp->nextp, ndx++) {
-				if (strcmp(lastid, tmp->name->c_str()) == 0) {
+				if (strcmp(compiler.lastid, tmp->name->c_str()) == 0) {
 					at_node = ndx;
 					found = true;
 					break;
@@ -771,7 +771,7 @@ TYP* Expression::ParseNameRef(ENODE** node, Symbol* symi, int nt)
 	tptr = nameref(&pnode, nt, symi);
 	if (tptr == nullptr) {
 		if (currentSym) {
-			if (currentSym->name->compare(lastid) == 0) {
+			if (currentSym->name->compare(compiler.lastid) == 0) {
 				tptr = currentSym->tp;
 			}
 		}
@@ -793,7 +793,7 @@ TYP* Expression::ParseNameRef(ENODE** node, Symbol* symi, int nt)
 	//pnode->p[3] = (ENODE *)tptr->size;
 	//				if (pnode->nodetype==en_nacon)
 	//					pnode->p[0] = makenode(en_list,tptr->BuildEnodeTree(),nullptr);
-			//else if (sp = gsyms->Find(lastid, false)) {
+			//else if (sp = gsyms->Find(compiler.lastid, false)) {
 			//	if (TABLE::matchno > 1) {
 			//		for (i = 0; i < TABLE::matchno) {
 			//			sp = TABLE::match[i];
@@ -836,7 +836,7 @@ TYP* Expression::ParseNameRef(ENODE** node, Symbol* symi, int nt)
 		tptr->isShort = false;
 		tptr->isUnsigned = false;
 		tptr->size = 8;
-		tptr->sname = new std::string(lastid);
+		tptr->sname = new std::string(compiler.lastid);
 	}
 
 	if (pnode == nullptr)
@@ -1558,7 +1558,7 @@ ENODE* Expression::ParseDotOperator(TYP* tp1, ENODE *ep1, Symbol* symi)
 	TypeArray typearray;
 	ENODE* ep2, * ep3, * qnode, *n1, *parent;
 	TYP* ptp1, * ptp2;
-	Symbol* sp, *psp;
+	Symbol* sp, *psp, *sp_parent;
 	char* name;
 	int ii;
 	bool iu;
@@ -1594,7 +1594,7 @@ ENODE* Expression::ParseDotOperator(TYP* tp1, ENODE *ep1, Symbol* symi)
 	dfs.printf("dot search: %p\r\n", (char*)&tp1->lst);
 	ptp1 = tp1;
 	pep1 = ep1;
-	name = lastid;
+	name = compiler.lastid;
 	//sp = FindMember(tp1, name);
 	
 	// If nothing is found under the type passed in, check the second type field
@@ -1611,9 +1611,11 @@ ENODE* Expression::ParseDotOperator(TYP* tp1, ENODE *ep1, Symbol* symi)
 		}
 	}
 	n1 = ep1;
+	sp_parent = nullptr;
 	if (n1) {
 		if (n1->nodetype == en_ref) {
 			if (n1->sym) {
+				sp_parent = n1->sym;
 				if (n1->sym->name->compare(name) == 0) {
 					sp = n1->sym;
 					goto j1;
@@ -1691,11 +1693,12 @@ j1:
 		skip_id = true;
 	j2:
 		dfs.printf("tp1->type:%d", tp1->type);
-		if (ep1)
-			iu = ep1->isUnsigned;
-		else
+		if (tp1)
 			iu = tp1->isUnsigned;
-		if (sp->value.i) {
+		else
+			iu = ep1->isUnsigned;
+		//if (sp->value.i)
+		{
 			qnode = makeinode(en_icon, sp->value.i);
 			qnode->constflag = TRUE;
 			if (sp->tp->bit_offset) {
@@ -1708,8 +1711,10 @@ j1:
 			ep1->isPascal = ep1->p[0]->isPascal;
 			ep1->constflag = ep1->p[0]->constflag;
 		}
+		/*
 		else if (ep1)
 			ep1->constflag = TRUE;
+		*/
 		if (ep1) {
 			ep1->sym = sp;
 			ep1->isUnsigned = iu;
@@ -1728,8 +1733,9 @@ j1:
 		NextToken();       /* past id */
 	dfs.printf("B");
 xit:
-	if (ep1)
+	if (ep1) {
 		ep1->tp = tp1;
+	}
 	return (ep1);
 }
 
@@ -1808,7 +1814,7 @@ ENODE* Expression::ParseOpenpa(TYP* tp1, ENODE* ep1, Symbol* symi)
 		dfs.printf("Got function pointer.\n");
 	}
 	dfs.printf("tp2->type=%d", tp2->type);
-	name = lastid;
+	name = compiler.lastid;
 	//NextToken();
 	tp3 = tp1->btpp;
 	ep4 = nullptr;

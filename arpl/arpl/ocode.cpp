@@ -750,7 +750,11 @@ void OCODE::OptNoUse()
 	}
 	// If we get to the end, and no use, then eliminate
 	// But, do not remove frame pointer load at end of function.
-	if (oper1->preg != regFP && !IsArgReg(oper1->preg) && !IsSavedReg(oper1->preg)) {
+	if (oper1->preg != regFP 
+		&& !IsArgReg(oper1->preg)
+		&& !IsSavedReg(oper1->preg)
+		&& oper1->preg != regLR
+		) {
 		MarkRemove();
 		optimized++;
 	}

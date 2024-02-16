@@ -10,13 +10,21 @@ _main00042:
   mov fp,sp
   sub sp,sp,40
   sto s0,[sp]
+  ldo t1,[fp]
+  lda s0,-8[fp]
+; u.a = 1;
+  ldi t0,1
+  sto t0,0[s0]
 ; u.b = 3;
-  ldi s0,3
+  ldi t0,3
+  sto t0,0[s0]
 ; if (u.a != 3 || u.b != 3)
-  ldi t1,3
-  bne s0,t1,.00016
+  ldo t1,0[s0]
   ldi t2,3
-  beq s0,t2,.00014
+  bne t1,t2,.00016
+  ldo t2,0[s0]
+  ldi t3,3
+  beq t2,t3,.00014
 .00016:
 ; return 1;
   ldi a0,1

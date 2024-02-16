@@ -12,7 +12,7 @@ _arr:
 	.sdreg	29
 _main00147:
 ; if(arr[0] != 0)
-  lda t1,00147.00000[gp]
+  lda t1,_arr[gp]
   ldo t1,0[t1]
   beq t1,r0,.00018
 ; return 1;
@@ -21,7 +21,7 @@ _main00147:
   rts 
 .00018:
 ; if(arr[1] != 1)
-  lda t1,00147.00000[gp]
+  lda t1,_arr[gp]
   ldo t1,1[t1]
   ldi t2,1
   beq t1,t2,.00020
@@ -30,7 +30,7 @@ _main00147:
   bra .00017
 .00020:
 ; if(arr[2] != 2)
-  lda t1,00147.00000[gp]
+  lda t1,_arr[gp]
   ldo t1,2[t1]
   ldi t2,2
   beq t1,t2,.00022

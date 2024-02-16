@@ -16,11 +16,15 @@ _main00044:
   mov fp,sp
   sub sp,sp,40
   sto s0,[sp]
+  ldo t1,[fp]
+  lda s0,-8[fp]
 ; v.x = 2;
-  ldi s0,2
+  ldi t0,2
+  sto t0,0[s0]
 ; if(v.x != 2)
-  ldi t1,2
-  beq s0,t1,.00013
+  ldo t1,0[s0]
+  ldi t2,2
+  beq t1,t2,.00013
 ; return 1;
   ldi a0,1
 .00012:

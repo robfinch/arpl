@@ -22,7 +22,7 @@ _main00217:
   sto s2,16[sp]
   sto s3,24[sp]
 ; char *data = t;
-  lda s0,00217.00001[gp]
+  lda s0,_t[gp]
   ldi s2,4
   ldi s3,5
   ldi s1,12

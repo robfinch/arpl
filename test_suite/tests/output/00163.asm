@@ -19,7 +19,7 @@ _main00163:
   sto s0,[sp]
   sto s1,8[sp]
 ; int a;
-  lda s1,00163.00116[gp]
+  lda s1,_bolshevic[gp]
 ; a = 42;
   ldi t0,42
   sto t0,-8[fp]
@@ -32,67 +32,65 @@ _main00163:
   ldo t0,[s0]
   sto t0,8[sp]
   bsr _printf
+; bolshevic.a = 12;
+  lda t0,_bolshevic[gp]
+  ldi t1,12
+  sto t1,0[t0]
 ; bolshevic.b = 34;
-  lda t0,00163.00116[gp]
+  lda t0,_bolshevic[gp]
   ldi t1,34
   sto t1,8[t0]
 ; bolshevic.c = 56;
-  lda t0,00163.00116[gp]
+  lda t0,_bolshevic[gp]
   ldi t1,56
   sto t1,16[t0]
 ; printf("bolshevic.a = %d\n", bolshevic.a);
   sub sp,sp,16
   lda t0,_main00163.00002[gp]
   sto t0,0[sp]
-  lda t0,00163.00000[gp]
+  lda t0,_bolshevic[gp]
+  ldo t0,0[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("bolshevic.b = %d\n", bolshevic.b);
   sub sp,sp,16
   lda t0,_main00163.00003[gp]
   sto t0,0[sp]
-  lda t0,00163.00116[gp]
-  ldou t0,8[t0]
+  lda t0,_bolshevic[gp]
+  ldo t0,8[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("bolshevic.c = %d\n", bolshevic.c);
   sub sp,sp,16
   lda t0,_main00163.00004[gp]
   sto t0,0[sp]
-  lda t0,00163.00116[gp]
-  ldou t0,16[t0]
+  lda t0,_bolshevic[gp]
+  ldo t0,16[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("tsar->a = %d\n", tsar->a);
-  sub sp,sp,8
+  sub sp,sp,16
   lda t0,_main00163.00005[gp]
   sto t0,0[sp]
-  ldo t0,[s1]
-  lea t1,0[sp]
-  sto t1,8[sp]
-  sto t0,0[sp]
-  ldi t1,24
-  sto t1,24
-  bsr __aacpy
-  ldi t1,0
-  sto t1,8[sp]
+  ldo t0,0[s1]
+  sto t0,8[sp]
   bsr _printf
 ; printf("tsar->b = %d\n", tsar->b);
   sub sp,sp,16
   lda t0,_main00163.00006[gp]
   sto t0,0[sp]
-  ldou t0,192[s1]
+  ldo t0,8[s1]
   sto t0,8[sp]
   bsr _printf
 ; printf("tsar->c = %d\n", tsar->c);
   sub sp,sp,16
   lda t0,_main00163.00007[gp]
   sto t0,0[sp]
-  ldou t0,384[s1]
+  ldo t0,16[s1]
   sto t0,8[sp]
   bsr _printf
 ; b = &(bolshevic.b);
-  lda t1,00163.00116[gp]
+  lda t1,_bolshevic[gp]
   add s0,t1,8
 ; printf("bolshevic.b = %d\n", *b);
   sub sp,sp,16

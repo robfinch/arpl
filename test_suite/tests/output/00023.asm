@@ -12,10 +12,10 @@ _x:
 	.sdreg	29
 _main00023:
 ; x = 0;
-  lda t0,00023.00000[gp]
+  lda t0,_x[gp]
   sto r0,[t0]
 ; return x;
-  lda a0,00023.00000[gp]
+  lda a0,_x[gp]
 .00010:
   rts 
 	.type	_main00023,@function

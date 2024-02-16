@@ -16,7 +16,7 @@ _s:
 	.type	_s,@object
 	.size	_s,16
 	.8byte	1
-	.8byte	00049.00000
+	.8byte	_x
  
 	.text
 
@@ -25,7 +25,8 @@ _s:
 	.sdreg	29
 _main00049:
 ; if(s.a != 1)
-  lda t1,00049.00000[gp]
+  lda t1,_s[gp]
+  ldo t1,0[t1]
   ldi t2,1
   beq t1,t2,.00016
 ; return 1;
@@ -34,7 +35,7 @@ _main00049:
   rts 
 .00016:
 ; if(*s.p != 10)
-  lda t1,00049.00024[gp]
+  lda t1,_s[gp]
   ldo t1,8[t1]
   ldo t1,[t1]
   ldi t2,10

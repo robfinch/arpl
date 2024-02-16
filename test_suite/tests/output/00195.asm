@@ -21,28 +21,26 @@ _main00195:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; int my_point = 10;
-  ldi s0,10
+  ldi t0,10
+  sto t0,-8[fp]
 ; point_array[my_point].x = 12.34;
-  lda t0,00195.00132[gp]
+  lda t0,_point_array[gp]
   ldo t1,0x0000[gp]
-  sto t1,0[t0+s0*]
+  sto t1,0[t0]
 ; point_array[my_point].y = 56.78;
-  lda t1,00195.00132[gp]
-  add t0,t1,10
+  lda t0,_point_array[gp]
   ldo t1,0x0000[gp]
   sto t1,8[t0]
 ; printf("%f, %f\n", point_array[my_point].x, point_array[my_point].y);
   sub sp,sp,24
   lda t0,_main00195.00001[gp]
   sto t0,0[sp]
-  lda t0,00195.00132[gp]
-  ldo t0,0[t0+s0*]
+  lda t0,_point_array[gp]
+  ldo t0,0[t0]
   sto t0,8[sp]
-  lda t1,00195.00132[gp]
-  add t0,t1,10
+  lda t0,_point_array[gp]
   ldo t0,8[t0]
   sto t0,16[sp]
   bsr _printf
@@ -50,7 +48,6 @@ _main00195:
 ; return 0;
   mov a0,r0
 .00011:
-  ldo s0,[sp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

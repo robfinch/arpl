@@ -10,9 +10,11 @@ _main00153:
   mov fp,sp
   sub sp,sp,40
   sto s0,[sp]
+  lda s0,-8[fp]
 ; s.f = 0;
-  mov s0,r0
-  mov a0,r0
+  sto r0,0[s0]
+; return s.f;
+  ldo a0,0[s0]
 .00010:
   ldo s0,[sp]
   mov sp,fp

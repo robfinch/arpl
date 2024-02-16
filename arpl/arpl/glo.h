@@ -133,7 +133,6 @@ extern int              lineno;
 extern int              nextlabel;
 extern int              lastch;
 extern int              lastst;
-extern char             lastid[128];
 extern char             lastkw[128];
 extern char             laststr[MAX_STLP1];
 extern int laststrlen;

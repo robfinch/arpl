@@ -14,7 +14,7 @@ _main00138:
   sto t0,-8[fp]
 ; return (a[1] == 'i') ? 0 : 1;
   ldo t1,1[fp]
-  ldw t1,2[t1]
+  ldw t1,1[t1]
   ldi t2,105
   bne t1,t2,.00014
   ldi t1,0

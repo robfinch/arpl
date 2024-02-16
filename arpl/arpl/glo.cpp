@@ -183,7 +183,6 @@ int             lineno = 0;
 int             nextlabel = 1;
 int             lastch = 0;
 int             lastst = 0;
-char            lastid[128] = "";
 char            lastkw[128] = "";
 char            laststr[MAX_STRLEN + 1] = "";
 int64_t			ival = 0;

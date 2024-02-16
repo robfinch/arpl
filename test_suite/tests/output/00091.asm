@@ -12,7 +12,7 @@ _a:
 	.sdreg	29
 _main00091:
 ; if (a[0].v != 1)
-  lda t1,00091.00024[gp]
+  lda t1,_a[gp]
   ldo t1,0[t1]
   ldi t2,1
   beq t1,t2,.00022
@@ -22,8 +22,7 @@ _main00091:
   rts 
 .00022:
 ; if (a[0].sub[0] != 2)
-  lda t3,00091.00024[gp]
-  add t2,t3,r0
+  lda t2,_a[gp]
   add t1,t2,8
   ldo t1,0[t1]
   ldi t2,2
@@ -33,8 +32,7 @@ _main00091:
   bra .00021
 .00024:
 ; if (a[0].sub[1] != 3)
-  lda t3,00091.00024[gp]
-  add t2,t3,r0
+  lda t2,_a[gp]
   add t1,t2,8
   ldo t1,1[t1]
   ldi t2,3

@@ -22,9 +22,10 @@ _main00106:
   mov fp,sp
   sub sp,sp,32
 ; s2.s1.x = 1;
-  ldo t0,[fp]
+  lda t1,-8[fp]
+  add t0,t1,r0
   ldi t1,1
-  sto t1,-8[t0]
+  sto t1,0[t0]
 ; return 0;
   mov a0,r0
 .00010:

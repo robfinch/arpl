@@ -6,7 +6,7 @@
 	.sdreg	29
 _main00088:
 ; if (fptr)
-  lda t0,00088.00000[gp]
+  lda t0,_fptr[gp]
   beqz t0,.00013
 ; return 1;
   ldi a0,1
