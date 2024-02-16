@@ -9,21 +9,19 @@ _main00194:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
+  sub sp,sp,32
 ; a = 0;
-  mov s0,r0
+  mov t0,r0
 ; while (a < 2)
   ldi t1,2
-  bge s0,t1,.00020
+  bge t0,t1,.00020
 .00019:
 ; printf("%d", a++);
   sub sp,sp,16
   lda t0,_main00194.00001[gp]
   sto t0,0[sp]
-  add s0,s0,1
-  sto s0,8[sp]
+  add t0,t0,1
+  sto t0,8[sp]
   bsr _printf
 ; break;
   bra .00020
@@ -32,11 +30,11 @@ _main00194:
   sub sp,sp,16
   lda t0,_main00194.00002[gp]
   sto t0,0[sp]
-  add s1,s1,1
-  sto s1,8[sp]
+  add t1,t1,1
+  sto t1,8[sp]
   bsr _printf
   ldi t1,67
-  blt s1,t1,.00021
+  blt t1,t1,.00021
 .00022:
 ; printf("e");
   sub sp,sp,8
@@ -44,7 +42,7 @@ _main00194:
   sto t0,0[sp]
   bsr _printf
   ldi t1,2
-  blt s0,t1,.00019
+  blt t0,t1,.00019
 .00020:
 ; printf("\n");
   sub sp,sp,8
@@ -54,8 +52,7 @@ _main00194:
 ; return 0;
   mov a0,r0
 .00018:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

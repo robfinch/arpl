@@ -57,6 +57,7 @@ _main00089:
   ldo t0,_go
   sto t0,-32[fp]
 .00041:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

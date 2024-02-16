@@ -28,6 +28,7 @@ _main00121:
   bsr _g
   sub a0,a0,a0
 .00010:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

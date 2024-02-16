@@ -27,6 +27,7 @@ _main00208:
   ldw t1,0[t1]
   not a0,t1
 .00047:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

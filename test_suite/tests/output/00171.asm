@@ -9,25 +9,21 @@ _main00171:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
+  sub sp,sp,32
 ; a = 42;
   ldi t0,42
   sto t0,-8[fp]
-; b = &a;
-  lda s0,-8[fp]
 ; c = (void *)0;
-  mov s1,r0
+  mov t1,r0
 ; printf("%d\n", *b);
   sub sp,sp,16
   lda t0,_main00171.00001[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 ; if (b == (void *)0)
-  bnez s0,.00020
+  bnez t0,.00020
 ; printf("b is NULL\n");
   sub sp,sp,8
   lda t0,_main00171.00002[gp]
@@ -42,7 +38,7 @@ _main00171:
   bsr _printf
 .00021:
 ; if (c == (void *)0)
-  bnez s1,.00022
+  bnez t1,.00022
 ; printf("c is NULL\n");
   sub sp,sp,8
   lda t0,_main00171.00004[gp]
@@ -59,8 +55,7 @@ _main00171:
 ; return 0;
   mov a0,r0
 .00019:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

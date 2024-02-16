@@ -2547,6 +2547,7 @@ public:
 	bool exceptions;
 	short int autoInline;
 	short int table_density;		// switch table density threshold as a percentage.
+	short int reg_in_use[256];
 	char firstid[128];
 	char lastid[128];
 public:
@@ -2573,6 +2574,7 @@ public:
 	};
 	GlobalDeclaration *decls;
 	void compile();
+	int GetUnusedTemp();
 	int PreprocessFile(char *nm);
 	void CloseFiles();
 	void AddStandardTypes();
@@ -2593,6 +2595,7 @@ public:
 	int pagesize;
 	int cache_line_size;
 	int code_align;
+	int NumRegs;
 	int NumArgRegs;
 	int NumTmpRegs;
 	int NumSavedRegs;

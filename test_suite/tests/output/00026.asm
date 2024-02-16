@@ -5,21 +5,14 @@
 
 	.sdreg	29
 _main00026:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
 ; p = "hello";
-  lda s0,_main00026.00001[gp]
+  lda t0,_main00026.00001[gp]
 ; return p[0] - 104;
-  ldw t1,0[s0]
-  sub a0,t1,104
+  ldw t0,0[t0]
+  sub t0,t0,104
+  sub a0,t0,104
 .00011:
-  ldo s0,[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 	.type	_main00026,@function
 	.size	_main00026,$-_main00026
 

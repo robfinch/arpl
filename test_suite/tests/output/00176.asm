@@ -11,33 +11,19 @@ _array:
 
 	.sdreg	29
 _swap:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,56
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  ldo s0,40[fp]
-  ldo s1,32[fp]
 ; int tmp  = array[a];
   lda t0,_array[gp]
-  ldo s2,0[t0+s1*]
+  ldo t2,0[t0+t1*]
 ; array[a] = array[b];
   lda t0,_array[gp]
   lda t1,_array[gp]
-  ldo t2,0[t1+s0*]
-  sto t2,0[t0+s1*]
+  ldo t2,0[t1+t0*]
+  sto t2,0[t0+t1*]
 ; array[b] = tmp;
   lda t0,_array[gp]
-  sto s2,0[t0+s0*]
+  sto t2,0[t0+t0*]
 .00010:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 48,0
+  rts 
 	.type	_swap,@function
 	.size	_swap,$-_swap
 
@@ -48,56 +34,51 @@ _swap:
 
 	.sdreg	29
 _partition:
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
-  sto s4,32[sp]
-  sto s5,40[sp]
-  ldo s1,8[sp]
-  ldo s2,0[sp]
-  ldo s4,0[sp]
+  sub sp,sp,32
+  sto fp,[sp]
+  mov fp,sp
+  sto lr0,8[fp]
+  sub sp,sp,32
+  ldo t1,40[fp]
+  ldo t2,32[fp]
+  ldo t4,32[fp]
   lda t0,_array[gp]
-  ldo s5,0[t0+s4*]
-  mov s3,s2
+  ldo t5,0[t0+t4*]
+  mov t3,t2
 ; swap(pivotIndex, right);
   sub sp,sp,16
-  sto s4,0[sp]
-  sto s1,8[sp]
+  sto t4,0[sp]
+  sto t1,8[sp]
   bsr _swap
 ; for(i = left; i < right; i++)
-  mov s0,s2
-  bge s0,s1,.00027
+  mov t0,t2
+  bge t0,t1,.00027
 .00026:
 ; if(array[i] < pivotValue)
   lda t1,_array[gp]
-  ldo t1,0[t1+s0*]
-  bge t1,s5,.00029
+  ldo t0,0[t1+t0*]
+  bge t0,t5,.00029
 ; swap(i, index);
   sub sp,sp,16
-  sto s0,0[sp]
-  sto s3,8[sp]
+  sto t0,0[sp]
+  sto t3,8[sp]
   bsr _swap
 ; index += 1;
-  add s3,s3,1
+  add t3,t3,1
 .00029:
 .00028:
-  iblt s0,s1,.00026
 .00027:
 ; swap(right, index);
   sub sp,sp,16
-  sto s1,0[sp]
-  sto s3,8[sp]
+  sto t1,0[sp]
+  sto t3,8[sp]
   bsr _swap
 ; return index;
-  mov a0,s3
+  mov a0,t3
 .00025:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
-  ldo s4,32[sp]
-  ldo s5,40[sp]
+  ldo lr0,8[fp]
+  mov sp,fp
+  ldo fp,[sp]
   rtd 48,0
 	.type	_partition,@function
 	.size	_partition,$-_partition
@@ -113,23 +94,17 @@ _quicksort:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,56
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  ldo s0,32[fp]
-  ldo s1,40[fp]
+  sub sp,sp,32
+  ldo t0,32[fp]
+  ldo t1,40[fp]
 ; if(left >= right)
   sub sp,sp,16
-  sto s0,0[sp]
-  sto s1,8[sp]
+  sto t0,0[sp]
+  sto t1,8[sp]
   bsr _partition
-  mov s2,a0
-  blt s0,s1,.00043
+  mov t2,a0
+  blt t0,t1,.00043
 .00042:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
@@ -137,15 +112,15 @@ _quicksort:
 .00043:
 ; quicksort(left, index - 1);
   sub sp,sp,16
-  sto s0,0[sp]
-  sub t0,s2,1
+  sto t0,0[sp]
+  sub t0,t2,1
   sto t0,8[sp]
   bsr _quicksort
 ; quicksort(index + 1, right);
   sub sp,sp,16
-  add t0,s2,1
+  add t0,t2,1
   sto t0,0[sp]
-  sto s1,8[sp]
+  sto t1,8[sp]
   bsr _quicksort
   bra .00042
 	.type	_quicksort,@function
@@ -162,8 +137,7 @@ _main00176:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; array[0] = 62;
   lda t0,_array[gp]
   ldi t1,62
@@ -229,16 +203,16 @@ _main00176:
   ldi t1,55
   sto t1,15[t0]
 ; for (i = 0; i < 16; i++)
-  mov s0,r0
+  mov t0,r0
   ldi t1,16
-  bge s0,t1,.00066
+  bge t0,t1,.00066
 .00065:
 ; printf("%d ", array[i]);
   sub sp,sp,16
   lda t0,_main00176.00045[gp]
   sto t0,0[sp]
   lda t0,_array[gp]
-  ldo t0,0[t0+s0*]
+  ldo t0,0[t0+t0*]
   sto t0,8[sp]
   bsr _printf
 .00066:
@@ -254,19 +228,17 @@ _main00176:
   sto t0,8[sp]
   bsr _quicksort
 ; for (i = 0; i < 16; i++)
-  mov s0,r0
+  mov t0,r0
   ldi t1,16
-  bge s0,t1,.00069
-.00068:
+  bge t0,t1,.00069
 ; printf("%d ", array[i]);
   sub sp,sp,16
   lda t0,_main00176.00047[gp]
   sto t0,0[sp]
   lda t0,_array[gp]
-  ldo t0,0[t0+s0*]
+  ldo t0,0[t0+t0*]
   sto t0,8[sp]
   bsr _printf
-  iblt s0,t1,.00068
 .00069:
 ; printf("\n");
   sub sp,sp,8
@@ -276,7 +248,7 @@ _main00176:
 ; return 0;
   mov a0,r0
 .00064:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

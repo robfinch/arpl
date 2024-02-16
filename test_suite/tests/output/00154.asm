@@ -15,76 +15,72 @@ _main00154:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
-  lda s0,-48[fp]
-  lda s1,-16[fp]
+  sub sp,sp,32
+  lda t1,-16[fp]
 ; bloggs.boris = 12;
   ldi t0,12
-  sto t0,0[s1]
+  sto t0,0[t1]
 ; bloggs.natasha = 34;
   ldi t0,34
-  sto t0,8[s1]
+  sto t0,8[t1]
 ; printf("%d\n", bloggs.boris);
   sub sp,sp,16
   lda t0,_main00154.00001[gp]
   sto t0,0[sp]
-  ldo t0,0[s1]
+  ldo t0,0[t1]
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", bloggs.natasha);
   sub sp,sp,16
   lda t0,_main00154.00002[gp]
   sto t0,0[sp]
-  ldo t0,8[s1]
+  ldo t0,8[t1]
   sto t0,8[sp]
   bsr _printf
 ; jones[0].boris = 12;
   ldi t0,12
-  sto t0,0[s0]
+  sto t0,0[t0]
 ; jones[0].natasha = 34;
   ldi t0,34
-  sto t0,128[s0]
+  sto t0,128[t0]
 ; jones[1].boris = 56;
   ldi t0,56
-  sto t0,0[s0]
+  sto t0,0[t0]
 ; jones[1].natasha = 78;
   ldi t0,78
-  sto t0,128[s0]
+  sto t0,128[t0]
 ; printf("%d\n", jones[0].boris);
   sub sp,sp,16
   lda t0,_main00154.00003[gp]
   sto t0,0[sp]
-  ldo t0,0[s0]
+  ldo t0,0[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", jones[0].natasha);
   sub sp,sp,16
   lda t0,_main00154.00004[gp]
   sto t0,0[sp]
-  ldo t0,128[s0]
+  ldo t0,128[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", jones[1].boris);
   sub sp,sp,16
   lda t0,_main00154.00005[gp]
   sto t0,0[sp]
-  ldo t0,0[s0]
+  ldo t0,0[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", jones[1].natasha);
   sub sp,sp,16
   lda t0,_main00154.00006[gp]
   sto t0,0[sp]
-  ldo t0,128[s0]
+  ldo t0,128[t0]
   sto t0,8[sp]
   bsr _printf
 ; return 0;
   mov a0,r0
 .00016:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

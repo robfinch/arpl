@@ -53,7 +53,7 @@ bool PeepList::HasCall(OCODE *ip)
 	int cnt;
 
 	for (cnt = 0; ip; ip = ip->fwd) {
-		if (ip->opcode == op_call || ip->opcode == op_jal || ip->opcode==op_jsr) {
+		if (ip->opcode == op_call || ip->opcode == op_jal || ip->opcode==op_jsr || ip->opcode==op_bsr) {
 			return (true);
 		}
 		if (ip == tail)
@@ -66,7 +66,7 @@ OCODE* PeepList::FindTarget(OCODE *ip, int reg, OCODE* eip)
 {
 	for (; ip != eip; ip = ip->fwd) {
 		if (ip->HasTargetReg()) {
-			if (ip->opcode == op_call || ip->opcode == op_jal || ip->opcode==op_jsr) {
+			if (ip->opcode == op_call || ip->opcode == op_jal || ip->opcode==op_jsr || ip->opcode==op_bsr) {
 				if (reg == cpu.argregs[0] || reg == cpu.argregs[1])
 					return (ip);
 			}
@@ -425,8 +425,40 @@ int PeepList::CountBPReferences()
 			inFuncBody = true;
 			continue;
 		}
-		if (!inFuncBody)
+		// Look for loads of temporary regs in the func prolog.
+		if (!inFuncBody) {
+			if (ip->opcode != op_label && ip->opcode != op_nop) {
+				if (ip->oper1) {
+					if (ip->oper1->preg == regFP || ip->oper1->sreg == regFP)
+						if (!IsTempReg(ip->oper1->preg)
+							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regFP
+							) refBP++;
+				}
+				if (ip->oper2) {
+					if (ip->oper2->preg == regFP || ip->oper2->sreg == regFP)
+						if (!IsTempReg(ip->oper1->preg)
+							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regFP
+							) refBP++;
+				}
+				if (ip->oper3) {
+					if (ip->oper3->preg == regFP || ip->oper3->sreg == regFP)
+						if (!IsTempReg(ip->oper1->preg)
+							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regFP
+							) refBP++;
+				}
+				if (ip->oper4) {
+					if (ip->oper4->preg == regFP || ip->oper4->sreg == regFP)
+						if (!IsTempReg(ip->oper1->preg)
+							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regFP
+							) refBP++;
+				}
+			}
 			continue;
+		}
 		if (ip->opcode == op_leave || ip->opcode == op_leave_far || ip->opcode==op_defcat)
 			refBP++;
 		else if (ip->opcode != op_label && ip->opcode != op_nop

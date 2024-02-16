@@ -9,19 +9,13 @@ _main00174:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,56
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  ldo s1,0x0000[gp]
-  ldo s2,0x0000[gp]
-; float a = 12.34 + 56.78;
-  ldo s0,0x0000[gp]
+  sub sp,sp,32
+  ldo t1,0x0000[gp]
 ; printf("%f\n", a);
   sub sp,sp,16
   lda t0,_main00174.00001[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf("%f\n", 12.34 + 56.78);
   sub sp,sp,16
@@ -34,7 +28,7 @@ _main00174:
   sub sp,sp,16
   lda t0,_main00174.00003[gp]
   sto t0,0[sp]
-  sto s1,8[sp]
+  sto t1,8[sp]
   bsr _printf
 ; printf("%f\n", 12.34 * 56.78);
   sub sp,sp,16
@@ -104,51 +98,35 @@ _main00174:
   sto t0,48[sp]
   bsr _printf
   add sp,sp,40
-; a = 12.34;
-  mov s0,s1
-; a += 56.78;
-  fadd s0,s0,s2
 ; printf("%f\n", a);
   sub sp,sp,16
   lda t0,_main00174.00009[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
-; a = 12.34;
-  mov s0,s1
-; a -= 56.78;
-  fsub s0,s0,s2
 ; printf("%f\n", a);
   sub sp,sp,16
   lda t0,_main00174.00010[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
-; a = 12.34;
-  mov s0,s1
-; a *= 56.78;
-  fmul s0,s0,s2
 ; printf("%f\n", a);
   sub sp,sp,16
   lda t0,_main00174.00011[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
-; a = 12.34;
-  mov s0,s1
-; a /= 56.78;
-  fdiv.d s0,s0,s2
 ; printf("%f\n", a);
   sub sp,sp,16
   lda t0,_main00174.00012[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf("%f\n", +12.34);
   sub sp,sp,16
   lda t0,_main00174.00013[gp]
   sto t0,0[sp]
-  sto s1,8[sp]
+  sto t1,8[sp]
   bsr _printf
 ; printf("%f\n", -12.34);
   sub sp,sp,16
@@ -157,13 +135,11 @@ _main00174:
   ldh t0,0x0000[gp]
   sto t0,8[sp]
   bsr _printf
-; a = 2;
-  ldo s0,0x4000[gp]
 ; printf("%f\n", a);
   sub sp,sp,16
   lda t0,_main00174.00016[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf("%f\n", _Sin(2, 0));
   sub sp,sp,16
@@ -179,9 +155,7 @@ _main00174:
 ; return 0;
   mov a0,r0
 .00032:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

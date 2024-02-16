@@ -9,18 +9,16 @@ _henry:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-  lda s0,00197.00003[gp]
+  sub sp,sp,32
 ; printf("%d\n", fred);
   sub sp,sp,16
   lda t0,_henry.00004[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 .00014:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -38,14 +36,12 @@ _main00197:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-  lda s0,00197.00003[gp]
+  sub sp,sp,32
 ; printf("%d\n", fred);
   sub sp,sp,16
   lda t0,_main00197.00015[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 ; henry();
@@ -57,12 +53,12 @@ _main00197:
   sub sp,sp,16
   lda t0,_main00197.00016[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 ; fred = 8901;
   ldi t0,8901
-  sto t0,[s0]
+  sto t0,[t0]
 ; joe = 2345;
   ldi t0,2345
   sto t0,00197.00002[gp]
@@ -70,7 +66,7 @@ _main00197:
   sub sp,sp,16
   lda t0,_main00197.00017[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", joe);
@@ -83,7 +79,7 @@ _main00197:
 ; return 0;
   mov a0,r0
 .00028:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

@@ -8,19 +8,19 @@ _main00004:
   sub sp,sp,32
   sto fp,[sp]
   mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; x = 4;
   ldi t0,4
   sto t0,-8[fp]
 ; p = &x;
-  lda s0,-8[fp]
+  lda t0,-8[fp]
 ; *p = 0;
-  sto r0,[s0]
+  sto r0,[t0]
 ; return *p;
-  ldo a0,[s0]
+  ldo t0,[t0]
+; return *p;
+  ldo a0,[t0]
 .00010:
-  ldo s0,[sp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

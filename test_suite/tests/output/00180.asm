@@ -9,12 +9,11 @@ _main00180:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-  lda s0,-20[fp]
+  sub sp,sp,32
+  lda t0,-20[fp]
 ; strcpy(a, "abcdef");
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t0,_main00180.00001[gp]
   sto t0,8[sp]
   bsr _strcpy
@@ -22,13 +21,13 @@ _main00180:
   sub sp,sp,16
   lda t0,_main00180.00002[gp]
   sto t0,0[sp]
-  add t0,s0,1
+  add t0,t0,1
   sto t0,8[sp]
   bsr _printf
 ; return 0;
   mov a0,r0
 .00012:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

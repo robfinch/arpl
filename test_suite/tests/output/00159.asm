@@ -5,18 +5,10 @@
 
 	.sdreg	29
 _myfunc:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
-  ldo s0,32[fp]
-  mul a0,s0,s0
+  mul t0,t0,t0
+  mul a0,t0,t0
 .00010:
-  ldo s0,[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 40,0
+  rts 
 	.type	_myfunc,@function
 	.size	_myfunc,$-_myfunc
 
@@ -39,6 +31,7 @@ _vfunc:
   sto t0,8[sp]
   bsr _printf
 .00021:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 40,0
@@ -62,6 +55,7 @@ _qfunc:
   sto t0,0[sp]
   bsr _printf
 .00032:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -75,7 +69,15 @@ _qfunc:
 
 	.sdreg	29
 _zfunc:
+  sub sp,sp,32
+  sto fp,[sp]
+  mov fp,sp
+  sto lr0,8[fp]
+  sub sp,sp,32
 .00042:
+  ldo lr0,8[fp]
+  mov sp,fp
+  ldo fp,[sp]
   rtd 32,0
 	.type	_zfunc,@function
 	.size	_zfunc,$-_zfunc
@@ -122,6 +124,7 @@ _main00159:
 ; return 0;
   mov a0,r0
 .00054:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

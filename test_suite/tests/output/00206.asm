@@ -44,6 +44,7 @@ _main00206:
   sto t0,8[sp]
   bsr _printf
 .00020:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

@@ -11,18 +11,10 @@ _s2:
 
 	.sdreg	29
 _main00129:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
 ; goto s;
   bra .00001
 .00012:
-  ldo s0,[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 .00002:
 ; return 0;
   mov a0,r0

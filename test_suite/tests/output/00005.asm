@@ -5,37 +5,22 @@
 
 	.sdreg	29
 _main00005:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,56
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  lda s0,-16[fp]
-  lda t0,-8[fp]
-  lda s1,-8[fp]
 ; x = 0;
-  sto r0,[s1]
+  sto r0,[t1]
 ; p = &x;
-  sto s1,[s0]
+  sto t1,[t0]
 ; pp = &p;
-  mov s2,s0
+  mov t2,t0
 ; if (*p) then
-  ldo t0,[s0]
+  ldo t0,[t0]
   beqz t0,.00017
 ; return 1;
   ldi a0,1
 .00016:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 .00017:
 ; if (**pp) then
-  ldou t0,[s2]
+  ldou t0,[t2]
   beqz t0,.00019
 ; return 1;
   bra .00016
@@ -44,7 +29,7 @@ _main00005:
   ldi t0,1
 .00020:
 ; if (x) then
-  ldo t0,[s1]
+  ldo t0,[t1]
   beqz t0,.00021
 ; return 0;
   mov a0,r0
@@ -53,7 +38,6 @@ _main00005:
 ; return 1;
   ldi a0,1
   bra .00016
-.00022:
   bra .00016
 	.type	_main00005,@function
 	.size	_main00005,$-_main00005

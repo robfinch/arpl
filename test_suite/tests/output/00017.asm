@@ -8,25 +8,24 @@ _main00017:
   sub sp,sp,32
   sto fp,[sp]
   mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
-  lda s0,-24[fp]
+  sub sp,sp,32
+  ldh t1,[fp]
 ; aa = 10;
   ldi t0,10
   sto t0,-8[fp]
 ; s.x = 3;
   ldi t0,3
-  sto t0,0[s0]
+  sto t0,0[t0]
 ; s.y = 5;
   ldi t0,5
-  sto t0,8[s0]
+  sto t0,8[t0]
 ; return s.y - s.x - 2;
-  ldo t2,8[s0]
-  ldo t3,0[s0]
-  sub t1,t2,t3
+  sto t1,-32[fp]
+  ldo t1,8[t0]
+  ldo t2,0[t0]
+  sub t1,t1,t2
   sub a0,t1,2
 .00010:
-  ldo s0,[sp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

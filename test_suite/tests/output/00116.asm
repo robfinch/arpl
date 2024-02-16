@@ -27,6 +27,7 @@ _main00116:
   sto r0,0[sp]
   bsr _f
 .00020:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

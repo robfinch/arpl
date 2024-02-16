@@ -9,25 +9,22 @@ _main00156:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; for (Count = 1; Count <= 10; Count++)
-  ldi s0,1
+  ldi t0,1
   ldi t1,10
-  bgt s0,t1,.00016
-.00015:
+  bgt t0,t1,.00016
 ; printf("%d\n", Count);
   sub sp,sp,16
   lda t0,_main00156.00001[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
-  ible s0,t1,.00015
 .00016:
 ; return 0;
   mov a0,r0
 .00014:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

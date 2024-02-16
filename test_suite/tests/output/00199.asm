@@ -21,6 +21,7 @@ _fred:
   sto t0,0[sp]
   bsr _printf
 .00014:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -38,8 +39,7 @@ _joe:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; int b = 5678;
   ldi t0,5678
   sto t0,-8[fp]
@@ -48,13 +48,11 @@ _joe:
   lda t0,_joe.00015[gp]
   sto t0,0[sp]
   bsr _printf
-; int c = 1234;
-  ldi s0,1234
 ; printf("c = %d\n", c);
   sub sp,sp,16
   lda t0,_joe.00016[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf("done\n");
   sub sp,sp,8
@@ -62,7 +60,7 @@ _joe:
   sto t0,0[sp]
   bsr _printf
 .00029:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -103,6 +101,7 @@ _henry:
   sto t0,0[sp]
   bsr _printf
 .00043:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -130,6 +129,7 @@ _main00199:
 ; return 0;
   mov a0,r0
 .00053:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

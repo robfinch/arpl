@@ -8,18 +8,17 @@ _main00102:
   sub sp,sp,32
   sto fp,[sp]
   mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; x = 1;
-  ldi s0,1
+  ldi t0,1
 ; if ((x << 1) != 2)
-  asl t1,s0,1
-  ldi t2,2
-  beq t1,t2,.00013
+  asl t1,t0,1
+  sto t1,-32[fp]
+  ldi t1,2
+  beq t1,t1,.00013
 ; return 1;
   ldi a0,1
 .00012:
-  ldo s0,[sp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

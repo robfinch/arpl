@@ -17,6 +17,7 @@ _charfunc:
   sto t0,8[sp]
   bsr _printf
 .00011:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 40,0
@@ -42,6 +43,7 @@ _intfunc:
   sto t0,8[sp]
   bsr _printf
 .00022:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 40,0
@@ -67,6 +69,7 @@ _floatfunc:
   sto t0,8[sp]
   bsr _printf
 .00033:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 96,0
@@ -84,22 +87,14 @@ _main00175:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,88
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
-  sto s4,32[sp]
-  sto s5,40[sp]
-  sto s6,48[sp]
-  ldo s5,0x5630[gp]
-  ldo s6,0x5610[gp]
+  sub sp,sp,32
+  ldo t5,0x5630[gp]
+  ldo t6,0x5610[gp]
 ; charfunc('a');
-  ldi s0,97
-  ldi s4,97
-  ldi s2,97
-  mov s1,s6
-  mov s3,s6
+  ldi t4,97
+  ldi t2,97
+  mov t1,t6
+  mov t3,t6
   sub sp,sp,8
   ldi t0,97
   sto t0,0[sp]
@@ -111,7 +106,7 @@ _main00175:
   bsr _charfunc
 ; charfunc(99.0);
   sub sp,sp,8
-  sto s5,0[sp]
+  sto t5,0[sp]
   bsr _charfunc
 ; intfunc('a');
   sub sp,sp,8
@@ -125,7 +120,7 @@ _main00175:
   bsr _intfunc
 ; intfunc(99.0);
   sub sp,sp,8
-  sto s5,0[sp]
+  sto t5,0[sp]
   bsr _intfunc
 ; floatfunc('a');
   sub sp,sp,8
@@ -139,13 +134,13 @@ _main00175:
   bsr _floatfunc
 ; floatfunc(99.0);
   sub sp,sp,8
-  sto s5,0[sp]
+  sto t5,0[sp]
   bsr _floatfunc
 ; printf("%d %d\n", b, c);
   sub sp,sp,24
   lda t0,_main00175.00034[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   ldw t0,-4[fp]
   sto t0,16[sp]
   bsr _printf
@@ -154,28 +149,22 @@ _main00175:
   sub sp,sp,24
   lda t0,_main00175.00035[gp]
   sto t0,0[sp]
-  sto s4,8[sp]
-  sto s2,16[sp]
+  sto t4,8[sp]
+  sto t2,16[sp]
   bsr _printf
   add sp,sp,8
 ; printf("%f %f\n", f, g);
   sub sp,sp,24
   lda t0,_main00175.00036[gp]
   sto t0,0[sp]
-  sto s1,8[sp]
-  sto s3,16[sp]
+  sto t1,8[sp]
+  sto t3,16[sp]
   bsr _printf
   add sp,sp,8
 ; return 0;
   mov a0,r0
 .00047:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
-  ldo s4,32[sp]
-  ldo s5,40[sp]
-  ldo s6,48[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

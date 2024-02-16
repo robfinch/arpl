@@ -8,10 +8,7 @@ _kb_wait_1:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-; unsigned long timeout = 2;
-  ldi s0,2
+  sub sp,sp,32
 .00020:
 ; if (1) printf("timeout=%ld\n", timeout);
   ldi t0,1
@@ -19,7 +16,7 @@ _kb_wait_1:
   sub sp,sp,16
   lda t0,00215.00002[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
   bra .00023
 .00022:
@@ -37,11 +34,11 @@ _kb_wait_1:
 .00025:
 .00023:
 ; timeout--;
-  sub s0,s0,1
+  sub t0,t0,1
 ;} while (timeout);
-  bnez s0,.00020
+  bnez t0,.00020
 .00019:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -58,10 +55,7 @@ _kb_wait_2:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-; unsigned long timeout = 2;
-  ldi s0,2
+  sub sp,sp,32
 .00046:
 ; if (1) printf("timeout=%ld\n", timeout);
   ldi t0,1
@@ -69,7 +63,7 @@ _kb_wait_2:
   sub sp,sp,16
   lda t0,00215.00027[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
   bra .00049
 .00048:
@@ -80,11 +74,11 @@ _kb_wait_2:
   bsr _printf
 .00049:
 ; timeout--;
-  sub s0,s0,1
+  sub t0,t0,1
 ;} while (timeout);
-  bnez s0,.00046
+  bnez t0,.00046
 .00045:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -101,10 +95,7 @@ _kb_wait_2_1:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-; unsigned long timeout = 2;
-  ldi s0,2
+  sub sp,sp,32
 .00072:
 ; if (1) printf("timeout=%ld\n", timeout);
   ldi t0,1
@@ -112,7 +103,7 @@ _kb_wait_2_1:
   sub sp,sp,16
   lda t0,00215.00054[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
   bra .00075
 .00074:
@@ -127,11 +118,11 @@ _kb_wait_2_1:
   bnez t0,.00076
 .00075:
 ; timeout--;
-  sub s0,s0,1
+  sub t0,t0,1
 ;} while (timeout);
-  bnez s0,.00072
+  bnez t0,.00072
 .00071:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -148,10 +139,7 @@ _kb_wait_2_2:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-; unsigned long timeout = 2;
-  ldi s0,2
+  sub sp,sp,32
 .00096:
 ; if (1) printf("timeout=%ld\n", timeout);
   ldi t0,1
@@ -159,7 +147,7 @@ _kb_wait_2_2:
   sub sp,sp,16
   lda t0,00215.00079[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
   bra .00099
 .00098:
@@ -173,11 +161,11 @@ _kb_wait_2_2:
   bra .00080
 .00099:
 ; timeout--;
-  sub s0,s0,1
+  sub t0,t0,1
 ;} while (timeout);
-  bnez s0,.00096
+  bnez t0,.00096
 .00095:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -194,11 +182,7 @@ _kb_wait_3:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
-; unsigned long timeout = 2;
-  ldi s0,2
+  sub sp,sp,32
 .00117:
 ; if (1) printf("timeout=%ld\n", timeout);
   ldi t0,1
@@ -206,24 +190,23 @@ _kb_wait_3:
   sub sp,sp,16
   lda t0,00215.00101[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
   bra .00120
 .00119:
 ; int i = 1;
-  ldi s1,1
+  ldi t1,1
 ; i = i + 3;
   ldo t1,-16[fp]
   add t0,t1,3
   sto t0,-16[fp]
 .00120:
 ; timeout--;
-  sub s0,s0,1
+  sub t0,t0,1
 ;} while (timeout);
-  bnez s0,.00117
+  bnez t0,.00117
 .00116:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -240,10 +223,7 @@ _kb_wait_4:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-; unsigned long timeout = 2;
-  ldi s0,2
+  sub sp,sp,32
 .00150:
 ; if (1) printf("timeout=%ld\n", timeout);
   ldi t0,1
@@ -251,27 +231,27 @@ _kb_wait_4:
   sub sp,sp,16
   lda t0,00215.00122[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
   bra .00153
 .00152:
 ; case 2:
-  bne s0,2,.00157
+  bne t0,2,.00157
 ; printf("timeout is 2");
   sub sp,sp,8
   lda t0,00215.00123[gp]
   sto t0,0[sp]
   bsr _printf
 .00157:
-  bne s0,1,.00128
+  bne t0,1,.00128
 .00128:
 .00153:
 ; timeout--;
-  sub s0,s0,1
+  sub t0,t0,1
 ;} while (timeout);
-  bnez s0,.00150
+  bnez t0,.00150
 .00149:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -315,6 +295,7 @@ _main00215:
 ; return 0;
   mov a0,r0
 .00172:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

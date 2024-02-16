@@ -16,35 +16,27 @@ _main00217:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,64
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
+  sub sp,sp,32
 ; char *data = t;
-  lda s0,_t[gp]
-  ldi s2,4
-  ldi s3,5
-  ldi s1,12
+  ldi t2,4
+  ldi t3,5
+  ldi t1,12
 ; *(unsigned*)(data + r) += a - b;
-  asl t0,s2,1
-  sub t1,s3,12
-  ldo t2,0[s0+t0*]
-  add t2,t2,t1
-  sto t2,0[s0+t0*]
+  asl t0,t2,1
+  sub t1,t3,t1
+  ldo t1,0[t0+t0*]
+  add t1,t1,t1
+  sto t1,0[t0+t0*]
 ; printf("data = \"%s\"\n", data);
   sub sp,sp,16
   lda t0,_main00217.00002[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; return 0;
   mov a0,r0
 .00012:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

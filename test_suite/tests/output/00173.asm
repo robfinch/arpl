@@ -9,81 +9,70 @@ _main00173:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,80
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
-  sto s4,32[sp]
-  sto s5,40[sp]
-  ldo s1,1[fp]
+  sub sp,sp,32
+  ldo t1,1[fp]
   ldo t1,[fp]
-  lda s4,-54[fp]
+  lda t4,-54[fp]
 ; int x = 'a';
-  ldi s5,97
-  stw s5,-10[fp]
+  ldi t5,97
+  stw t5,-10[fp]
   lda t0,_main00173.00001[gp]
   sto t0,-18[fp]
-  add s3,s4,r0
-  mov s2,s1
+  add t3,t4,r0
+  mov t2,t1
 ; printf("%s\n", a);
   sub sp,sp,16
   lda t0,_main00173.00002[gp]
   sto t0,0[sp]
-  sto s1,8[sp]
+  sto t1,8[sp]
   bsr _printf
 ; c = *a;
-  ldo t0,[s1]
+  ldo t0,[t1]
   sto t0,-26[fp]
 ; for (b = a; *b != 0; b++)
-  mov s0,s1
-  ldw t1,[s0]
-  beq t1,r0,.00021
+  mov t0,t1
+  ldw t0,[t0]
+  beq t0,r0,.00021
 .00020:
 ; printf("%c: %d\n", *b, *b);
   sub sp,sp,24
   lda t0,_main00173.00003[gp]
   sto t0,0[sp]
-  ldw t0,[s0]
+  ldw t0,[t0]
   sto t0,8[sp]
-  ldw t0,[s0]
+  ldw t0,[t0]
   sto t0,16[sp]
   bsr _printf
   add sp,sp,8
 .00022:
-  add s0,s0,2
-  ldw t1,[s0]
-  bnez t1,.00020
+  add t0,t0,2
+  ldw t0,[t0]
+  bnez t0,.00020
 .00021:
 ; while (*src != 0)
-  ldw t1,[s2]
+  ldw t1,[t2]
   beq t1,r0,.00024
 .00023:
 ; *dest++ = *src++;
-  ldw t0,[s2]
-  stw t0,[s3]
-  add s3,s3,2
-  add s2,s2,2
-  ldw t1,[s2]
+  ldw t0,[t2]
+  stw t0,[t3]
+  add t3,t3,2
+  add t2,t2,2
+  ldw t1,[t2]
   bnez t1,.00023
 .00024:
 ; *dest = 0;
-  stw r0,[s3]
+  stw r0,[t3]
 ; printf("copied string is %s\n", destarray);
   sub sp,sp,16
   lda t0,_main00173.00004[gp]
   sto t0,0[sp]
-  sto s4,8[sp]
+  sto t4,8[sp]
   bsr _printf
 ; return 0;
   mov a0,r0
 .00019:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
-  ldo s4,32[sp]
-  ldo s5,40[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

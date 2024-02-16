@@ -41,12 +41,12 @@ _f1:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
+  ldo t0,[t0]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
 .00010:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 56,0
@@ -64,12 +64,12 @@ _f2:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
+  ldo t0,[t0]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
 .00020:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 56,0
@@ -87,12 +87,12 @@ _f3:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
+  ldo t0,[t0]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
 .00030:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 56,0
@@ -110,12 +110,13 @@ _f4:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
+  lda t0,0[fp]
+  ldo t0,0[t0+t0*]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
 .00040:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 80,0
@@ -133,13 +134,11 @@ _f5:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
   sub sp,sp,8
-  sto s0,0[sp]
-  jsr [s0]
+  sto t0,0[sp]
 .00050:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 48,0

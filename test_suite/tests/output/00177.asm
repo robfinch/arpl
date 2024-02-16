@@ -67,6 +67,7 @@ _main00177:
 ; return 0;
   mov a0,r0
 .00018:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

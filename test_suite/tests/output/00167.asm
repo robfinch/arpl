@@ -9,14 +9,12 @@ _main00167:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
+  sub sp,sp,32
 ; int a = 1;
-  ldi s1,1
-  mov s0,r0
+  ldi t1,1
+  mov t0,r0
 ; if (a)
-  beqz s1,.00019
+  beqz t1,.00019
 ; printf("a is true\n");
   sub sp,sp,8
   lda t0,_main00167.00001[gp]
@@ -31,7 +29,7 @@ _main00167:
   bsr _printf
 .00020:
 ; if (b)
-  beqz s0,.00021
+  beqz t0,.00021
 ; printf("b is true\n");
   sub sp,sp,8
   lda t0,_main00167.00003[gp]
@@ -48,8 +46,7 @@ _main00167:
 ; return 0;
   mov a0,r0
 .00018:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

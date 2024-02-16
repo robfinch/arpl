@@ -5,21 +5,17 @@
 
 	.sdreg	29
 _main00086:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
+; x = 0;
+  mov t0,r0
+; x = x + 1;
+  add t0,t0,1
 ; if (x != 1)
   ldi t1,1
-  ibeq s0,t1,.00013
+  beq t0,t1,.00013
 ; return 1;
   ldi a0,1
 .00012:
-  ldo s0,[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 .00013:
 ; return 0;
   mov a0,r0

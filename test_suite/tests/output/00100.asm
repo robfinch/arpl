@@ -25,6 +25,7 @@ _main00100:
   sub sp,sp,32
   bsr _foo
 .00020:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

@@ -5,25 +5,15 @@
 
 	.sdreg	29
 _main00111:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
 ; short s = 1;
-  ldi s0,1
-  ldi s1,1
+  ldi t0,1
+  ldi t1,1
 ; s -= l;
-  sub s0,s0,1
+  sub t0,t0,1
 ; s -= l;
-  sub a0,s0,1
+  sub a0,t0,1
 .00010:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 	.type	_main00111,@function
 	.size	_main00111,$-_main00111
 

@@ -147,40 +147,37 @@ _main00205:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
+  sub sp,sp,32
 ; for(j=0; j < sizeof(cases)/sizeof(cases[0]); j++) {
-  mov s0,r0
+  mov t0,r0
   ldi t1,1
-  bge s0,t1,.00025
+  bge t0,t1,.00025
 .00024:
 ; for(i=0; i < sizeof(cases->c)/sizeof(cases->c[0]); i++)
-  mov s1,r0
   ldi t1,4
-  bge s1,t1,.00028
+  bge t1,t1,.00028
 .00027:
 ; printf("cases[%d].c[%d]=%ld\n", j, i, cases[j].c[i]);
   sub sp,sp,32
   lda t0,_main00205.00003[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
-  sto s1,16[sp]
+  sto t0,8[sp]
+  sto t1,16[sp]
   lda t1,_cases[gp]
   add t0,t1,r0
-  ldo t0,0[t0+s1*]
+  ldo t0,0[t0+t1*]
   sto t0,24[sp]
   bsr _printf
   add sp,sp,16
 .00029:
   ldi t1,4
-  iblt s1,t1,.00027
+  blt t1,t1,.00027
 .00028:
 ; printf("cases[%d].b=%ld\n", j, cases[j].b);
   sub sp,sp,24
   lda t0,_main00205.00004[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   lda t0,_cases[gp]
   ldo t0,32[t0]
   sto t0,16[sp]
@@ -190,7 +187,7 @@ _main00205:
   sub sp,sp,24
   lda t0,_main00205.00005[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   lda t0,_cases[gp]
   ldo t0,40[t0]
   sto t0,16[sp]
@@ -200,7 +197,7 @@ _main00205:
   sub sp,sp,24
   lda t0,_main00205.00006[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   lda t0,_cases[gp]
   ldo t0,48[t0]
   sto t0,16[sp]
@@ -212,14 +209,11 @@ _main00205:
   sto t0,0[sp]
   bsr _printf
 .00026:
-  ldi t1,1
-  iblt s0,t1,.00024
 .00025:
 ; return 0;
   mov a0,r0
 .00023:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

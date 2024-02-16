@@ -9,35 +9,28 @@ _main00202:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
+  sub sp,sp,32
 ; int bob, jim = 21;
-  ldi s0,21
-; int bob, jim = 21;
-  ldi s1,21
-  mul s1,s1,2
+  ldi t1,21
+  mul t1,t1,2
 ; printf("jim: %d, bob: %d\n", jim, bob);
   sub sp,sp,24
   lda t0,_main00202.00001[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
-  sto s1,16[sp]
+  sto t0,8[sp]
+  sto t1,16[sp]
   bsr _printf
   add sp,sp,8
-; jim = 60 ++3;
-  ldi s0,60
 ; printf("jim: %d\n", jim);
   sub sp,sp,16
   lda t0,_main00202.00002[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; return 0;
   mov a0,r0
 .00012:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

@@ -177,25 +177,43 @@ int CSETable::voidauto2(ENODE *node)
 int CSETable::AllocateGPRegisters()
 {
 	CSE *csp;
-	bool alloc;
+	bool alloc,talloc;
 	int pass;
 	int reg;
+	int treg;
+	int nn;
 
 	reg = 0;
+	treg = 0;
 	for (pass = 0; pass < 4; pass++) {
 		for (csp = First(); csp; csp = Next()) {
 			if (csp->OptimizationDesireability() > 0) {
 				if (!csp->voidf && csp->reg == -1) {
 					if (csp->exp->etype != bt_vector && !csp->isfp && !csp->isPosit) {
 						alloc = false;
+						talloc = false;
 						switch (pass)
 						{
 						case 0:
 						case 1:
-						case 2:	alloc = (csp->OptimizationDesireability() >= 3) && reg < cpu.NumSavedRegs; break;
-						case 3: alloc = (csp->OptimizationDesireability() >= 3) && reg < cpu.NumSavedRegs; break;
+						case 2:
+							if ((csp->OptimizationDesireability() >= 3) && (treg = compiler.GetUnusedTemp())) {
+								talloc = true;
+								break;
+							}
+							alloc = (csp->OptimizationDesireability() >= 3) && reg < cpu.NumSavedRegs;
+							break;
+						case 3:
+							if ((csp->OptimizationDesireability() >= 3) && (treg = compiler.GetUnusedTemp())) {
+								talloc = true;
+								break;
+							}
+							alloc = (csp->OptimizationDesireability() >= 3) && reg < cpu.NumSavedRegs;
+							break;
 						}
-						if (alloc)
+						if (talloc)
+							csp->reg = treg;
+						else if (alloc)
 							csp->reg = cpu.saved_regs[reg++];
 						else
 							csp->reg = -1;
@@ -395,7 +413,7 @@ void CSETable::InitializeTempRegs()
 
 void CSETable::GenerateRegMask(CSE *csp, CSet *msk, CSet *rmsk)
 {
-	if (csp->reg != -1)
+	if (csp->reg != -1 && !IsTempReg(csp->reg))
 	{
 		rmsk->add(nregs - 1 - csp->reg);
 		msk->add(csp->reg);

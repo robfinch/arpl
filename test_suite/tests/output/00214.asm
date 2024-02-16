@@ -74,6 +74,7 @@ _get_args:
   beq t1,t2,.00016
 .00016:
 .00015:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 48,0

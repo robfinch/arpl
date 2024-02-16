@@ -15,21 +15,15 @@ _main00163:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
-; int a;
-  lda s1,_bolshevic[gp]
+  sub sp,sp,32
 ; a = 42;
   ldi t0,42
   sto t0,-8[fp]
-; b = &a;
-  lda s0,-8[fp]
 ; printf("a = %d\n", *b);
   sub sp,sp,16
   lda t0,_main00163.00001[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 ; bolshevic.a = 12;
@@ -72,38 +66,34 @@ _main00163:
   sub sp,sp,16
   lda t0,_main00163.00005[gp]
   sto t0,0[sp]
-  ldo t0,0[s1]
+  ldo t0,0[t1]
   sto t0,8[sp]
   bsr _printf
 ; printf("tsar->b = %d\n", tsar->b);
   sub sp,sp,16
   lda t0,_main00163.00006[gp]
   sto t0,0[sp]
-  ldo t0,8[s1]
+  ldo t0,8[t1]
   sto t0,8[sp]
   bsr _printf
 ; printf("tsar->c = %d\n", tsar->c);
   sub sp,sp,16
   lda t0,_main00163.00007[gp]
   sto t0,0[sp]
-  ldo t0,16[s1]
+  ldo t0,16[t1]
   sto t0,8[sp]
   bsr _printf
-; b = &(bolshevic.b);
-  lda t1,_bolshevic[gp]
-  add s0,t1,8
 ; printf("bolshevic.b = %d\n", *b);
   sub sp,sp,16
   lda t0,_main00163.00008[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 ; return 0;
   mov a0,r0
 .00018:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

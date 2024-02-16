@@ -29,21 +29,19 @@ _main00033:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; g = 0;
   lda t0,_g[gp]
   sto r0,[t0]
 ; x = 0;
-  mov s0,r0
+  mov t0,r0
 ; if(x && effect())
-  beqz s0,.00039
+  beqz t0,.00039
   bsr _effect
   beqz a0,.00039
 ; return 1;
   ldi a0,1
 .00038:
-  ldo s0,[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
@@ -57,9 +55,9 @@ _main00033:
   bra .00038
 .00041:
 ; x = 1;
-  ldi s0,1
+  ldi t0,1
 ; if(x && effect()) {
-  beqz s0,.00043
+  beqz t0,.00043
   bsr _effect
   beqz a0,.00043
 ; if(g != 1)
@@ -80,9 +78,9 @@ _main00033:
   lda t0,_g[gp]
   sto r0,[t0]
 ; x = 1;
-  ldi s0,1
+  ldi t0,1
 ; if(x || effect()) {
-  bnez s0,.00049
+  bnez t0,.00049
   bsr _effect
   beqz a0,.00047
 .00049:
@@ -100,9 +98,9 @@ _main00033:
   bra .00038
 .00048:
 ; x = 0;
-  mov s0,r0
+  mov t0,r0
 ; if(x || effect()) {
-  bnez s0,.00054
+  bnez t0,.00054
   bsr _effect
   beqz a0,.00052
 .00054:

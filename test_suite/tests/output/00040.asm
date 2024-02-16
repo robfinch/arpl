@@ -20,105 +20,96 @@ _chk:
   sub sp,sp,32
   sto fp,[sp]
   mov fp,sp
-  sub sp,sp,64
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
-  ldo s2,32[fp]
-  ldo s3,40[fp]
+  sub sp,sp,32
+  ldo t2,32[fp]
+  ldo t3,40[fp]
 ; for (r=i=0; i<8; i++) {
-  mov s0,r0
-  mov s1,r0
+  mov t0,r0
   ldi t1,8
-  bge s0,t1,.00039
-.00038:
+  bge t0,t1,.00039
 ; r = r + t[x + 8*i];
   lda t1,_t[gp]
-  asl t3,s0,3
-  add t2,s2,t3
-  ldo t1,0[t1+t2*]
-  add s1,s1,t1
+  asl t3,t0,3
+  add t2,t2,t3
+  ldo t0,0[t1+t2*]
+  add t0,t1,t0
 ; r = r + t[i + 8*y];
   lda t1,_t[gp]
-  asl t3,s3,3
-  add t2,s0,t3
-  ldo t1,0[t1+t2*]
-  add s1,s1,t1
+  asl t3,t3,3
+  add t2,t0,t3
+  ldo t0,0[t1+t2*]
+  add t0,t1,t0
 ; if (x+i < 8 & y+i < 8)
-  add t2,s2,s0
+  add t2,t2,t0
   zslt t1,t2,8,1
-  add t3,s3,s0
-  zslt t2,t3,8,1
-  and t0,t1,t2
+  sto t1,-32[fp]
+  add t2,t3,t0
+  zslt t1,t2,8,1
+  and t0,t1,t1
   beqz t0,.00041
 ; r = r + t[x+i + 8*(y+i)];
   lda t1,_t[gp]
-  add t3,s2,s0
-  add t5,s3,s0
-  asl t4,t5,3
-  add t2,t3,t4
+  add t3,t2,t0
+  sto t3,-32[fp]
+  add t3,t3,t0
+  asl t2,t3,3
+  add t2,t3,t2
   ldo t1,0[t1+t2*]
-  add s1,s1,t1
+  add t0,t1,t1
 .00041:
 ; if (x+i < 8 & y-i >= 0)
-  add t2,s2,s0
+  add t2,t2,t0
   zslt t1,t2,8,1
-  sub t3,s3,s0
-  zsge t2,t3,0,1
-  and t0,t1,t2
+  sto t1,-32[fp]
+  sub t2,t3,t0
+  zsge t1,t2,0,1
+  and t0,t1,t1
   beqz t0,.00047
 ; r = r + t[x+i + 8*(y-i)];
   lda t1,_t[gp]
-  add t3,s2,s0
-  sub t5,s3,s0
-  asl t4,t5,3
-  add t2,t3,t4
+  add t3,t2,t0
+  sto t3,-32[fp]
+  sub t3,t3,t0
+  asl t2,t3,3
+  add t2,t3,t2
   ldo t1,0[t1+t2*]
-  add s1,s1,t1
+  add t0,t1,t1
 .00047:
 ; if (x-i >= 0 & y+i < 8)
-  sub t2,s2,s0
+  sub t2,t2,t0
   zsge t1,t2,0,1
-  add t3,s3,s0
-  zslt t2,t3,8,1
-  and t0,t1,t2
+  sto t1,-32[fp]
+  add t2,t3,t0
+  zslt t1,t2,8,1
+  and t0,t1,t1
   beqz t0,.00053
 ; r = r + t[x-i + 8*(y+i)];
   lda t1,_t[gp]
-  sub t3,s2,s0
-  add t5,s3,s0
-  asl t4,t5,3
-  add t2,t3,t4
+  sub t3,t2,t0
+  sto t3,-32[fp]
+  add t3,t3,t0
+  asl t2,t3,3
+  add t2,t3,t2
   ldo t1,0[t1+t2*]
-  add s1,s1,t1
+  add t0,t1,t1
 .00053:
 ; if (x-i >= 0 & y-i >= 0)
-  sub t2,s2,s0
+  sub t2,t2,t0
   zsge t1,t2,0,1
-  sub t3,s3,s0
-  zsge t2,t3,0,1
-  and t0,t1,t2
+  sto t1,-32[fp]
+  sub t2,t3,t0
+  zsge t1,t2,0,1
+  and t0,t1,t1
   beqz t0,.00059
 ; r = r + t[x-i + 8*(y-i)];
-  lda t1,_t[gp]
-  sub t3,s2,s0
-  sub t5,s3,s0
-  asl t4,t5,3
-  add t2,t3,t4
-  ldo t1,0[t1+t2*]
-  add s1,s1,t1
+  sub t3,t2,t0
+  sto t3,-32[fp]
 .00059:
   ldi t1,8
-  iblt s0,t1,.00038
 .00039:
 ; return r;
-  mov a0,s1
+  mov a0,t1
 .00037:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
   mov sp,fp
   ldo fp,[sp]
   rtd 48,0
@@ -136,54 +127,51 @@ _go:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,56
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  ldo s0,40[fp]
-  ldo s1,48[fp]
-  ldo s2,32[fp]
+  sub sp,sp,32
+  ldo t0,40[fp]
+  ldo t2,32[fp]
 ; if (n == 8) {
   ldi t1,8
-  bne s2,t1,.00085
+  bne t2,t1,.00085
 ; N++;
   lda t0,_N[gp]
 ; return 0;
   mov a0,r0
 .00084:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 56,0
 .00085:
 ; for (; y<8; y++) {
-  bge s1,t1,.00088
+  bge t1,t1,.00088
 .00087:
 ; for (; x<8; x++)
-  bge s0,t1,.00091
+  bge t0,t1,.00091
 ; if (chk(x, y) == 0) {
-  sto t0,-56[fp]
+  sto t0,-32[fp]
   sub sp,sp,16
-  sto s0,0[sp]
-  sto s1,8[sp]
+  sto t0,0[sp]
+  sto t1,8[sp]
   bsr _chk
-  ldo t0,-56[fp]
+  ldo t0,-32[fp]
   bnez a0,.00093
+; t[x + 8*y]++;
+  lda t0,_t[gp]
+  asl t2,t1,3
+  add t1,t0,t2
 ; go(n+1, x, y);
   sub sp,sp,24
-  add t0,s2,1
+  add t0,t2,1
   sto t0,0[sp]
-  sto s0,8[sp]
-  sto s1,16[sp]
+  sto t0,8[sp]
+  sto t1,16[sp]
   bsr _go
 .00093:
+  ldi t1,8
 .00091:
 ; x = 0;
-  mov s0,r0
-  iblt s1,t1,.00087
+  blt t1,t1,.00087
 .00088:
 ; return 0;
   mov a0,r0

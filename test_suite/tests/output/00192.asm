@@ -9,26 +9,21 @@ _main00192:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-; int Count = 0;
-  mov s0,r0
-; Count++;
-  add s0,s0,1
+  sub sp,sp,32
 ; printf("%d\n", Count);
   sub sp,sp,16
   lda t0,_main00192.00001[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; if (Count >= 10)
   ldi t1,10
-  blt s0,t1,.00020
+  blt t0,t1,.00020
 .00020:
 ; return 0;
   mov a0,r0
 .00016:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

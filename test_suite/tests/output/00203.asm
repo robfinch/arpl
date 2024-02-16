@@ -9,14 +9,13 @@ _main00203:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; long long int res = 0;
-  mov s0,r0
+  mov t0,r0
 ; if (res < -2147483648LL) {
   or t1,r0,0
   adds t1,16777088,1
-  bge s0,t1,.00018
+  bge t0,t1,.00018
 ; printf("Error: 0 < -2147483648\n");
   sub sp,sp,8
   lda t0,_main00203.00001[gp]
@@ -25,7 +24,6 @@ _main00203:
 ; return 1;
   ldi a0,1
 .00017:
-  ldo s0,[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
@@ -34,7 +32,7 @@ _main00203:
 ; if (2147483647LL < res) {
   or t1,r0,16777215
   adds t1,127,1
-  bge t1,s0,.00020
+  bge t1,t0,.00020
 ; printf("Error: 2147483647 < 0\n");
   sub sp,sp,8
   lda t0,_main00203.00002[gp]

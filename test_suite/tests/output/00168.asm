@@ -9,29 +9,26 @@ _factorial:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-  ldo s0,32[fp]
+  sub sp,sp,32
 ; if (i < 2)
   ldi t1,2
-  bge s0,t1,.00013
+  bge t1,t1,.00013
 ; return i;
-  mov a0,s0
+  mov a0,t1
 .00012:
-  ldo s0,[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 40,0
 .00013:
 ; return i * factorial(i - 1);
-  sto t0,-40[fp]
-  store v9,-40[fp]
+  sto t0,-32[fp]
+  store v9,-32[fp]
   sub sp,sp,8
-  sub t1,s0,1
+  sub t1,t1,1
   sto t1,0[sp]
   bsr _factorial
-  mul v9,s0,a0
+  mul v9,t1,a0
   ldw a0,v9
   bra .00012
 	.type	_factorial,@function
@@ -48,29 +45,27 @@ _main00168:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; for (Count = 1; Count <= 10; Count++)
-  ldi s0,1
+  ldi t0,1
   ldi t1,10
-  bgt s0,t1,.00030
+  bgt t0,t1,.00030
 .00029:
 ; printf("%d\n", factorial(Count));
   sub sp,sp,16
   lda t0,_main00168.00015[gp]
   sto t0,0[sp]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _factorial
   sto a0,8[sp]
   bsr _printf
 .00031:
-  ible s0,t1,.00029
 .00030:
 ; return 0;
   mov a0,r0
 .00028:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

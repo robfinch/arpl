@@ -5,15 +5,10 @@
 
 	.sdreg	29
 _main00137:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
 ; p = "hello"  " is better than bye";
-  lda s0,_main00137.00001[gp]
+  lda t1,_main00137.00001[gp]
 ; return (*p == 'h') ? 0 : 1;
-  ldw t1,[s0]
+  ldw t1,[t1]
   ldi t2,104
   bne t1,t2,.00014
   ldi t1,0
@@ -23,10 +18,7 @@ _main00137:
 .00015:
   mov a0,t1
 .00013:
-  ldo s0,[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 	.type	_main00137,@function
 	.size	_main00137,$-_main00137
 

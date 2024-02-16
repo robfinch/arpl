@@ -5,22 +5,23 @@
 
 	.sdreg	29
 _main00309:
-  sto s0,[sp]
-  sto s1,8[sp]
-  lda t0,1[sp]
-  lda s1,1[sp]
-  lda s0,1[sp]
-  ldw t0,[s0]
+  sub sp,sp,32
+  sto fp,[sp]
+  mov fp,sp
+  sto lr0,8[fp]
+  sub sp,sp,32
+  lda t0,1[fp]
+  ldw t0,[t0]
   beqz t0,.00018
 .00017:
   sub sp,sp,16
   lda t0,_main00309.00002[gp]
   sto t0,0[sp]
-  ldw t0,[s0]
+  ldw t0,[t0]
   sto t0,8[sp]
   bsr _printf
-  add s0,s0,2
-  ldw t0,[s0]
+  add t0,t0,2
+  ldw t0,[t0]
   bnez t0,.00017
 .00018:
 ; printf("\n");
@@ -31,8 +32,9 @@ _main00309:
 ; return 0;
   mov a0,r0
 .00016:
-  ldo s0,[sp]
-  ldo s1,8[sp]
+  ldo lr0,8[fp]
+  mov sp,fp
+  ldo fp,[sp]
   rtd 32,0
 	.type	_main00309,@function
 	.size	_main00309,$-_main00309

@@ -9,13 +9,8 @@ _main00187:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,64
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
-  ldo s0,2[fp]
-  lda s3,-22[fp]
+  sub sp,sp,32
+  lda t3,-22[fp]
 ; FILE *f = fopen("fred.txt", "w");
   sub sp,sp,16
   lda t0,_main00187.00001[gp]
@@ -32,11 +27,11 @@ _main00187:
   sto t0,8[sp]
   ldi t0,12
   sto t0,16[sp]
-  sto s0,24[sp]
+  sto t0,24[sp]
   bsr _fwrite
 ; fclose(f);
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _fclose
 ; f = fopen("fred.txt", "r");
   sub sp,sp,16
@@ -45,18 +40,18 @@ _main00187:
   lda t0,_main00187.00005[gp]
   sto t0,8[sp]
   bsr _fopen
-  mov s0,a0
+  mov t0,a0
 ; if (fread(freddy, 1, 6, f) != 6)
-  sto t0,-64[fp]
+  sto t0,-32[fp]
   sub sp,sp,32
-  sto s3,0[sp]
+  sto t3,0[sp]
   ldi t1,1
   sto t1,8[sp]
   ldi t1,6
   sto t1,16[sp]
-  sto s0,24[sp]
+  sto t0,24[sp]
   bsr _fread
-  ldo t0,-64[fp]
+  ldo t0,-32[fp]
   beq a0,t1,.00043
 ; printf("couldn't read fred.txt\n");
   sub sp,sp,8
@@ -65,16 +60,16 @@ _main00187:
   bsr _printf
 .00043:
 ; freddy[6] = '\0';
-  stw r0,12[s3]
+  stw r0,12[t3]
 ; fclose(f);
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _fclose
 ; printf("%s", freddy);
   sub sp,sp,16
   lda t0,_main00187.00007[gp]
   sto t0,0[sp]
-  sto s3,8[sp]
+  sto t3,8[sp]
   bsr _printf
 ; f = fopen("fred.txt", "r");
   sub sp,sp,16
@@ -83,45 +78,43 @@ _main00187:
   lda t0,_main00187.00009[gp]
   sto t0,8[sp]
   bsr _fopen
-  mov s0,a0
+  mov t0,a0
 ; while ( (InChar = fgetc(f)) != (-1))
-  sto t0,-64[fp]
+  sto t0,-32[fp]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _fgetc
-  ldo t0,-64[fp]
-  mov s1,a0
+  ldo t0,-32[fp]
   ldi t1,16777215
-  beq s1,t1,.00046
+  beq t1,t1,.00046
 .00045:
 ; ShowChar = InChar;
-  mov s2,s1
+  mov t2,t1
 ; if (ShowChar < ' ')
   ldi t1,32
-  bge s2,t1,.00047
+  bge t2,t1,.00047
 ; ShowChar = '.';
-  ldi s2,46
+  ldi t2,46
 .00047:
 ; printf("ch: %d '%c'\n", InChar, ShowChar);
   sub sp,sp,24
   lda t0,_main00187.00010[gp]
   sto t0,0[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
+  sto t1,8[sp]
+  sto t2,16[sp]
   bsr _printf
   add sp,sp,8
-  sto t0,-64[fp]
+  sto t0,-32[fp]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _fgetc
-  ldo t0,-64[fp]
-  mov s1,a0
+  ldo t0,-32[fp]
   ldi t1,16777215
-  bne s1,t1,.00045
+  bne t1,t1,.00045
 .00046:
 ; fclose(f);
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _fclose
 ; f = fopen("fred.txt", "r");
   sub sp,sp,16
@@ -130,7 +123,7 @@ _main00187:
   lda t0,_main00187.00012[gp]
   sto t0,8[sp]
   bsr _fopen
-  mov s0,a0
+  mov t0,a0
 ; while ( (InChar = ((f)->_Next < (f)->_Rend ? *(f)->_Next++ : (getc)(f))) != (-1))
   ldou t2,2[fp]
   ldou t2,24[t2]
@@ -142,36 +135,35 @@ _main00187:
   ldou t2,24[t3]
   bra .00052
 .00051:
-  sto t0,-64[fp]
-  sto t1,-56[fp]
-  sto t2,-48[fp]
+  sto t0,-32[fp]
+  sto t1,-24[fp]
+  sto t2,-16[fp]
   sub sp,sp,8
   ldo t3,2[fp]
   sto t3,0[sp]
   bsr _getc
-  ldo t1,-56[fp]
-  ldo t0,-64[fp]
+  ldo t0,-32[fp]
   mov t2,a0
 .00052:
   movzxw t2,t2
-  movzxw s1,t2
+  movzxw t1,t2
   ldi t2,16777215
-  beq s1,t2,.00050
+  beq t1,t2,.00050
 .00049:
 ; ShowChar = InChar;
-  mov s2,s1
+  mov t2,t1
 ; if (ShowChar < ' ')
   ldi t1,32
-  bge s2,t1,.00053
+  bge t2,t1,.00053
 ; ShowChar = '.';
-  ldi s2,46
+  ldi t2,46
 .00053:
 ; printf("ch: %d '%c'\n", InChar, ShowChar);
   sub sp,sp,24
   lda t0,_main00187.00013[gp]
   sto t0,0[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
+  sto t1,8[sp]
+  sto t2,16[sp]
   bsr _printf
   add sp,sp,8
   ldou t2,2[fp]
@@ -184,25 +176,24 @@ _main00187:
   ldou t2,24[t3]
   bra .00056
 .00055:
-  sto t0,-64[fp]
-  sto t1,-56[fp]
-  sto t2,-48[fp]
+  sto t0,-32[fp]
+  sto t1,-24[fp]
+  sto t2,-16[fp]
   sub sp,sp,8
   ldo t3,2[fp]
   sto t3,0[sp]
   bsr _getc
-  ldo t1,-56[fp]
-  ldo t0,-64[fp]
+  ldo t0,-32[fp]
   mov t2,a0
 .00056:
   movzxw t2,t2
-  movzxw s1,t2
+  movzxw t1,t2
   ldi t2,16777215
-  bne s1,t2,.00049
+  bne t1,t2,.00049
 .00050:
 ; fclose(f);
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _fclose
 ; f = fopen("fred.txt", "r");
   sub sp,sp,16
@@ -211,43 +202,41 @@ _main00187:
   lda t0,_main00187.00015[gp]
   sto t0,8[sp]
   bsr _fopen
-  mov s0,a0
+  mov t0,a0
 ; while (fgets(freddy, sizeof(freddy), f) != (void *)0)
-  sto t0,-64[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s3,0[sp]
+  sto t3,0[sp]
   ldi t1,14
   sto t1,8[sp]
-  sto s0,16[sp]
+  sto t0,16[sp]
   bsr _fgets
-  ldo t0,-64[fp]
+  ldo t0,-32[fp]
   beq a0,r0,.00058
 .00057:
 ; printf("x: %s", freddy);
   sub sp,sp,16
   lda t0,_main00187.00016[gp]
   sto t0,0[sp]
-  sto s3,8[sp]
+  sto t3,8[sp]
   bsr _printf
-  sto t0,-64[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s3,0[sp]
+  sto t3,0[sp]
   sto t1,8[sp]
-  sto s0,16[sp]
+  sto t0,16[sp]
   bsr _fgets
+  ldo t0,-32[fp]
   bnez a0,.00057
 .00058:
 ; fclose(f);
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _fclose
 ; return 0;
   mov a0,r0
 .00042:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

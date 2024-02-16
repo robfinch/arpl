@@ -39,6 +39,7 @@ _main00021:
   sto t0,8[sp]
   bsr _foo
 .00020:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

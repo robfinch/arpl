@@ -98,8 +98,7 @@ _main00170:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; enum fred frod;
   ldi t0,1
   stw t0,-4[fp]
@@ -124,21 +123,17 @@ _main00170:
   sto t0,64[sp]
   bsr _printf
   add sp,sp,56
-; frod = 12;
-  ldi s0,12
 ; printf("%d\n", frod);
   sub sp,sp,16
   lda t0,_main00170.00033[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
-; frod = e;
-  ldi s0,54
 ; printf("%d\n", frod);
   sub sp,sp,16
   lda t0,_main00170.00034[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf ("enum to int: %u\n", deref_uintptr(&epos));
   sub sp,sp,16
@@ -153,7 +148,7 @@ _main00170:
 ; return 0;
   mov a0,r0
 .00045:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

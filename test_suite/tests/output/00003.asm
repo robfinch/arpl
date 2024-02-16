@@ -5,20 +5,14 @@
 
 	.sdreg	29
 _main00003:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
 ; x = 4;
-  ldi s0,4
+  ldi t0,4
 ; return x - 4;
-  sub a0,s0,4
+  sub t0,t0,4
+; return x - 4;
+  sub a0,t0,4
 .00010:
-  ldo s0,[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 	.type	_main00003,@function
 	.size	_main00003,$-_main00003
 

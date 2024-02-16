@@ -9,16 +9,13 @@ _main00191:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; for (a = 0; a < 2; a++)
-  mov s0,r0
+  mov t0,r0
   ldi t1,2
-  bge s0,t1,.00016
-.00015:
+  bge t0,t1,.00016
 ; int b = a;
-  sto s0,-16[fp]
-  iblt s0,t1,.00015
+  sto t0,-16[fp]
 .00016:
 ; printf("it's all good\n");
   sub sp,sp,8
@@ -28,7 +25,7 @@ _main00191:
 ; return 0;
   mov a0,r0
 .00014:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

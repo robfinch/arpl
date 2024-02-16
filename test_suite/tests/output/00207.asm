@@ -9,9 +9,7 @@ _f1:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-  ldo s0,32[fp]
+  sub sp,sp,32
 ; if(0)
   ldi t0,0
   beqz t0,.00017
@@ -23,9 +21,8 @@ _f1:
   bsr _printf
 .00017:
 ; if(argc-- == 0)
-  bnez s0,.00019
+  bnez t0,.00019
 .00016:
-  ldo s0,[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
@@ -134,6 +131,7 @@ _f3:
   sto a0,8[sp]
   bsr _printf
 .00055:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -164,6 +162,7 @@ _main00207:
 ; return 0;
   mov a0,r0
 .00071:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

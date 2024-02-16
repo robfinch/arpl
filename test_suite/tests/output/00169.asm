@@ -9,49 +9,39 @@ _main00169:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,56
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
+  sub sp,sp,32
 ; for (x = 0; x < 2; x++)
-  mov s2,r0
+  mov t2,r0
   ldi t1,2
-  bge s2,t1,.00022
-.00021:
+  bge t2,t1,.00022
 ; for (y = 0; y < 3; y++)
-  mov s1,r0
   ldi t1,3
-  bge s1,t1,.00025
+  bge t1,t1,.00025
 .00024:
 ; for (z = 0; z < 3; z++)
-  mov s0,r0
-  bge s0,t1,.00028
+  mov t0,r0
+  bge t0,t1,.00028
 .00027:
 ; printf("%d %d %d\n", x, y, z);
   sub sp,sp,32
   lda t0,_main00169.00001[gp]
   sto t0,0[sp]
-  sto s2,8[sp]
-  sto s1,16[sp]
-  sto s0,24[sp]
+  sto t2,8[sp]
+  sto t1,16[sp]
+  sto t0,24[sp]
   bsr _printf
   add sp,sp,32
 .00029:
-  iblt s0,t1,.00027
 .00028:
 .00026:
-  iblt s1,t1,.00024
+  blt t1,t1,.00024
 .00025:
 .00023:
-  ldi t1,2
-  iblt s2,t1,.00021
 .00022:
 ; return 0;
   mov a0,r0
 .00020:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

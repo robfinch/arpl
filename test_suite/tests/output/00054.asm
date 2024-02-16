@@ -11,21 +11,13 @@ __noname_var0:
 
 	.sdreg	29
 _main00054:
-  sub sp,sp,32
-  sto fp,[sp]
-  mov fp,sp
-  sub sp,sp,40
-  sto s0,[sp]
 ; if(x != 0)
   ldi t0,0
   beqz t0,.00017
 ; return 1;
   ldi a0,1
 .00016:
-  ldo s0,[sp]
-  mov sp,fp
-  ldo fp,[sp]
-  rtd 32,0
+  rts 
 .00017:
 ; if(y != 1)
   ldi t0,0
@@ -42,7 +34,6 @@ _main00054:
   bra .00016
 .00021:
 ; e = x;
-  mov s0,r0
   mov a0,r0
   bra .00016
 	.type	_main00054,@function

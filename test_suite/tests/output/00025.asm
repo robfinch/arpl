@@ -9,20 +9,17 @@ _main00025:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; p = "hello";
   lda t0,_main00025.00001[gp]
-; p = "hello";
-  lda s0,_main00025.00001[gp]
 ; return strlen(p) - 5;
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _strlen
   sub a0,a0,5
 .00011:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

@@ -433,3 +433,16 @@ void Compiler::storeTables()
 	oofs->close();
 	delete oofs;
 }
+
+int Compiler::GetUnusedTemp()
+{
+	int nn;
+
+	for (nn = 1; nn < cpu.NumRegs; nn++) {
+		if (reg_in_use[nn]==-1 && IsTempReg(nn)) {
+			reg_in_use[nn] = 1;
+			return (nn);
+		}
+	}
+	return (0);
+}

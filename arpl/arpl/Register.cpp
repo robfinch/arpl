@@ -54,7 +54,6 @@ int max_vstack_use;
 #define	MAX_REG_STACK	30
 
 // Only registers 5,6,7 and 8 are used for temporaries
-static short int reg_in_use[256];	// 0 to 15
 static short int fpreg_in_use[256];	// 0 to 15
 static short int preg_in_use[256];	// 0 to 15
 static short int breg_in_use[16];	// 0 to 15
@@ -142,6 +141,7 @@ int NumTempRegs()
 void CPU::InitRegs()
 {
 #ifdef QUPLS
+	cpu.NumRegs = 32;
 	cpu.NumArgRegs = 8;
 	cpu.argregs[0] = 1;
 	cpu.argregs[1] = 2;
@@ -198,6 +198,7 @@ void CPU::InitRegs()
 
 #endif
 #ifdef RISCV
+	cpu.NumRegs = 32;
 	cpu.NumArgRegs = 8;
 	cpu.argregs[0] = 10;
 	cpu.argregs[1] = 11;
@@ -230,9 +231,16 @@ void CPU::InitRegs()
 	cpu.tmpregs[6] = 15;
 	cpu.tmpregs[7] = 16;
 	cpu.tmpregs[8] = 17;
-	cpu.tmpregs[9] = 0;
-	cpu.tmpregs[10] = 0;
-	cpu.tmpregs[11] = 0;
+
+	// These are saved regs.
+	cpu.tmpregs[9] = 18;
+	cpu.tmpregs[10] = 19;
+	cpu.tmpregs[11] = 20;
+	cpu.tmpregs[12] = 21;
+	cpu.tmpregs[13] = 22;
+	cpu.tmpregs[14] = 23;
+	cpu.tmpregs[15] = 24;
+	cpu.tmpregs[16] = 25;
 
 	cpu.NumvTmpRegs = 12;
 	cpu.vtmpregs[0] = 4;
@@ -423,7 +431,7 @@ void initRegStack()
 	//	regstack[rsp] = tmpregs[rsp];
 	//rsp = 0;
 	for (i = 0; i <= 255; i++) {
-		reg_in_use[i] = -1;
+		compiler.reg_in_use[i] = -1;
 		fpreg_in_use[i] = -1;
 		preg_in_use[i] = -1;
 		vreg_in_use[i] = -1;
@@ -544,7 +552,7 @@ void SpillRegister(Operand *ap, int number)
   if (reg_alloc[number].f.isPushed=='T')
 	fatal("SpillRegister(): register already spilled");
   reg_alloc[number].f.isPushed = 'T';
-	reg_in_use[ap->preg] = -1;
+	compiler.reg_in_use[ap->preg] = -1;
 }
 
 void SpillVectorRegister(Operand* ap, int number)
@@ -588,9 +596,9 @@ void SpillPositRegister(Operand* ap, int number)
 
 void LoadRegister(int regno, int number)
 {
-	if (reg_in_use[regno] >= 0)
+	if (compiler.reg_in_use[regno] >= 0)
 		fatal("LoadRegister():register still in use");
-	reg_in_use[regno] = number;
+	compiler.reg_in_use[regno] = number;
 	cg.GenerateLoad(makereg(regno),cg.MakeIndexed(currentFn->GetTempBot()+number*cpu.sizeOfWord,regFP), cpu.sizeOfWord, cpu.sizeOfWord);
     reg_alloc[number].f.isPushed = 'F';
 }
@@ -671,10 +679,10 @@ void GenerateTempRegPop(int reg, int rmode, int number, int stkpos)
     /* check if the desired register really is on stack */
     if (reg_stack[reg_stack_ptr].f.allocnum != number)
 		fatal("GenerateTempRegPop()/2");
-	if (reg_in_use[reg] >= 0)
+	if (compiler.reg_in_use[reg] >= 0)
 		fatal("GenerateTempRegPop():register still in use");
 	TRACE(printf("popped r%d\r\n", reg);)
-	reg_in_use[reg] = number;
+	compiler.reg_in_use[reg] = number;
 	ap1 = allocOperand();
 	ap1->preg = reg;
 	ap1->mode = rmode;
@@ -696,13 +704,13 @@ Operand *GetTempRegister()
 	int number;
 	int nr, nn;
 
-	number = reg_in_use[cpu.tmpregs[next_reg]];
+	number = compiler.reg_in_use[cpu.tmpregs[next_reg]];
 	if (number >= 0) {// && number < rap[wrapno]) {
 		/*
 		nr = next_reg;
 		for (nn = regFirstTemp; nn <= regLastTemp; nn++) {
-			if (reg_in_use[nn] < 0) {
-				reg_in_use[nn] = reg_alloc_ptr;
+			if (compiler.reg_in_use[nn] < 0) {
+				compiler.reg_in_use[nn] = reg_alloc_ptr;
 				ap = allocOperand();
 				ap->mode = am_reg;
 				ap->preg = next_reg;
@@ -715,7 +723,7 @@ Operand *GetTempRegister()
 		SpillRegister(makereg(cpu.tmpregs[next_reg]),number);
 	}
 	TRACE(printf("GetTempRegister:r%d\r\n", next_reg);)
-  reg_in_use[cpu.tmpregs[next_reg]] = reg_alloc_ptr;
+  compiler.reg_in_use[cpu.tmpregs[next_reg]] = reg_alloc_ptr;
   ap = allocOperand();
   ap->mode = am_reg;
   ap->preg = cpu.tmpregs[next_reg];
@@ -809,8 +817,8 @@ Operand *GetTempFPRegister()
 	if (number >= 0) {
 		SpillFPRegister(fpreg_alloc[number].Operand,number);
 	}
-//	if (reg_in_use[next_reg] >= 0) {
-//		GenerateTempRegPush(next_reg, am_reg, reg_in_use[next_reg],0);
+//	if (compiler.reg_in_use[next_reg] >= 0) {
+//		GenerateTempRegPush(next_reg, am_reg, compiler.reg_in_use[next_reg],0);
 //	}
 	TRACE(printf("GetTempFPRegister:r%d\r\n", next_fpreg);)
     fpreg_in_use[next_fpreg] = fpreg_alloc_ptr;
@@ -841,8 +849,8 @@ Operand* GetTempPositRegister()
 	if (number >= 0) {
 		SpillPositRegister(preg_alloc[number].Operand, number);
 	}
-	//	if (reg_in_use[next_reg] >= 0) {
-	//		GenerateTempRegPush(next_reg, am_reg, reg_in_use[next_reg],0);
+	//	if (compiler.reg_in_use[next_reg] >= 0) {
+	//		GenerateTempRegPush(next_reg, am_reg, compiler.reg_in_use[next_reg],0);
 	//	}
 	TRACE(printf("GetTempPositRegister:r%d\r\n", next_preg);)
 		preg_in_use[next_preg] = preg_alloc_ptr;
@@ -875,7 +883,7 @@ Operand* GetTempPositRegister()
 //	//	for (nn = 1, rm = rgmask; nn <= 15; nn = nn + 1)
 //	//		if ((rm>>nn) & 1) {
 //	//			GenerateMonadic(op_pop,0,makereg(nn));
-//	//			reg_in_use[nn] = 0;
+//	//			compiler.reg_in_use[nn] = 0;
 //	//		}
 //	//}
 //}
@@ -901,7 +909,7 @@ void checkstack()
     Function *sym = currentFn;
 
     for (i=1; i<= cpu.NumTmpRegs; i++)
-        if (reg_in_use[i] != -1)
+        if (compiler.reg_in_use[i] != -1)
             fatal("checkstack()/1");
 	if (next_reg != 0) {//sym->IsLeaf ? 1 : cpu.tmpregs[0]) {
 		//printf("Nextreg: %d\r\n", next_reg);
@@ -997,11 +1005,11 @@ void ReleaseTempRegister(Operand *ap)
 	// Kludgy here. The register is being release so at the moment it
 	// is in use until it's released. The in_use flag will cause
 	// validate not to work. Need to keep the value of in_use for later.
-	nn = reg_in_use[ap->preg];
+	nn = compiler.reg_in_use[ap->preg];
 	if (ap->typep != &stdvector && ap->mode != am_fpreg)
-		reg_in_use[ap->preg] = -1;
+		compiler.reg_in_use[ap->preg] = -1;
 	validate(ap);
-	reg_in_use[ap->preg] = nn;
+	compiler.reg_in_use[ap->preg] = nn;
 
 	if (ap->typep==&stdvector) {
 		switch (ap->mode) {
@@ -1103,7 +1111,7 @@ void ReleaseTempRegister(Operand *ap)
 	case am_reg:
 common:
 		if (IsTempReg(ap->preg)) {
-			if (reg_in_use[ap->preg]==-1)
+			if (compiler.reg_in_use[ap->preg]==-1)
 				return;
 			if (next_reg == 0) {
 				next_reg = cpu.NumTmpRegs - 1;// regLastTemp;
@@ -1111,14 +1119,14 @@ common:
 			}
 			else
 				next_reg--;
-			number = reg_in_use[ap->preg];
-			reg_in_use[ap->preg] = -1;
+			number = compiler.reg_in_use[ap->preg];
+			compiler.reg_in_use[ap->preg] = -1;
 			break;
 		}
 		return;
     case am_indx2:
 		if (IsTempReg(ap->sreg)) {
-			if (reg_in_use[ap->sreg]==-1)
+			if (compiler.reg_in_use[ap->sreg]==-1)
 				goto common;
 			if (next_reg == 0) {
 				next_reg = cpu.NumTmpRegs - 1;// regLastTemp;
@@ -1126,8 +1134,8 @@ common:
 			}
 			else
 				next_reg--;
-			number = reg_in_use[ap->sreg];
-			reg_in_use[ap->sreg] = -1;
+			number = compiler.reg_in_use[ap->sreg];
+			compiler.reg_in_use[ap->sreg] = -1;
 			//break;
 		}
 		goto common;
@@ -1175,7 +1183,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 
 	save_reg_alloc_ptr = reg_alloc_ptr;
 	memcpy(save_reg_alloc, reg_alloc, sizeof(save_reg_alloc));
-	memcpy(save_reg_in_use, reg_in_use, sizeof(save_reg_in_use));
+	memcpy(save_reg_in_use, compiler.reg_in_use, sizeof(save_reg_in_use));
 	memcpy(save_rap, rap, sizeof(rap));
 
 	save_fpreg_alloc_ptr = fpreg_alloc_ptr;
@@ -1201,7 +1209,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 			stacked_regs[sp].f.allocnum = i;
 			sp++;
 			// mark the register void
-			reg_in_use[reg_alloc[i].reg] = -1;
+			compiler.reg_in_use[reg_alloc[i].reg] = -1;
     }
 	}
 	for (*fsp = i = 0; i < fpreg_alloc_ptr; i++) {
@@ -1240,7 +1248,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 			vreg_in_use[vreg_alloc[i].reg] = -1;
 		}
 	}
-	memset(reg_in_use, -1, sizeof(reg_in_use));
+	memset(compiler.reg_in_use, -1, sizeof(compiler.reg_in_use));
 	memset(fpreg_in_use, -1, sizeof(fpreg_in_use));
 
 	memset(vreg_in_use, -1, sizeof(vreg_in_use));
@@ -1291,7 +1299,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	// Scalar regs
 	wrapno = 0;
 	reg_alloc_ptr = 0;
-	memset(reg_in_use, -1, sizeof(reg_in_use));
+	memset(compiler.reg_in_use, -1, sizeof(compiler.reg_in_use));
 	ZeroMemory(reg_alloc, sizeof(reg_alloc));
 	ZeroMemory(rap, sizeof(rap));
 	// Float
@@ -1358,7 +1366,7 @@ void TempRevalidate(int sp, int fsp, int psp, int vsp)
 	wrapno = save_wrapno;
 	reg_alloc_ptr = save_reg_alloc_ptr;
 	memcpy(reg_alloc, save_reg_alloc, sizeof(reg_alloc));
-	memcpy(reg_in_use, save_reg_in_use, sizeof(reg_in_use));
+	memcpy(compiler.reg_in_use, save_reg_in_use, sizeof(compiler.reg_in_use));
 	memcpy(rap, save_rap, sizeof(rap));
 	// Float
 	fpreg_alloc_ptr = save_fpreg_alloc_ptr;

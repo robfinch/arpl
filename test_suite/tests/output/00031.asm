@@ -35,24 +35,15 @@ _main00031:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,48
-  sto s0,[sp]
-  sto s1,8[sp]
+  sub sp,sp,32
 ; x = zero();
   bsr _zero
-  mov s0,a0
-; y = ++x;
-  add s0,s0,1
-; y = ++x;
-  add s1,s0,1
 ; if (x != 1)
   ldi t1,1
-  beq s0,t1,.00047
+  ibeq t0,t1,.00047
 ; return 1;
   ldi a0,1
 .00046:
-  ldo s0,[sp]
-  ldo s1,8[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
@@ -60,56 +51,55 @@ _main00031:
 .00047:
 ; if (y != 1)
   ldi t1,1
-  beq s1,t1,.00049
+  beq t1,t1,.00049
 ; return 1;
   ldi a0,1
   bra .00046
 .00049:
 ; x = one();
   bsr _one
-  mov s0,a0
+  mov t0,a0
 ; y = --x;
-  sub s0,s0,1
+  sub t0,t0,1
 ; y = --x;
-  sub s1,s0,1
+  sub t1,t0,1
 ; if (x != 0)
-  beq s0,r0,.00051
+  beq t0,r0,.00051
 ; return 1;
   bra .00046
 .00051:
 ; if (y != 0)
-  beq s1,r0,.00053
+  beq t1,r0,.00053
 ; return 1;
   bra .00046
 .00053:
 ; x = zero();
   bsr _zero
-  mov s1,a0
 ; if (x != 1)
   ldi t1,1
-  ibeq s0,t1,.00055
+  ibeq t0,t1,.00055
 ; return 1;
   ldi a0,1
   bra .00046
 .00055:
 ; if (y != 0)
-  beq s1,r0,.00057
+  beq t1,r0,.00057
 ; return 1;
   bra .00046
 .00057:
 ; x = one();
   bsr _one
-  mov s0,a0
-  mov s1,a0
-  sub s0,s0,1
+  mov t0,a0
+  mov t1,a0
+  sub t0,t0,1
 ; if (x != 0)
-  beq s0,r0,.00059
+  beq t0,r0,.00059
 ; return 1;
   bra .00046
 .00059:
 ; if (y != 1)
   ldi t1,1
-  beq s1,t1,.00061
+  beq t1,t1,.00061
 ; return 1;
   ldi a0,1
   bra .00046

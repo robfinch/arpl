@@ -9,40 +9,33 @@ _main00160:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,56
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
+  sub sp,sp,32
 ; a = 1;
-  ldi s0,1
+  ldi t0,1
 ; p = 0;
-  mov s2,r0
-; t = 0;
-  mov s1,r0
+  mov t2,r0
 ; while (a < 100)
   ldi t1,100
-  bge s0,t1,.00015
+  bge t0,t1,.00015
 .00014:
 ; printf("%d\n", a);
   sub sp,sp,16
   lda t0,_main00160.00001[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; t = a;
-  mov s1,s0
+  mov t1,t0
 ; a = t + p;
-  add s0,s1,s2
+  add t0,t1,t2
 ; p = t;
-  mov s2,s1
-  blt s0,t1,.00014
+  ldi t1,100
+  blt t0,t1,.00014
 .00015:
 ; return 0;
   mov a0,r0
 .00013:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

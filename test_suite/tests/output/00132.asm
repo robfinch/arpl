@@ -9,26 +9,23 @@ _main00132:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; printf("Hello world\n");
   sub sp,sp,8
   lda t0,_main00132.00001[gp]
   sto t0,0[sp]
   bsr _printf
 ; for (Count = -5; Count <= 5; Count++)
-  ldi s0,16777211
+  ldi t0,16777211
   ldi t1,5
-  bgt s0,t1,.00022
-.00021:
+  bgt t0,t1,.00022
 ; printf("Count = %d\n", Count);
   sub sp,sp,16
   lda t0,_main00132.00002[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 .00023:
-  ible s0,t1,.00021
 .00022:
 ; printf("String 'hello', 'there' is '%s', '%s'\n", "hello", "there");
   sub sp,sp,24
@@ -57,7 +54,7 @@ _main00132:
 ; return 0;
   mov a0,r0
 .00020:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

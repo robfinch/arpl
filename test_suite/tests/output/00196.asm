@@ -18,6 +18,7 @@ _fred:
 ; return 0;
   mov a0,r0
 .00011:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -44,6 +45,7 @@ _joe:
 ; return 1;
   ldi a0,1
 .00022:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -131,6 +133,7 @@ _main00196:
 ; return 0;
   mov a0,r0
 .00048:
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

@@ -31,23 +31,22 @@ _PrintAll:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; printf("A: ");
   sub sp,sp,8
   lda t0,_PrintAll.00001[gp]
   sto t0,0[sp]
   bsr _printf
 ; for(i=0;i<4;i++)printf(" %d ",A[i]);
-  mov s0,r0
+  mov t0,r0
   ldi t1,4
-  bge s0,t1,.00031
+  bge t0,t1,.00031
 .00030:
   sub sp,sp,16
   lda t0,_PrintAll.00002[gp]
   sto t0,0[sp]
   lda t0,_A[r56]
-  ldo t0,0[t0+s0*]
+  ldo t0,0[t0+t0*]
   sto t0,8[sp]
   bsr _printf
 .00032:
@@ -63,14 +62,14 @@ _PrintAll:
   sto t0,0[sp]
   bsr _printf
 ; for(i=0;i<4;i++)printf(" %d ",B[i]);
-  mov s0,r0
-  bge s0,t1,.00034
+  mov t0,r0
+  bge t0,t1,.00034
 .00033:
   sub sp,sp,16
   lda t0,_PrintAll.00005[gp]
   sto t0,0[sp]
   lda t0,_B[r56]
-  ldo t0,0[t0+s0*]
+  ldo t0,0[t0+t0*]
   sto t0,8[sp]
   bsr _printf
 .00034:
@@ -85,17 +84,15 @@ _PrintAll:
   sto t0,0[sp]
   bsr _printf
 ; for(i=0;i<4;i++)printf(" %d ",C[i]);
-  mov s0,r0
-  bge s0,t1,.00037
-.00036:
+  mov t0,r0
+  bge t0,t1,.00037
   sub sp,sp,16
   lda t0,_PrintAll.00008[gp]
   sto t0,0[sp]
   lda t0,_C[gp]
-  ldo t0,0[t0+s0*]
+  ldo t0,0[t0+t0*]
   sto t0,8[sp]
   bsr _printf
-  iblt s0,t1,.00036
 .00037:
 ; printf("\n");
   sub sp,sp,8
@@ -108,7 +105,7 @@ _PrintAll:
   sto t0,0[sp]
   bsr _printf
 .00029:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
@@ -126,61 +123,55 @@ _Move:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,64
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
-  ldo s1,32[fp]
-  ldo s3,40[fp]
+  sub sp,sp,32
+  ldo t3,40[fp]
 ; int i = 0, j = 0;
-  mov s0,r0
-  mov s2,r0
+  mov t0,r0
+  mov t2,r0
 ; while (i<4 && (source[i])==0) i++;
-  zslt t1,s0,4,1
-  ldo t3,0[s1+s0*]
-  zseq t2,t3,0,1
-  and t3,t1,t2
-  beqz t3,.00070
+  zslt t1,t0,4,1
+  sto t1,-32[fp]
+  ldo t1,0[t1+t0*]
+  zseq t1,t1,0,1
+  and t1,t1,t1
+  beqz t1,.00070
 .00069:
-  add s0,s0,1
-  zslt t1,s0,4,1
-  ldo t3,0[s1+s0*]
-  zseq t2,t3,0,1
-  and t3,t1,t2
-  bnez t3,.00069
+  add t0,t0,1
+  zslt t1,t0,4,1
+  sto t1,-32[fp]
+  ldo t1,0[t1+t0*]
+  zseq t1,t1,0,1
+  and t1,t1,t1
+  bnez t1,.00069
 .00070:
 ; while (j<4 && (dest[j])==0) j++;
-  zslt t1,s2,4,1
-  ldo t3,0[s3+s2*]
-  zseq t2,t3,0,1
-  and t3,t1,t2
-  beqz t3,.00080
+  zslt t1,t2,4,1
+  ldo t2,0[t3+t2*]
+  zseq t2,t2,0,1
+  and t2,t1,t2
+  beqz t2,.00080
 .00079:
-  add s2,s2,1
-  zslt t1,s2,4,1
-  ldo t3,0[s3+s2*]
-  zseq t2,t3,0,1
-  and t3,t1,t2
-  bnez t3,.00079
+  add t2,t2,1
+  zslt t1,t2,4,1
+  ldo t2,0[t3+t2*]
+  zseq t2,t2,0,1
+  and t2,t1,t2
+  bnez t2,.00079
 .00080:
 ; dest[j-1] = source[i];
-  sub t0,s2,1
-  ldo t1,0[s1+s0*]
-  sto t1,0[s3+t0*]
+  sub t0,t2,1
+  ldo t1,0[t1+t0*]
+  sto t1,0[t3+t0*]
 ; source[i] = 0;
-  sto r0,0[s1+s0*]
+  sto r0,0[t1+t0*]
 ; PrintAll();       /* Print configuration after each move. */
   bsr _PrintAll
 ; return dest[j-1];
-  sub t0,s2,1
-  ldo t0,0[s3+t0*]
-  ldo a0,0[s3+t0*]
+  sub t0,t2,1
+  ldo t0,0[t3+t0*]
+  ldo a0,0[t3+t0*]
 .00068:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 48,0
@@ -198,18 +189,16 @@ _Hanoi:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; if(n==1){
   ldi t1,1
-  bne s0,t1,.00101
+  bne t0,t1,.00101
 ; Move(source,dest);
   sub sp,sp,16
-  sto s0,0[sp]
-  sto s0,8[sp]
+  sto t0,0[sp]
+  sto t0,8[sp]
   bsr _Move
 .00100:
-  ldo s0,[sp]
   ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
@@ -217,24 +206,24 @@ _Hanoi:
 .00101:
 ; Hanoi(n-1,source,spare,dest);
   sub sp,sp,32
-  sub t0,s0,1
+  sub t0,t0,1
   sto t0,0[sp]
-  sto s0,8[sp]
-  sto s0,16[sp]
-  sto s0,24[sp]
+  sto t0,8[sp]
+  sto t0,16[sp]
+  sto t0,24[sp]
   bsr _Hanoi
 ; Move(source,dest);
   sub sp,sp,16
-  sto s0,0[sp]
-  sto s0,8[sp]
+  sto t0,0[sp]
+  sto t0,8[sp]
   bsr _Move
 ; Hanoi(n-1,spare,dest,source);
   sub sp,sp,32
-  sub t0,s0,1
+  sub t0,t0,1
   sto t0,0[sp]
-  sto s0,8[sp]
-  sto s0,16[sp]
-  sto s0,24[sp]
+  sto t0,8[sp]
+  sto t0,16[sp]
+  sto t0,24[sp]
   bsr _Hanoi
 ; return;
   bra .00100
@@ -252,30 +241,27 @@ _main00181:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
+  sub sp,sp,32
 ; for(i=0;i<4;i++)A[i]=i+1;
-  mov s0,r0
+  mov t0,r0
   ldi t1,4
-  bge s0,t1,.00126
+  bge t0,t1,.00126
   lda t0,_A[r56]
-  add t1,s0,1
-  sto t1,0[t0+s0*]
+  add t1,t0,1
+  sto t1,0[t0+t0*]
   ldi t1,4
 .00126:
 ; for(i=0;i<4;i++)B[i]=0;
-  mov s0,r0
-  bge s0,t1,.00129
+  mov t0,r0
+  bge t0,t1,.00129
   lda t0,_B[r56]
-  sto r0,0[t0+s0*]
+  sto r0,0[t0+t0*]
 .00129:
 ; for(i=0;i<4;i++)C[i]=0;
-  mov s0,r0
-  bge s0,t1,.00132
-.00131:
+  mov t0,r0
+  bge t0,t1,.00132
   lda t0,_C[gp]
-  sto r0,0[t0+s0*]
-  iblt s0,t1,.00131
+  sto r0,0[t0+t0*]
 .00132:
 ; printf("Solution of Tower of Hanoi Problem with %d Disks\n\n",4);
   sub sp,sp,16
@@ -310,7 +296,7 @@ _main00181:
 ; return 0;
   mov a0,r0
 .00124:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0

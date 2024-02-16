@@ -5,72 +5,70 @@
 
 	.sdreg	29
 _main00172:
-  sto s0,[sp]
-  sto s1,8[sp]
-  sto s2,16[sp]
-  sto s3,24[sp]
-  lda s2,-16[sp]
-  lda s3,-8[sp]
-  lda s1,-8[sp]
-; e = &b;
-  mov s0,s2
+  sub sp,sp,32
+  sto fp,[sp]
+  mov fp,sp
+  sto lr0,8[fp]
+  sub sp,sp,32
+  lda t2,-16[fp]
+  lda t3,-8[fp]
+  lda t1,-8[fp]
 ; a = 12;
   ldi t0,12
-  sto t0,[s3]
+  sto t0,[t3]
 ; b = 34;
   ldi t0,34
-  sto t0,[s2]
+  sto t0,[t2]
 ; printf("%d\n", *d);
   sub sp,sp,16
   lda t0,_main00172.00001[gp]
   sto t0,0[sp]
-  ldo t0,[s1]
+  ldo t0,[t1]
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", *e);
   sub sp,sp,16
   lda t0,_main00172.00002[gp]
   sto t0,0[sp]
-  ldo t0,[s0]
+  ldo t0,[t0]
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", d == e);
   sub sp,sp,16
   lda t0,_main00172.00003[gp]
   sto t0,0[sp]
-  zseq t0,s1,s0,1
+  zseq t0,t1,t0,1
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", d != e);
   sub sp,sp,16
   lda t0,_main00172.00004[gp]
   sto t0,0[sp]
-  zsne t0,s1,s0,1
+  zsne t0,t1,t0,1
   sto t0,8[sp]
   bsr _printf
 ; d = e;
-  mov s1,s0
+  mov t1,t0
 ; printf("%d\n", d == e);
   sub sp,sp,16
   lda t0,_main00172.00005[gp]
   sto t0,0[sp]
-  zseq t0,s1,s0,1
+  zseq t0,t1,t0,1
   sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", d != e);
   sub sp,sp,16
   lda t0,_main00172.00006[gp]
   sto t0,0[sp]
-  zsne t0,s1,s0,1
+  zsne t0,t1,t0,1
   sto t0,8[sp]
   bsr _printf
 ; return 0;
   mov a0,r0
 .00024:
-  ldo s0,[sp]
-  ldo s1,8[sp]
-  ldo s2,16[sp]
-  ldo s3,24[sp]
+  ldo lr0,8[fp]
+  mov sp,fp
+  ldo fp,[sp]
   rtd 32,0
 	.type	_main00172,@function
 	.size	_main00172,$-_main00172

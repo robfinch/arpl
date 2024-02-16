@@ -9,12 +9,11 @@ _main00179:
   sto fp,[sp]
   mov fp,sp
   sto lr0,8[fp]
-  sub sp,sp,40
-  sto s0,[sp]
-  lda s0,-20[fp]
+  sub sp,sp,32
+  lda t0,-20[fp]
 ; strcpy(a, "hello");
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t0,_main00179.00001[gp]
   sto t0,8[sp]
   bsr _strcpy
@@ -22,11 +21,11 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00002[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; strncpy(a, "gosh", 2);
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t0,_main00179.00003[gp]
   sto t0,8[sp]
   ldi t0,2
@@ -36,15 +35,15 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00004[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", strcmp(a, "apple") > 0);
   sub sp,sp,16
   lda t0,_main00179.00005[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00006[gp]
   sto t1,8[sp]
   bsr _strcmp
@@ -55,9 +54,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00007[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00008[gp]
   sto t1,8[sp]
   bsr _strcmp
@@ -68,9 +67,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00009[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00010[gp]
   sto t1,8[sp]
   bsr _strcmp
@@ -82,13 +81,13 @@ _main00179:
   lda t0,_main00179.00011[gp]
   sto t0,0[sp]
   sub sp,sp,8
-  sto s0,0[sp]
+  sto t0,0[sp]
   bsr _strlen
   sto a0,8[sp]
   bsr _printf
 ; strcat(a, "!");
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t0,_main00179.00012[gp]
   sto t0,8[sp]
   bsr _strcat
@@ -96,15 +95,15 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00013[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", strncmp(a, "apple", 2) > 0);
   sub sp,sp,16
   lda t0,_main00179.00014[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00015[gp]
   sto t1,8[sp]
   ldi t1,2
@@ -117,9 +116,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00016[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00017[gp]
   sto t1,8[sp]
   ldi t1,2
@@ -132,9 +131,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00018[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00019[gp]
   sto t1,8[sp]
   ldi t1,2
@@ -147,9 +146,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00020[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00021[gp]
   sto t1,8[sp]
   ldi t1,2
@@ -163,7 +162,7 @@ _main00179:
   lda t0,_main00179.00022[gp]
   sto t0,0[sp]
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   ldi t0,111
   sto t0,8[sp]
   bsr _strchr
@@ -174,7 +173,7 @@ _main00179:
   lda t0,_main00179.00023[gp]
   sto t0,0[sp]
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   ldi t0,108
   sto t0,8[sp]
   bsr _strrchr
@@ -184,9 +183,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00024[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,16
-  sto s0,0[sp]
+  sto t0,0[sp]
   ldi t1,120
   sto t1,8[sp]
   bsr _strrchr
@@ -195,7 +194,7 @@ _main00179:
   bsr _printf
 ; memset(&a[1], 'r', 4);
   sub sp,sp,24
-  add t0,s0,1
+  add t0,t0,1
   sto t0,0[sp]
   ldi t0,114
   sto t0,8[sp]
@@ -206,13 +205,13 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00025[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; memcpy(&a[2], a, 2);
   sub sp,sp,24
-  add t0,s0,2
+  add t0,t0,2
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   ldi t0,2
   sto t0,16[sp]
   bsr _memcpy
@@ -220,15 +219,15 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00026[gp]
   sto t0,0[sp]
-  sto s0,8[sp]
+  sto t0,8[sp]
   bsr _printf
 ; printf("%d\n", memcmp(a, "apple", 4) > 0);
   sub sp,sp,16
   lda t0,_main00179.00027[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00028[gp]
   sto t1,8[sp]
   ldi t1,4
@@ -241,9 +240,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00029[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00030[gp]
   sto t1,8[sp]
   ldi t1,4
@@ -256,9 +255,9 @@ _main00179:
   sub sp,sp,16
   lda t0,_main00179.00031[gp]
   sto t0,0[sp]
-  sto t0,-40[fp]
+  sto t0,-32[fp]
   sub sp,sp,24
-  sto s0,0[sp]
+  sto t0,0[sp]
   lda t1,_main00179.00032[gp]
   sto t1,8[sp]
   ldi t1,4
@@ -270,7 +269,7 @@ _main00179:
 ; return 0;
   mov a0,r0
 .00064:
-  ldo s0,[sp]
+  ldo lr0,8[fp]
   mov sp,fp
   ldo fp,[sp]
   rtd 32,0
