@@ -53,7 +53,7 @@ Symbol* Symbol::GetTemp()
 	char buf[100];
 
 	sym = allocSYM();
-	sprintf_s(buf, sizeof(buf), "__tempsym%d", i);
+	sprintf_s(buf, sizeof(buf), "__tempsym%I64d", i);
 	i++;
 	sym->SetName(buf);
 	sym->tp = allocTYP();
@@ -103,7 +103,6 @@ Symbol *Symbol::GetParentPtr()
 // Dead code
 int Symbol::GetIndex()
 {
-	Symbol* p1;
 	if (this==nullptr)
      return 0;
 	return (this->id);
@@ -140,8 +139,7 @@ uint8_t hashadd(char *nm)
 
 Symbol *search2(std::string na,TABLE *tbl,TypeArray *typearray)
 {
-	Symbol *thead, *sp;
-	TYP* tp;
+	Symbol *thead;
 	TypeArray *ta;
 
 	if (&na == nullptr || tbl==nullptr || na == "")
@@ -224,8 +222,7 @@ Symbol *Expression::gsearch2(std::string na, __int16 rettype, TypeArray *typearr
 {
 	Symbol *sp;
 	Symbol* sp1;
-	Statement *st;
-	Symbol *p, *q, *f;
+	Symbol *p;
 	int n;
 	int nn;
 
@@ -498,7 +495,7 @@ Symbol* Symbol::FindInUnion(std::string nme)
 Symbol *Symbol::Find(std::string nme)
 {
 	Symbol *sp;
-	Symbol* head, * n;
+	Symbol* n;
 
 //	printf("Enter Find(char *)\r\n");
 
@@ -785,7 +782,8 @@ void Symbol::SetStorageOffset(TYP *head, int nbytes, int al, int ilc, int ztype)
 		value.i = ilc + nbytes;// + parentBytes;
 	}
 	else {
-		value.i = -(ilc + nbytes + head->roundSize());// + parentBytes);
+		if (!IsParameter)
+ 	 		value.i = -((int64_t)ilc + nbytes + head->roundSize());// + parentBytes);
 	}
 //	if (head == nullptr) {
 //		head = TYP::Make(bt_int, cpu.sizeOfInt);
@@ -799,7 +797,7 @@ void Symbol::SetStorageOffset(TYP *head, int nbytes, int al, int ilc, int ztype)
 int Symbol::AdjustNbytes(int nbytes, int al, int ztype)
 {
 	if (ztype == bt_union)
-		nbytes = imax(nbytes, tp->roundSize());
+		nbytes = max(nbytes, tp->roundSize());
 	else if (al != sc_external) {
 		// If a pointer to a function is defined in a struct.
 		if (isStructDecl) {
@@ -1110,7 +1108,6 @@ int64_t Symbol::InitializeUnion(txtoStream& tfs, ENODE* rootnode, TYP* tp)
 	List* lst, *hlst;
 	ENODE* node, *pnode;
 	int64_t ne;
-	bool oval;
 
 	nbytes = 0;
 	node = rootnode;
