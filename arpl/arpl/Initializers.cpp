@@ -128,20 +128,25 @@ static std::string GetObjdecl(Symbol* sp, int64_t sz)
 {
 	std::string objdecl;
 	char buf[100];
+	char nmbuf[200];
 
 	_itoa_s(sz, buf, sizeof(buf), 10);
+	if (sp->tp->IsAggregateType())
+		sprintf_s(nmbuf, sizeof(nmbuf), "__aggregate_%s_%s", GetPrivateNamespace(), sp->name->c_str());
+	else
+		sprintf_s(nmbuf, sizeof(nmbuf), "%s", sp->name->c_str());
 	switch (syntax) {
 	case MOT:
 		if (curseg == bssseg) {
 			objdecl = "comm ";
-			objdecl.append((char*)sp->name->c_str());
+			objdecl.append(nmbuf);
 			objdecl.append(",");
 			objdecl.append(buf);
 			objdecl.append("\n");
 		}
 		else {
 			objdecl = "";
-			objdecl.append((char*)sp->name->c_str());
+			objdecl.append(nmbuf);
 			objdecl.append(":\n");
 			objdecl.append("\tdc.b\t");
 			objdecl.append(buf);
@@ -151,21 +156,21 @@ static std::string GetObjdecl(Symbol* sp, int64_t sz)
 	default:
 		if (curseg == bssseg) {
 			objdecl = ".lcomm ";
-			objdecl.append((char*)sp->name->c_str());
+			objdecl.append(nmbuf);
 			objdecl.append(",");
 			objdecl.append(buf);
 			objdecl.append("\n");
 		}
 		else {
 			objdecl = "";
-			objdecl.append((char*)sp->name->c_str());
+			objdecl.append(nmbuf);
 			objdecl.append(":\n");
 		}
 		objdecl.append("\t.type\t");
-		objdecl.append((char*)sp->name->c_str());
+		objdecl.append(nmbuf);
 		objdecl.append(",@object\n");
 		objdecl.append("\t.size\t");
-		objdecl.append((char*)sp->name->c_str());
+		objdecl.append(nmbuf);
 		objdecl.append(",");
 		objdecl.append(buf);
 	}

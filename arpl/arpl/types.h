@@ -570,6 +570,7 @@ public:
 	int AdjustNbytes(int nbytes, int al, int ztype);
 	int64_t Initialize(txtoStream& tfs, ENODE* pnode, TYP* tp2, int opt);
 	int64_t InitializeArray(txtoStream& tfs, ENODE*, TYP*);
+	int64_t InitializeCharArray(txtoStream& tfs, ENODE*, TYP*);
 	int64_t InitializeStruct(txtoStream& tfs, ENODE*, TYP*);
 	int64_t InitializePointerToStruct(txtoStream& tfs, ENODE*, TYP*);
 	int64_t InitializeUnion(txtoStream& tfs, ENODE*, TYP*);

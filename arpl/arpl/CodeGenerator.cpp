@@ -2394,7 +2394,7 @@ Operand *CodeGenerator::GenerateAutocon(ENODE *node, int flags, int64_t size, TY
 		ReleaseTempRegister(ap3);
 		ap3->isPtr = node->etype == bt_pointer;
 		ap3->mode = am_indx;
-		ap3->preg = regFP;          // frame pointer
+		//ap3->preg = regFP;          // frame pointer
 		ap3->offset = node;     /* use as constant node */
 		ap3->bit_offset = node->bit_offset;
 		ap3->bit_width = node->bit_width;
@@ -2580,14 +2580,20 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 	case en_aggregate:
 	case en_end_aggregate:
 		if (pass == 1) {
+			char* pns;
 			sym = Symbol::alloc();
-			sprintf_s(nmbuf, sizeof(nmbuf), "__aggregate_tag", sym->acnt);
+			pns = GetPrivateNamespace();
+			//sprintf_s(nmbuf, sizeof(nmbuf), "__aggregate_%s", sym->acnt, pns);
 			sym->tp = node->tp;
-			sym->storage_class = sc_global;
+			if (node->constflag)
+				sym->storage_class = sc_const;
+			else
+				sym->storage_class = sc_global;
 			node->AssignTypeToList(sym->tp);
 			ofs.puts("\n");
-			put_label(ofs, sym->acnt, nmbuf, GetNamespace(), 'D', sym->tp->size, sym->segment);
-			sprintf_s(nmbuf, sizeof(nmbuf), "__aggregate_tag_%d", sym->acnt);
+			sprintf_s(nmbuf, sizeof(nmbuf), "__aggregate_%s_%d", pns, sym->acnt);
+//			put_label(ofs, sym->acnt, nmbuf, GetNamespace(), 'D', sym->tp->size, sym->segment);
+			put_label(ofs, -1, nullptr, nmbuf, 'D', sym->tp->size, sym->segment);
 			sym->SetName(std::string((char*)nmbuf));
 			sym->Initialize(ofs, node, sym->tp, 1);
 			ofs.puts("\n\n");
@@ -2595,7 +2601,10 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 		}
 //		GenerateReference(sym, 0);
 		ap1 = GetTempRegister();
-		GenerateLoadAddress(ap1, MakeStringAsNameConst((char *)node->sp->c_str(), use_iprel ? codeseg : rodataseg));
+		GenerateLoadAddress(ap1, 
+			MakeStringAsNameConst((char *)node->sp->c_str(),
+//			MakeStringAsNameConst(nmbuf,
+					use_iprel ? codeseg : rodataseg));
 		ap1->isPtr = true;
 		sym->acnt++;
 		/*

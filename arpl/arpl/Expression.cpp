@@ -224,8 +224,7 @@ TYP* Expression::ParseStringConst(ENODE** node, Symbol* sym)
 	*/
 	pnode = makenodei(en_labcon, (ENODE*)NULL, 0);
 	if (sizeof_flag == 0) {
-		sp = sym->Copy(sym);
-		sp->storage_class = sc_const;
+		sp = SymbolFactory::Make(*sym->name, sym->tp, sym->parentp, sym->depth, sc_const);
 		pnode->i = stringlit(str, sp);
 		pnode->sp = new std::string(&str[1]);
 		if (sym)
@@ -533,6 +532,17 @@ bool Expression::ParseAggregateStruct(ENODE** node, ENODE* cnode, Symbol* symi, 
 			needpunc(closebr, 78);
 			needpunc(assign, 79);
 			at_node = n128.low;
+			ndx = 0;
+			for (tmp = tp->lst.headp; tmp && ndx != at_node; tmp = tmp->nextp, ndx++)
+				;
+			if (ndx != at_node) {
+				tmp = nullptr;
+				found = false;
+			}
+		}
+		else {
+			tmp = lst;
+			found = true;
 		}
 
 		// Parse the element, it may be another level of aggregate or just an
@@ -623,6 +633,19 @@ void Expression::ParseAggregateHelper(ENODE** node, ENODE* cnode)
 	*node = pnode;
 }
 
+/*
+* On Entry:
+*		The parser has just found and skipped past an opening brace bracket '{'. An
+*	aggregate value must be following.
+* 
+* Parameters:
+*		symi: (input)
+*   tp:		(input) the type of the aggregate up to the current processing point.
+*					Must be an aggregate type or an error message will result. One of
+*					struct, union, array or pointer.
+*		node: (returned) a pointer to a pointer to a node containing the aggregate.
+*/
+
 TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 {
 	ENODE* pnode;
@@ -662,16 +685,25 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 		return (tptr);
 	}
 
+	// Now, there is an aggregate of some sort. Create a node for it. Note the
+	// beginning node is the oldest one processed, the end node will be the latest
+	// one processed.
+
 	hnode = pnode = makenode(en_aggregate, nullptr, nullptr);
 	pnode->order = 0;
 	parsingAggregate++;
 	head = tail = nullptr;
 	tptr = tptr2 = nullptr;
 	cnode = nullptr;
+
+	// The input type must match. If the type does not match an error
+	// is output, but processing continues on to absorb the aggregate.
 	if (tp->type != bt_struct && tp->type != bt_union &&
 		tp->type != bt_array && tp->type != bt_pointer)
 //		!(tp->type == bt_pointer && tp->val_flag))
 		error(ERR_MISMATCH);
+
+	// Flag node as struct or array type. Convenience for later processing.
 	is_struct = tp->IsStructType();
 	is_array = tp->isArray;
 	if (tp->type == bt_pointer) {
@@ -681,6 +713,8 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 	}
 	else
 		lst = tp->lst.headp;
+
+	// Parse the inside of the aggregate according to what type is expected.
 	// Handle an array
 	if (is_array) {
 		ParseAggregateArray(&pnode, cnode, symi, tp);
@@ -714,6 +748,8 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 	sz = tp->size;
 	tptr = pnode->tp;
 
+	// Create node denoting the end of the aggregate.
+
 	pnode = makenode(en_end_aggregate, pnode, nullptr);
 	if (tp->type == bt_union) {
 		hnode->SetType(tp);
@@ -724,18 +760,34 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 	}
 	else
 	{
-		hnode->SetType(tptr = TYP::Make(consistentType ? bt_array : bt_struct, sz));
-		pnode->SetType(tptr = TYP::Make(consistentType ? bt_array : bt_struct, sz));
-		if (consistentType)
+//		hnode->SetType(tptr = TYP::Make(consistentType ? bt_array : bt_struct, sz));
+//		pnode->SetType(tptr = TYP::Make(consistentType ? bt_array : bt_struct, sz));
+		hnode->SetType(tp);
+		pnode->SetType(tp);
+		/*
+		if (consistentType) {
 			btpp = tp;
-		else
+		}
+		else {
 			btpp = nullptr;
+			// Need to initialize the symbol table with the struct elements.
+			// A struct of what? Could loop through the node of the aggregate
+			// but, the type is passed in in tp. It shoulkd match.
+			//hnode->tp->lst = tp->lst;
+			//pnode->tp->lst = tp->lst;
+		}
+		*/
 	}
+	/*
 	if (consistentType) {
+	*/
+		/*
 		hnode->tp->btpp = btpp;
 		pnode->tp->btpp = btpp;
 		hnode->tp->isArray = true;
 		pnode->tp->isArray = true;
+		*/
+	/*
 		count = 0;
 		for (qnode = pnode->p[0]; qnode; qnode = qnode->p[0])
 			count++;
@@ -744,23 +796,31 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 //		hnode->tp->size = (count) * tptr->size;
 //		pnode->tp->size = (count) * tptr->size;
 	}
-
-	hnode->esize = tp->size;// hnode->tp->size;
-	pnode->esize = tp->size;// pnode->tp->size;
+	*/
+	hnode->esize = tp->size;
+	pnode->esize = tp->size;
 	str = "";
 //	str.append(*currentFn->sym->GetFullName());
+
 	str.append(GetPrivateNamespace());
 	hnode->i = litlist(pnode, (char*)str.c_str());
 	pnode->i = litlist(pnode, (char*)str.c_str());
+
+	// There are values for the aggregate so it needs to go into an initialized
+	// data area. This would be one of code, rodata, or data segments. Note if
+	// aggregate is not declared as a constant, it is placed in the initialized
+	// data area. It is updateable. If it is declared as a constant then it is
+	// placed in a read-only area.
 	hnode->segment = cnst ? (use_iprel ? codeseg : rodataseg) : dataseg;
 	pnode->segment = cnst ? (use_iprel ? codeseg : rodataseg) : dataseg;
 	hnode->constflag = true;
 	pnode->constflag = true;
 	parsingAggregate--;
+
+	// Return the node with the aggregate values.
 	*node = pnode;
 	if (parsingAggregate==0)
 		pnode->DumpAggregate();
-	//pnode->Dump(0);
 	return (pnode->tp);
 }
 

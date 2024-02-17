@@ -922,12 +922,69 @@ int64_t Symbol::Initialize(txtoStream& tfs, ENODE* pnode, TYP* tp2, int opt)
 //	return (nbytes);
 }
 
+/*
+*	Parameters:
+*		tfs: (input) reference to the text file stream where the initializer list
+*					is placed.
+*		rootnode: (input) pointer to node containing the character data.
+*		tp:	(input) pointer to the type of the data
+*
+* Returns:
+*		the number of bytes initialized. (The size of the type).
+*/
+int64_t Symbol::InitializeCharArray(txtoStream& tfs, ENODE* rootnode, TYP* tp)
+{
+	int64_t nbytes = 0;
+	int64_t count;
+	ENODE tnode;
+
+	if (rootnode->sp) {
+		// If initializing here, flag not to initialize later.
+		string_exclude.add(rootnode->i);
+		// Iterate across the length of the string. Quit if either the end of
+		// the string is reached or the size of the type is reached.
+		for (count = 0; count < rootnode->sp->length() && (count < tp->size || tp->unknown_size); count++) {
+			tnode.nodetype = en_icon;
+			tnode.i = rootnode->sp->c_str()[count];	// grab character from string.
+			tnode.i128 = Int128::Convert(tnode.i);	// needs to be 128-bit
+			// The size of a character may vary. So, the byte count is accumulated.
+			nbytes += GenerateT(tfs, &tnode, rootnode->tp->btpp);
+		}
+		// Generate null character at end of string.
+		tnode.nodetype = en_icon;
+		tnode.i = 0;
+		tnode.i128 = Int128::Convert(0LL);
+		nbytes += GenerateT(tfs, &tnode, rootnode->tp->btpp);
+		count++;
+		// Generate additional bytes needed to make up the size of the type.
+		if (nbytes < tp->size)
+			genstorage(tfs, tp->size - nbytes);
+		if (tp->unknown_size) {
+			tp->numele = count;
+			return (count * tp->btpp->size);
+		}
+		return (tp->size);
+	}
+	// Here there was no string data to initialized with.
+	genstorage(tfs, tp->size);
+	return (tp->size);
+}
+
+/*
+*	Parameters:
+*		tfs: (input) reference to the text file stream where the initializer list
+*					is placed.
+*		rootnode: (input) pointer to nodes containing the initialization data.
+*		tp:	(input) pointer to the type of the data
+* 
+* Returns:
+*		the number of bytes initialized. (The size of the type).
+*/
 int64_t Symbol::InitializeArray(txtoStream& tfs, ENODE* rootnode, TYP* tp)
 {
 	int64_t nbytes;
 	int64_t count;
-	ENODE* node, *temp;
-	ENODE tnode;
+	ENODE* node;
 	List* lst, *hlst;
 	bool oval;
 
@@ -935,31 +992,15 @@ int64_t Symbol::InitializeArray(txtoStream& tfs, ENODE* rootnode, TYP* tp)
 
 	// Do we have a pointer to a character type? These may be initialized with a
 	// string.
-	if (rootnode->tp->btpp->IsCharType()) {
-		if (rootnode->sp) {
-			string_exclude.add(rootnode->i);
-			for (count = 0; count < rootnode->sp->length() && (count < tp->size || tp->unknown_size); count++) {
-				tnode.nodetype = en_icon;
-				tnode.i = rootnode->sp->c_str()[count];
-				nbytes += GenerateT(tfs, &tnode, rootnode->tp->btpp);
-			}
-			// Generate null character at end of string.
-			tnode.nodetype = en_icon;
-			tnode.i = 0;
-			nbytes += GenerateT(tfs, &tnode, rootnode->tp->btpp);
-			count++;
-			if (nbytes < tp->size)
-				genstorage(tfs, tp->size - nbytes);
-			if (tp->unknown_size) {
-				tp->numele = count;
-				return (count * tp->btpp->size);
-			}
-			return (tp->size);
-		}
-	}
+	if (rootnode->tp->btpp->IsCharType())
+		return (InitializeCharArray(tfs, rootnode, tp));
 
+	// The array values were collected and ended up in reverse order in the nodes.
+	// Reverse the order so that it is as expected.
 	node = rootnode;
 	hlst = lst = node->ReverseList(node);
+
+	// Iterate for all list/node elements.
 	for (count = tp->numele; lst != nullptr; lst = lst->nxt) {
 		node = lst->node;
 		/*
@@ -969,13 +1010,18 @@ int64_t Symbol::InitializeArray(txtoStream& tfs, ENODE* rootnode, TYP* tp)
 			nbytes++;
 		}
 		*/
+		// The root node and tail nodes just indicate the beginning and end of
+		// the aggregate values. They do not contain values.
 		if (node != nullptr && node != rootnode) {
 			tp->dimen;
 			if (tp->dimen < 2) {
 				oval = lst->node->tp->val_flag;
 				lst->node->tp->val_flag = false;
 			}
-			if (true || !ENODE::initializedSet.isMember(node->number)) {
+			// Initialize the array element. This is a recursive call since the array
+			// may be an array of any type of data.
+//			if (true || !ENODE::initializedSet.isMember(node->number))
+			{
 				nbytes += Initialize(tfs, node, tp->btpp, 0);
 //				ENODE::initializedSet.add(node->number);
 			}
@@ -1164,6 +1210,7 @@ int64_t Symbol::InitializePointerToUnion(txtoStream& tfs, ENODE* rootnode, TYP* 
 		lbl = *sp->name;
 		lbl.append("_data");
 		put_label(tfs, (int)sp->value.i, (char*)lbl.c_str(), GetPrivateNamespace(), 'D', tp->size, sp->segment);
+		sp->Initialize(tfs, rootnode, tp, 0);
 	}
 	return (nbytes);
 }
@@ -1212,6 +1259,14 @@ int64_t Symbol::InitializePointerToStruct(txtoStream& tfs, ENODE* rootnode, TYP*
 	return (nbytes);
 }
 
+/*
+* Generate output for an (intrinsic) type.
+* 
+* Parameters:
+*		tfs:  (input) a reference to the output text file stream
+*		node: (input) an expression node containing initialization data
+*		ptp:	(input) a pointer to the type of the data
+*/
 int64_t Symbol::GenerateT(txtoStream& tfs, ENODE* node, TYP* ptp)
 {
 	int64_t nbytes;
@@ -1224,18 +1279,30 @@ int64_t Symbol::GenerateT(txtoStream& tfs, ENODE* node, TYP* ptp)
 		;
 	if (node->nodetype==en_ref)
 		;
+	// This used to detect if something was already initialized elsewhere
+	// but I think it dead code now.
 	if (ENODE::initializedSet.isMember(node->number))
 		return (0);
 	if (ptp == nullptr)
 		ptp = this->tp;
+
+	// Bump up the initialization level. This function may be called recursively
+	// so it trys to detect any issues by tracking the level. A normal program
+	// does not have many nested elements. For example arrays with more than
+	// two dimensions are rare.
 	initlvl++;
+	if (initlvl > 100) {
+		error(ERR_TOOMANYELEMENTS);
+		throw new C64PException(ERR_TOOMANYELEMENTS,92);
+	}
 	switch (ptp->type) {
 	case bt_byte:
-		val = node->i;
-		nbytes = 1; GenerateByte(tfs, val);
+		val = node->i128.low;
+		nbytes = 1;
+		GenerateByte(tfs, val);
 		break;
 	case bt_ubyte:
-		val = node->i;
+		val = node->i128.low;
 		nbytes = 1;
 		GenerateByte(tfs, val);
 		break;
@@ -1243,36 +1310,59 @@ int64_t Symbol::GenerateT(txtoStream& tfs, ENODE* node, TYP* ptp)
 	case bt_char:
 	case bt_enum:
 		val = node->i128.low;
-		nbytes = 2; GenerateChar(tfs, val); break;
+		nbytes = 2;
+		GenerateChar(tfs, val);
+		break;
 	case bt_iuchar:
 	case bt_uchar:
 		val = node->i128.low;
-		nbytes = 2; GenerateChar(tfs, val); break;
+		nbytes = 2;
+		GenerateChar(tfs, val);
+		break;
 	case bt_short:
 		val = node->i128.low;
-		nbytes = 4; GenerateHalf(tfs, val); break;
+		nbytes = cpu.sizeOfInt / 2;
+		GenerateHalf(tfs, val);
+		break;
 	case bt_ushort:
 		val = node->i128.low;
-		nbytes = 4; GenerateHalf(tfs, val); break;
+		nbytes = cpu.sizeOfInt/2;
+		GenerateHalf(tfs, val);
+		break;
 	case bt_int:
 	case bt_uint:
 		val = node->i128.low;
-		nbytes = cpu.sizeOfInt; GenerateInt(tfs, val); break;
+		nbytes = cpu.sizeOfInt;
+		GenerateInt(tfs, val);
+		break;
+	// ToDo: fix for 128-bits
 	case bt_long:
 		val = node->i128.low;
-		nbytes = 16; GenerateLong(tfs, val); break;
+		nbytes = cpu.sizeOfInt * 2;
+		GenerateLong(tfs, val);
+		break;
 	case bt_exception:
 	case bt_ulong:
 		val = node->i128.low;
-		nbytes = 16; GenerateLong(tfs, val); break;
+		nbytes = 16;
+		GenerateLong(tfs, val);
+		break;
 	case bt_float:
-		nbytes = 8; GenerateFloat(tfs, (Float128*)&node->f128); break;
+		nbytes = cpu.sizeOfFPS;
+		GenerateFloat(tfs, (Float128*)&node->f128);
+		break;
 	case bt_double:
-		nbytes = 8; GenerateFloat(tfs, (Float128*)&node->f128); break;
+		nbytes = cpu.sizeOfFPD;
+		GenerateFloat(tfs, (Float128*)&node->f128);
+		break;
 	case bt_quad:
-		nbytes = 16; GenerateQuad(tfs, (Float128*)&node->f128); break;
+		nbytes = cpu.sizeOfFPQ;
+		GenerateQuad(tfs, (Float128*)&node->f128);
+		break;
 	case bt_posit:
-		nbytes = 8; GeneratePosit(tfs, node->posit); break;
+		nbytes = 8;
+		GeneratePosit(tfs, node->posit);
+		break;
 	case bt_struct:
 		nbytes = InitializeStruct(tfs, node, ptp);
 		break;
@@ -1322,11 +1412,14 @@ int64_t Symbol::GenerateT(txtoStream& tfs, ENODE* node, TYP* ptp)
 		;
 	}
 //	ENODE::initializedSet.add(node->number);
+	// Drop down the initialization level.
 	initlvl--;
 	return (nbytes);
 }
 
-
+/* Under construction.
+* Serialization of compiler data so that it may be stopped and restarted.
+*/
 void Symbol::storeHex(txtoStream& ofs)
 {
 	ofs.write("Symbol:");

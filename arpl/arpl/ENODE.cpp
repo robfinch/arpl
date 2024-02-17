@@ -299,7 +299,8 @@ int ENODE::GetNaturalSize()
 		return (4);
 	case en_aggregate:
 	case en_end_aggregate:
-		return (p[0]->GetNaturalSize());
+		return (esize);
+//		return (p[0]->GetNaturalSize());
 	case en_list:
 		if (p[1])
 			return (p[0]->GetNaturalSize() + p[1]->GetNaturalSize());
@@ -2731,7 +2732,7 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
  			if (sc == sc_member) {
 				sc = pn->sc;
 			}
-			if (sc == sc_global)
+			if (sc == sc_global || sc==sc_external)
 				sprintf_s(buf, sizeof(buf), "%s", (char*)sp->c_str());
 			else
 				sprintf_s(buf, sizeof(buf), "%.400s.%05d", (char*)GetPrivateNamespace(), sym->value.i);

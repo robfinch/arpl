@@ -745,7 +745,6 @@ j1:
 void OCODE::OptNoUse()
 {
 	OCODE* ip;
-	int rg1, rg2;
 
 	if (!HasTargetReg())
 		return;

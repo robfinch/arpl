@@ -622,6 +622,22 @@ char *put_labels(txtoStream& tfs, char *buf)
 	return (buf);
 }
 
+
+/*
+*
+*/
+void PutZeroBytes(txtoStream& tfs, int64_t count)
+{
+	int64_t nn;
+
+	if (count <= 0)
+		return;
+	if (syntax == MOT) {
+		tfs.printf("\tdcb.b\t%I64d,0\n", count);
+		return;
+	}
+	tfs.printf("\t.skip\t%I64d,0\n", count);
+}
 /*
 * Pass -1 as the label number, lab, to just just the namespace parameter as the label.
 */
@@ -629,6 +645,9 @@ char *put_label(txtoStream& tfs, int lab, char *nm, char *ns, char d, int sz, in
 {
   static char buf[500];
 	int nn;
+	int64_t count;
+	TYP* tp;
+	int ch;
 
 	if (d != 'C')
 		seg(ofs, segment, 6);
@@ -696,21 +715,19 @@ char *put_label(txtoStream& tfs, int lab, char *nm, char *ns, char d, int sz, in
 				tfs.printf((char*)"%c %s\n", comment_char, (char*)nm);
 			}
 		}
+		/*
 		if (syntax == STD) {
-			if (sz > 0 && (segment==bssseg || segment==noseg)) {
-				tfs.printf("\t.byte\t0");
-				for (nn = 1; nn < sz; nn++) {
-					if ((nn % 32) == 31)
-						tfs.printf("\n\t.byte\t0%c", nn == sz ? ' ' : ',');
-					else
-						tfs.printf(",0");
-				}
-				tfs.printf("\n");
+			if (sz > 0 && (segment == bssseg || segment == noseg)) {
+				if (val)
+					val->sym->Initialize(tfs, val, val->tp, 0);
+				else
+					PutZeroBytes(tfs, sz);
 			}
 		}
 		else if (syntax == MOT) {
 			tfs.printf("\tdcb.b\t%d,0\n", sz);
 		}
+		*/
 	}
 	return (buf);
 }
@@ -1501,12 +1518,15 @@ void dumplits(txtoStream& tfs)
 		dfs.printf(".");
 		nl(tfs);
 		if (!lit->isString) {
-			if (DataLabels[lit->label])
+			char nmbuf[256];
+			if (DataLabels[lit->label]) {
+				sprintf_s(nmbuf, sizeof(nmbuf), "__aggregate_%s_%I64d", lit->nmspace, ep->i);
 #ifdef LOCAL_LABELS
 				put_label(tfs, lit->label, strip_crlf(&lit->str[1]), ""/*lit->nmspace*/, 'D', ep->esize, curseg);
 #else
-				put_label(tfs, lit->label, strip_crlf(&lit->str[1]), lit->nmspace, 'D', ep->esize, curseg);
+				put_label(tfs, /*lit->label(*/-1, nullptr /*strip_crlf(&lit->str[1])*/, nmbuf /*lit->nmspace*/, 'D', ep->esize, curseg);
 #endif
+			}
 		}
 		else {
 			cp = lit->str;

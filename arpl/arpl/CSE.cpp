@@ -95,15 +95,15 @@ int CSE::OptimizationDesireability()
 	// being accessed to the current function. Distant variables may
 	// require a lot of dereferencing so it is better to place them in
 	// registers. The number of dereferences is multiplied by the usage.
-	depth = 1;
+	depth = 0;
 		if (exp->sym)
 			depth = abs(currentFn->depth - exp->sym->depth);
-	depth = max(depth, 1);
+	depth = max(depth, 0);
 
 	// Left values are worth more to optimization than right values.
     if(exp->IsLValue() )
-	    return (2 * uses * depth);
-    return (uses * depth);
+	    return (2 * uses * (depth+1));
+    return (uses * (depth+1));
 }
 
 void CSE::AccDuses(int val)

@@ -81,6 +81,8 @@ int     imax(int i, int j)
 char *my_strdup(char *s)
 {
 	char *p;
+	if (s == nullptr)
+		return (nullptr);
 	int n = strlen(s);
 	int m = sizeof(char);
 	p = (char *)allocx(sizeof(char)*(n+1));
@@ -2037,7 +2039,8 @@ void Declaration::ParseAssign(Symbol *sp)
 		if (tp2 == nullptr || !ep1->IsLValue())
 			error(ERR_LVALUE);
 		else {
-			tp1 = forcefit(&ep2, tp2, &ep1, tp1, false, true);
+//			tp1 = 
+				forcefit(&ep2, tp2, &ep1, tp1, false, true);
 			ep1 = makenode(op, ep1, ep2);
 			ep1->tp = tp1;
 		}
@@ -3083,7 +3086,7 @@ int AutoDeclaration::ParseId(Symbol* parent, TABLE* ssyms, Statement* st)
 		if (sp->storage_class == sc_typedef || sp->storage_class == sc_type) {
 			dfs.printf("Declaring var of type\n");
 			depth++;
-			lc_auto += declare(parent, ssyms, sc_auto, lc_auto, bt_struct, &symo, isLocal, depth);
+			lc_auto += declare(parent, ssyms, sc_auto, lc_auto, bt_struct, &symo, isLocal, depth-1);
 			depth--;
 			if (symo) {
 				symo->segment = dataseg;
@@ -3106,7 +3109,7 @@ void AutoDeclaration::ParseThread(Symbol* parent, TABLE* ssyms, Statement* st)
 
 	NextToken();
 	depth++;
-	lc_thread += declare(parent, ssyms, sc_thread, lc_thread, bt_struct, &symo, isLocal, depth);
+	lc_thread += declare(parent, ssyms, sc_thread, lc_thread, bt_struct, &symo, isLocal, depth-1);
 	depth--;
 	if (symo)
 		if (symo->fi) {
@@ -3122,7 +3125,7 @@ void AutoDeclaration::ParseStatic(Symbol* parent, TABLE* ssyms, Statement* st)
 
 	NextToken();
 	depth++;
-	lc_static += declare(parent, ssyms, sc_static, lc_static, bt_struct, &symo, isLocal, depth);
+	lc_static += declare(parent, ssyms, sc_static, lc_static, bt_struct, &symo, isLocal, depth-1);
 	depth--;
 	if (symo) {
 		if (symo->fi) {
@@ -3153,7 +3156,7 @@ void AutoDeclaration::ParseExtern(Symbol* parent, TABLE* ssyms, Statement* st)
 		NextToken();
 	++global_flag;
 	depth++;
-	declare(nullptr, &gsyms[0], sc_external, 0, bt_struct, &symo, isLocal, depth);
+	declare(nullptr, &gsyms[0], sc_external, 0, bt_struct, &symo, isLocal, depth-1);
 	depth--;
 	if (symo)
 		if (symo->fi) {
@@ -3170,7 +3173,7 @@ void AutoDeclaration::ParseIntrinsicType(Symbol* parent, TABLE* ssyms, Statement
 	Symbol* symo;
 
 	depth++;
-	lc_auto += declare(parent, ssyms, sc_auto, lc_auto, bt_struct, &symo, isLocal, depth);
+	lc_auto += declare(parent, ssyms, sc_auto, lc_auto, bt_struct, &symo, isLocal, depth-1);
 	depth--;
 	if (symo)
 		if (symo->fi) {
@@ -3184,7 +3187,6 @@ ENODE *AutoDeclaration::Parse(Symbol *parent, TABLE *ssyms, Statement* st)
 {
 	Symbol *sp, *symo;
 	ENODE* ep1;
-	int nn;
 	static short depth = 0;
 
 //	printf("Enter ParseAutoDecls\r\n");
@@ -3211,7 +3213,7 @@ ENODE *AutoDeclaration::Parse(Symbol *parent, TABLE *ssyms, Statement* st)
 		case kw_typedef:
 //      error(ERR_ILLCLASS);
 			depth++;
-	    lc_auto += declare(parent,ssyms,sc_auto,lc_auto,bt_struct,&symo,isLocal,depth);
+	    lc_auto += declare(parent,ssyms,sc_auto,lc_auto,bt_struct,&symo,isLocal,depth-1);
 			depth--;
 			if (symo)
 				if (symo->fi) {
