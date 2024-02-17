@@ -449,7 +449,7 @@ Operand* CodeGenerator::GenerateAddDereference(ENODE* node, TYP* tp, bool isRefT
 {
 	Operand* ap1;
 
-	ap1 = node->GenIndex(false);
+	ap1 = node->GenerateIndex(false);
 	ap1->isUnsigned = !su;//node->isUnsigned;
 // *** may have to fix for stackseg
 	ap1->segment = node->segment;// dataseg;

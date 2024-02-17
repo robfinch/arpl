@@ -1667,7 +1667,7 @@ Operand* ENODE::GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg)
 // If we have nested indexes we really want the value from the inner index
 // array to use. Hence it is loaded.
 // ----------------------------------------------------------------------------
-Operand *ENODE::GenIndex(bool neg)
+Operand *ENODE::GenerateIndex(bool neg)
 {
 	Operand *ap1, *ap2, *ap3, * ap4;
 	static int ndxlvl = 0;
@@ -1749,7 +1749,7 @@ Operand *ENODE::GenIndex(bool neg)
 	}
 
 	// ap1->mode must be am_reg
-//	ap2->MakeLegal(am_reg, 8);
+	ap2->MakeLegal(am_reg, ap2->tp->size);
 	if (cpu.SupportsIndexed && ndxlvl==1) {
 		ap1->mode = am_indx2;            /* make indexed */
 		ap1->sreg = ap2->preg;

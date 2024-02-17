@@ -875,7 +875,7 @@ public:
 	void GenerateLoad(Operand *ap3, Operand *ap1, int ssize, int size);
 	void GenStore(Operand *ap1, Operand *ap3, int size);
 	static void GenRedor(Operand *ap1, Operand *ap2);
-	Operand *GenIndex(bool neg);
+	Operand *GenerateIndex(bool neg);
 	Operand* GenerateRegRegIndex();
 	Operand* GenerateImmExprIndex(Operand* ap1, bool neg);
 	Operand* GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg);
