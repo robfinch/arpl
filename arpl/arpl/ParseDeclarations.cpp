@@ -1562,14 +1562,14 @@ void Declaration::ParseSuffixOpenbr()
 		}
 	}
 	for (kk = nn-1; kk > 0; kk--) {
-		dimen[kk]->dimen = nn - kk + 1;
+		dimen[kk]->dimen = nn - kk;
 		dimen[kk]->size = dimen[kk]->size * dimen[kk]->numele;
-		dimen[kk - 1]->size *= dimen[kk]->size;
+		dimen[kk - 1]->size = dimen[kk]->size;
 	}
-	if (nn == 1)
-		dimen[0]->size = dimen[0]->size * dimen[0]->numele;
+	dimen[0]->size = dimen[0]->size * dimen[0]->numele;
+	//	if (nn == 1)
 	head = tail = dimen[0];
-	for (kk = 1; kk < nn; kk++) {
+	for (kk = 0; kk < nn; kk++) {
 		tail->btpp = dimen[kk];
 		tail = dimen[kk];
 	}
@@ -2832,7 +2832,7 @@ void GlobalDeclaration::Parse()
 			continue;
 
 		case id:
-			lc_static += declare(NULL, &gsyms[0], sc_global, lc_static, bt_struct, &symo, false, 0);
+			compiler.lc_static += declare(NULL, &gsyms[0], sc_global, compiler.lc_static, bt_struct, &symo, false, 0);
 			if (symo) {
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
@@ -2868,7 +2868,7 @@ void GlobalDeclaration::Parse()
 				case kw_enum: case kw_void: case kw_bit: case kw_bool:
 				case kw_float: case kw_double: case kw_float128: case kw_posit:
 		case kw_vector: case kw_vector_mask:
-			lc_static += declare(NULL, &gsyms[0], sc_global, lc_static, bt_struct, &symo, false, 0);
+			compiler.lc_static += declare(NULL, &gsyms[0], sc_global, compiler.lc_static, bt_struct, &symo, false, 0);
 			if (symo) {
 				if (symo->segment == noseg)
 					symo->segment = bssseg;
@@ -2884,7 +2884,7 @@ void GlobalDeclaration::Parse()
 			break;
 
 		case kw_const:
-			lc_static += declare(NULL, &gsyms[0], sc_global, lc_static, bt_struct, &symo, false, 0);
+			compiler.lc_static += declare(NULL, &gsyms[0], sc_global, compiler.lc_static, bt_struct, &symo, false, 0);
 			if (symo) {
 				symo->segment = use_iprel ? codeseg : rodataseg;
 				if (symo->fi) {
@@ -2913,7 +2913,7 @@ void GlobalDeclaration::Parse()
 		case kw_register:
 			NextToken();
       error(ERR_ILLCLASS);
-      lc_static += declare(NULL,&gsyms[0],sc_global,lc_static,bt_struct, &symo, false, 0);
+      compiler.lc_static += declare(NULL,&gsyms[0],sc_global,compiler.lc_static,bt_struct, &symo, false, 0);
 			if (symo)
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
@@ -2926,7 +2926,7 @@ void GlobalDeclaration::Parse()
 		case kw_private:
     case kw_static:
       NextToken();
-			lc_static += declare(NULL,&gsyms[0],sc_static,lc_static,bt_struct, &symo, false, 0);
+			compiler.lc_static += declare(NULL,&gsyms[0],sc_static,compiler.lc_static,bt_struct, &symo, false, 0);
 			if (symo) {
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
@@ -3125,7 +3125,7 @@ void AutoDeclaration::ParseStatic(Symbol* parent, TABLE* ssyms, Statement* st)
 
 	NextToken();
 	depth++;
-	lc_static += declare(parent, ssyms, sc_static, lc_static, bt_struct, &symo, isLocal, depth-1);
+	compiler.lc_static += declare(parent, ssyms, sc_static, compiler.lc_static, bt_struct, &symo, isLocal, depth-1);
 	depth--;
 	if (symo) {
 		if (symo->fi) {
@@ -3378,7 +3378,7 @@ dfs.printf("C");
     case kw_static:
       NextToken();
       error(ERR_ILLCLASS);
-			lc_static += declare(NULL, throw_away ? &scrap_table : &gsyms[0],sc_static,lc_static,bt_struct,nullptr, false, currentFn->depth);
+			compiler.lc_static += declare(NULL, throw_away ? &scrap_table : &gsyms[0],sc_static,compiler.lc_static,bt_struct,nullptr, false, currentFn->depth);
 			isAuto = false;
 			break;
 		// A list of externals could be following a function prototype. This

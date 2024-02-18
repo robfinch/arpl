@@ -1957,7 +1957,8 @@ xit:
 	return (ep1);
 }
 
-/*
+/* Dead code.
+* 
 * GetSizesForArray fills in the Expression member variable sa, for the array
 * size array. 
 * 
@@ -1966,12 +1967,14 @@ xit:
 * Returns:
 *		none
 */
+
 void Expression::GetSizesForArray(TYP* tp)
 {
 	TYP* tp4;
 	int cnt2;
 	int elesize;
 
+	return;
 	if (tp->type == bt_pointer && !tp->val_flag) {
 		elesize = cpu.GetTypeSize(tp->btpp->type);
 		numdimen = tp->btpp->dimen;
@@ -1983,9 +1986,9 @@ void Expression::GetSizesForArray(TYP* tp)
 	}
 	// Track down the size of each dimension.
 	if (cnt == 0) {
-		cnt2 = 1;
+		cnt2 = 0;
 		for (tp4 = tp; tp4; tp4 = tp4->btpp) {
-			sa[cnt2] = max(tp4->numele, 1);
+			sa[cnt2] = max(tp4->size, 1);
 			elesize = cpu.GetTypeSize(tp4->type);
 			cnt2++;
 			if (cnt2 > 9) {
@@ -1994,9 +1997,9 @@ void Expression::GetSizesForArray(TYP* tp)
 			}
 		}
 		if (numdimen == 0)
-			numdimen = cnt2-2;
-		sa[numdimen + 1] = elesize;
-		sa[0] = sa[numdimen + 1];
+			numdimen = cnt2-1;
+		sa[numdimen] = elesize;
+		//sa[0] = sa[numdimen];
 	}
 }
 
@@ -2127,7 +2130,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 		return (ParseBitfieldSpec(tp3, pnode));
 
 	// Track down the size of each dimension.
-	GetSizesForArray(tp1);
+//	GetSizesForArray(tp1);
 
 	tp1 = tp1->btpp;
 	//if (cnt==0) {
@@ -2161,9 +2164,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	//	}
 	//}
 	//else
-	sz1 = sa[cnt+2];
-	for (cnt2 = 3; cnt2 <= numdimen; cnt2++)
-		sz1 = sz1 * sa[cnt2];
+	sz1 = tp1->size;
 
 	qnode = makeinode(en_icon, sz1);
 	qnode->etype = bt_ushort;
@@ -2177,8 +2178,8 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	else
 	*/
 	// qnode contains the size of the element multiplied by the index amount.
-	// The base size of an element was stuffed in sa[numdimen+1].
-	elesize = sa[numdimen + 1];
+	// The base size of an element was stuffed in sa[numdimen].
+	elesize = sa[numdimen];
 	if (numdimen < 0 && cf && qnode->i == elesize &&
 		(elesize==1 || elesize==2 || elesize==4 || elesize==8 || elesize==16)) {
 		qnode = rnode;

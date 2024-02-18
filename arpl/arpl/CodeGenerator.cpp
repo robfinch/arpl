@@ -429,6 +429,7 @@ ENODE* FindAnd(ENODE *node)
 			}
 		}
 	}
+	return (nullptr);
 }
 
 Operand* CodeGenerator::GenerateFieldrefDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size)
@@ -816,7 +817,7 @@ Operand* CodeGenerator::GenerateLabconDereference(ENODE* node, TYP* tp, bool isR
 
 Operand* CodeGenerator::GenerateBitoffsetDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int opt)
 {
-	Operand* ap1, * ap2, * ap3, * ap4, * ap5;
+	Operand* ap1, * ap2, * ap3, * ap4;
 	OCODE* ip;
 
 //	ap5 = GenerateBitfieldExtract(node->p[0], node->p[1], node->p[2]);
@@ -860,7 +861,7 @@ Operand* CodeGenerator::GenerateBitoffsetDereference(ENODE* node, TYP* tp, bool 
 
 Operand* CodeGenerator::GenerateDereference2(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int64_t siz1, int su, int opt)
 {
-	Operand* ap1, * ap2, * ap3, * ap4;
+	Operand* ap1, * ap2, * ap3;
 
 	if (node == nullptr)
 		return (nullptr);
@@ -2514,6 +2515,7 @@ Operand* CodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
 	ap1->isUnsigned = node->isUnsigned;
 	ap1->tp = node->tp;
 	ap1->MakeLegal(flags, size);
+	return (ap1);
 }
 
 Operand* CodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
@@ -2542,6 +2544,7 @@ Operand* CodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
 	ap1->isUnsigned = node->isUnsigned;
 	ap1->MakeLegal(flags, size);
 	Leave((char*)"GenNacon", 7);
+	return (ap1);
 }
 
 //

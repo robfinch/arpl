@@ -163,9 +163,7 @@ void IGraph::Add2(int x, int y)
 
 bool IGraph::Remove(int n)
 {
-	int bitndx;
-	int intndx;
-	int j, m, nn, mm, n1, m1;
+	int j, m, nn, mm;
 	bool updated = false;
 
 	for (j = 0; j < degrees[n]; j++) {

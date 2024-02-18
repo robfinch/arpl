@@ -2555,6 +2555,7 @@ public:
 	CSet temp_in_use;
 	char firstid[128];
 	char lastid[128];
+	int64_t lc_static;
 public:
 	Compiler() { 
 		int i;

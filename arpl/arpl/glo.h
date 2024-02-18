@@ -152,7 +152,6 @@ extern TABLE            tagtable;
 extern Symbol              *lasthead;
 extern struct slit      *strtab;
 extern Float128		    *quadtab;
-extern int              lc_static;
 extern int              lc_auto;
 extern int				lc_thread;
 extern Statement     *bodyptr;       /* parse tree for function */

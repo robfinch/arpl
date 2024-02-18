@@ -202,7 +202,6 @@ int DataLabels[65535];
 Symbol             *lasthead = (Symbol *)NULL;
 Float128		*quadtab = nullptr;
 struct slit     *strtab = (struct slit *)NULL;
-int             lc_static = 0;
 int             lc_auto = 0;
 int				lc_thread = 0;
 Statement    *bodyptr = 0;

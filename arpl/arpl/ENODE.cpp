@@ -705,7 +705,7 @@ List* ENODE::ReverseList(ENODE* node)
 {
 	List* lst;
 	ENODE* pnode;
-	int64_t count, cnt2, cnt1;
+	int64_t count, cnt2;
 
 	List::numele = 0;
 	// Trap single non-list items.
