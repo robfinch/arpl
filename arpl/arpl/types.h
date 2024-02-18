@@ -997,6 +997,7 @@ public:
 	Function* owning_func;
 private:
 	void SetRefType(ENODE** node);
+	void GetSizesForArray(TYP* typ);
 	ENODE* SetIntConstSize(TYP* tptr, int64_t val);
 	ENODE *ParseArgumentList(ENODE *hidden, TypeArray *typearray, Symbol* symi);
 	TYP* ParseCharConst(ENODE** node, int sz);
@@ -1043,10 +1044,11 @@ private:
 	ENODE* ParseOpenpa(TYP* tp1, ENODE* ep1, Symbol* symi);
 	ENODE* ParseOpenbr(TYP*tp1, ENODE* ep1);
 	ENODE* AdjustForBitArray(int pop, TYP* tp1, ENODE* ep1);
+	ENODE* ParseBitfieldSpec(TYP* typ, ENODE* node);
 
 	void ApplyVMask(ENODE* node, ENODE* mask);
 
-	TYP* deref(ENODE** node, TYP* tp);
+	TYP* AddRef(ENODE** node, TYP* tp);
 
 	TYP *ParsePrimaryExpression(ENODE **node, int got_pa, Symbol* symi);
 	TYP *ParseCastExpression(ENODE **node, Symbol* symi);
@@ -1106,7 +1108,7 @@ public:
 	Symbol* gsearch2(std::string na, __int16 rettype, TypeArray* typearray, bool exact);
 	TYP* ParseNameRef(ENODE** node, Symbol* symi, int nt = 1);
 	TYP* ParseUnaryExpression(ENODE** node, int got_pa, Symbol* symi);
-	TYP* CondDeref(ENODE** node, TYP* tp);
+	TYP* CondAddRef(ENODE** node, TYP* tp);
 	ENODE* MakeAutoNameNode(Symbol* sp);
 	TYP* nameref(ENODE** node, int nt, Symbol* symi);
 	TYP* nameref2(std::string name, ENODE** node, int nt, bool alloc, TypeArray* typearray, TABLE* tbl, Symbol* symi);
@@ -2405,7 +2407,7 @@ public:
 	Declaration(Statement* st);
 	Declaration *next;
 	void AssignParameterName();
-	int declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int ztype, Symbol** symo, bool local, short int depth=0);
+	int64_t declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int ztype, Symbol** symo, bool local, short int depth=0);
 	void ParseEnumerationList(TABLE *table, Float128 amt, Symbol *parent, bool power);
 	void ParseEnum(TABLE *table);
 	void ParseVoid();
@@ -2672,6 +2674,8 @@ public:
 	int RIimmSize;			// size in bits of immediate field for RI instructions
 	CPU();
 	void InitRegs();
+	int GetTypePrecision(e_bt typ);
+	int GetTypeSize(e_bt typ);
 };
 
 class QuplsCPU : public CPU

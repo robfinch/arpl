@@ -298,9 +298,11 @@ void OCODE::OptMove()
 	//		add Rt,Ra,Rb
 	//		add Rn,Ra,Rb
 	// should allow the compiler to remove the first add
+	// But, do not do for volatile operations, a I/O load should not be replicated.
+	return;
 	for (pbk = back; pbk && (pbk->opcode == op_hint || pbk->opcode == op_remark); pbk = pbk->back)
 		;
-	if (pbk && pbk->oper1 && pbk->HasTargetReg()) {
+	if (pbk && pbk->oper1 && pbk->HasTargetReg() && !pbk->isVolatile) {
 		if (pbk->oper1->mode == am_reg && oper2->mode == am_reg) {
 			if (pbk->oper1->preg == oper2->preg) {
 				OCODE* p;
@@ -709,15 +711,10 @@ void OCODE::OptDefUse()
 	for (ip = fwd; ip; ip = ip->fwd) {
 		if (ip->insn->IsFlowControl())
 			goto j1;
-		if (ip->opcode == op_hint) {
-			// Do not remove the reloads of callee saved registers.
-			if (ip->oper1->offset->i == begin_stack_unlink)
-				goto j1;
+		if (ip->opcode == op_hint)
 			continue;
-		}
-		if (ip->opcode == op_remark) {
+		if (ip->opcode == op_remark)
 			continue;
-		}
 		if (ip->HasSourceReg(oper1->preg))
 			goto j1;
 		if (ip->HasTargetReg()) {
@@ -730,8 +727,12 @@ void OCODE::OptDefUse()
 	// But, do not remove frame pointer load at end of function.
 	if (!isVolatile) {
 		if (oper1->preg != regFP
-			&& oper1->preg != regLR) {
-			MarkRemove();
+			&& oper1->preg != regLR
+			&& !IsArgReg(oper1->preg)
+			&& !IsSavedReg(oper1->preg)
+			)
+		{
+				MarkRemove();
 			optimized++;
 		}
 	}

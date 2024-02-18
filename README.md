@@ -1,12 +1,15 @@
 # Arpl - A Real Programming Language, Our Pal
 
-# History
+## History
 Arpl started out many years ago 1990s ish as a C compiler. It has since gained a number of features of its own.
+Coding work started on Arpl at home and *before* the internet became popular. Some of the original code is not the best.
 
 # Arpl Compiler
 Arpl is an optimizing compiler. It does many optimizations, but it is not GCC or LLVM.
+It does common subexpression elimination and many peephole optimizations.
+For instance, it looks for def's without uses's and removed code where possible.
 
-# Language Features
+## Language Features
 Arpl can compile most 'C' programs. So if you know C you know a lot of arpl.
 There are additional convenience keywords like 'until' documented in the arpl guide.
 There are additional operators not found in 'C'.
@@ -28,3 +31,6 @@ There is a trial port of the compiler for Riscv code, but is untested and not kn
 # Status
 Still very much a work-in-progress. The code is not stable.
 The compiler generates code that looks reasonable in most cases.
+There is a bug in the stack allocation for arrays that is being tracked down.
+The compiler does not allocate enough stack space for arrays, it is close.
+

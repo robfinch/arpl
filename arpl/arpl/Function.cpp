@@ -209,7 +209,7 @@ void Function::GenerateBody(bool force_inline)
 
 	while (lc_auto % cpu.sizeOfWord)	// round frame size to word
 		++lc_auto;
-	if (pass == 1)
+	if (pass == 0)
 		stkspace = roundWord(lc_auto);
 	if (!IsInline || force_inline) {
 		pass = 1;
@@ -301,7 +301,7 @@ void Function::DoFuncptrAssign(Function *sp)
 	tp1->btpp = TYP::Make(bt_func, cpu.sizeOfWord);
 	asym = nullptr;
 	exp.nameref2(sp->sym->name->c_str(), &ep1, en_ref, FALSE, nullptr, nullptr, sp->sym);
-	exp.CondDeref(&ep1, sp->sym->tp);
+	exp.CondAddRef(&ep1, sp->sym->tp);
 
 	op = en_assign;
 	ep2 = nullptr;

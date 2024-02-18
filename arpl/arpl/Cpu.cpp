@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2020-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2020-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -104,4 +104,37 @@ void CPU::SetVirtualRegisters()
 		vregs[n].IsArg = false;
 	}
 	MachineReg::MarkColorable();
+}
+
+int CPU::GetTypePrecision(e_bt typ)
+{
+	switch (typ) {
+	case bt_bit: return (1);
+	case bt_byte:	return (8);
+	case bt_char:
+	case bt_uchar:
+	case bt_ichar:
+	case bt_iuchar:
+	case bt_exception:
+	case bt_enum:
+		return (16);
+	case bt_bool:	return (1);
+	case bt_short: return (sizeOfInt * 4);
+	case bt_int:	return (sizeOfInt * 8);
+	case bt_long:	return (sizeOfInt * 16);
+	case bt_float: return (sizeOfFPS * 8);
+	case bt_double: return (sizeOfFPD * 8);
+	case bt_quad: return (sizeOfFPQ * 8);
+	case bt_pointer: return (sizeOfPtr * 8);
+	case bt_decimal: return (sizeOfDecimal * 8);
+	case bt_void: return (0);
+	case bt_vector: return (64 * 8);
+	case bt_vector_mask: return (sizeOfWord * 8);
+	default: return (sizeOfWord * 8);
+	}
+}
+
+int CPU::GetTypeSize(e_bt typ)
+{
+	return (GetTypePrecision(typ) / 8);
 }

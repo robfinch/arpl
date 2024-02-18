@@ -8,7 +8,7 @@ extern Symbol* currentClass;
 extern ENODE* makenodei(int nt, ENODE* v1, int i);
 extern ENODE* makefcnode(int nt, ENODE* v1, ENODE* v2, Symbol* sp);
 extern ENODE* makefqnode(int nt, Float128* f128);
-extern TYP* CondDeref(ENODE** node, TYP* tp);
+extern TYP* CondAddRef(ENODE** node, TYP* tp);
 extern bool IsBeginningOfTypecast(int st);
 extern int NumericLiteral(ENODE*);
 int64_t List::numele;
@@ -1026,7 +1026,7 @@ TYP* Expression::ParseStar(ENODE** node, Symbol* symi)
 		NextToken();
 		ep1 = Autoincdec(tp, &ep1, sub, false);
 	}
-	tp = CondDeref(&ep1, tp);
+	tp = CondAddRef(&ep1, tp);
 j1:
 	*node = ep1;
 	ep1->SetType(tp);
@@ -1259,7 +1259,7 @@ ENODE* Expression::ParseDelete(Symbol* symi)
 		tp = ParseCastExpression(&ep1, symi);
 		if (needbr)
 			needpunc(closebr, 50);
-		tp = deref(&ep1, tp);
+		tp = AddRef(&ep1, tp);
 		ep2 = makesnode(en_cnacon, name, name, 0);
 		ep1 = makefcnode(en_fcall, ep2, ep1, nullptr);
 		if (ep1) ep1->SetType(tp);
@@ -1647,7 +1647,7 @@ ENODE* Expression::ParseDotOperator(TYP* tp1, ENODE *ep1, Symbol* symi)
 		// off by using ep->p[0] rather than ep.
 		ep1 = makenode(en_add, ep1->p[0], ep2);
 		tp1 = tp1->btpp;
-		tp1 = CondDeref(&ep1, tp1);
+		tp1 = CondAddRef(&ep1, tp1);
 		goto xit;
 	}
 	if (lastst != id) {
@@ -1787,7 +1787,7 @@ j1:
 		//if (tp1->type==bt_pointer && (tp1->btpp->type==bt_func || tp1->btpp->type==bt_ifunc))
 		//	dfs.printf("Pointer to func");
 		//else
-		tp1 = CondDeref(&ep1, tp1);
+		tp1 = CondAddRef(&ep1, tp1);
 		if (ep1)
 			ep1->SetType(tp1);
 		dfs.printf("tp1->type:%d", tp1->type);
@@ -1957,6 +1957,111 @@ xit:
 	return (ep1);
 }
 
+/*
+* GetSizesForArray fills in the Expression member variable sa, for the array
+* size array. 
+* 
+* Parameter:
+*		tp: (input) the array type
+* Returns:
+*		none
+*/
+void Expression::GetSizesForArray(TYP* tp)
+{
+	TYP* tp4;
+	int cnt2;
+	int elesize;
+
+	if (tp->type == bt_pointer && !tp->val_flag) {
+		elesize = cpu.GetTypeSize(tp->btpp->type);
+		numdimen = tp->btpp->dimen;
+		//sa[numdimen + 1] = ep1->esize;
+	}
+	else {
+		elesize = cpu.GetTypeSize(tp->type);
+		numdimen = tp->dimen;
+	}
+	// Track down the size of each dimension.
+	if (cnt == 0) {
+		cnt2 = 1;
+		for (tp4 = tp; tp4; tp4 = tp4->btpp) {
+			sa[cnt2] = max(tp4->numele, 1);
+			elesize = cpu.GetTypeSize(tp4->type);
+			cnt2++;
+			if (cnt2 > 9) {
+				error(ERR_TOOMANYDIMEN);
+				break;
+			}
+		}
+		if (numdimen == 0)
+			numdimen = cnt2-2;
+		sa[numdimen + 1] = elesize;
+		sa[0] = sa[numdimen + 1];
+	}
+}
+
+/* Parses a bit field specification on a scalar intrinsic type.
+*  A bitfield spec looks like a[1:4] or to select just a single bit a[3].
+* 
+* Parameter:
+*		pnode: (input) pointer to node of expression tree.
+* Returns:
+*		a node containing the bitfield spec.
+*/
+
+ENODE* Expression::ParseBitfieldSpec(TYP* tp3, ENODE* pnode)
+{
+	TYP* tp1;
+	ENODE* qnode;
+	ENODE* rnode;
+	ENODE* snode;
+	ENODE* ep1;
+
+	rnode = nullptr;
+	ep1 = nullptr;
+	if (lastst == colon) {
+		NextToken();
+		tp3 = ParseExpression(&qnode, nullptr);
+		snode = qnode;
+		qnode = compiler.ef.Makenode(en_sub, pnode->Clone(), qnode);
+		//qnode = compiler.ef.Makenode(en_sub, qnode, makeinode(en_icon, 1));
+		//ep1 = compiler.ef.Makenode(pnode->isUnsigned ? en_extu : en_ext, rnode, pnode, qnode);
+		rnode = makenode(en_fieldref, nullptr, nullptr);
+		rnode->bit_offset = snode;
+		rnode->bit_width = qnode;
+		rnode->esize = tp3->size;
+		ep1 = rnode;//compiler.ef.Makenode(en_bitoffset, rnode, snode, qnode);
+		//ep1 = compiler.ef.Makenode(en_void, rnode, nullptr);
+	}
+	else {
+		qnode = makeinode(en_icon, 0);
+		//ep1 = compiler.ef.Makenode(pnode->isUnsigned ? en_extu : en_ext, rnode, pnode->Clone(), qnode->Clone());
+		if (rnode == nullptr) {
+			error(ERR_NOPOINTER);
+			return (ep1);
+		}
+		rnode = makenode(en_fieldref, nullptr, nullptr);
+		rnode->bit_offset = pnode;
+		rnode->bit_width = qnode;
+		rnode->esize = tp3->size;
+		ep1 = rnode;//compiler.ef.Makenode(en_bitoffset, rnode, pnode, qnode);
+		snode = pnode;
+		//ep1 = compiler.ef.Makenode(en_void, rnode, nullptr);
+	}
+	//rnode->bit_offset = pnode;
+	//rnode->bit_width = qnode;
+	//ep1->bit_offset = pnode->Clone();
+	//ep1->bit_width = qnode->Clone();
+	needpunc(closebr, 9);
+	//tp1 = CondDeref(&ep1, tp2);
+	tp1 = TYP::Make(bt_bitfield, cpu.sizeOfWord);
+	tp1->type = bt_bitfield;
+	tp1->bit_offset = snode->Clone();
+	tp1->bit_width = qnode->Clone();
+	ep1->tp = tp1;
+	return (ep1);
+}
+
 ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 {
 	ENODE* pnode, * rnode, * qnode, * snode;
@@ -2014,72 +2119,17 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 		tp3 = tp1;
 		tp4 = tp1;
 	}
-	if (cnt == 0) {
-		numdimen = tp1->dimen;
-		cnt2 = 1;
-		for (; tp4; tp4 = tp4->btpp) {
-			sa[cnt2] = max(tp4->numele, 1);
-			cnt2++;
-			if (cnt2 > 9) {
-				error(ERR_TOOMANYDIMEN);
-				break;
-			}
-		}
-		if (tp1->type == bt_pointer && !tp1->val_flag) {
-			sa[numdimen + 1] = tp1->btpp->size;
-			//sa[numdimen + 1] = ep1->esize;
-		}
-		else
-			sa[numdimen + 1] = tp1->size;
-	}
+	
+	// Debug
 	if (cnt == 0)
 		totsz = tp1->size;
-	if (tp1->type != bt_pointer) {
-		/* could be a bitfield spec on a scalar type */
-		if (lastst == colon) {
-			NextToken();
-			tp3 = ParseExpression(&qnode, nullptr);
-			snode = qnode;
-			qnode = compiler.ef.Makenode(en_sub, pnode->Clone(), qnode);
-			//qnode = compiler.ef.Makenode(en_sub, qnode, makeinode(en_icon, 1));
-			//ep1 = compiler.ef.Makenode(pnode->isUnsigned ? en_extu : en_ext, rnode, pnode, qnode);
-			rnode->nodetype = en_fieldref;
-			rnode->bit_offset = snode;
-			rnode->bit_width = qnode;
-			rnode->esize = tp3->size;
-			ep1 = rnode;//compiler.ef.Makenode(en_bitoffset, rnode, snode, qnode);
-			//ep1 = compiler.ef.Makenode(en_void, rnode, nullptr);
-		}
-		else {
-			qnode = makeinode(en_icon, 0);
-			//ep1 = compiler.ef.Makenode(pnode->isUnsigned ? en_extu : en_ext, rnode, pnode->Clone(), qnode->Clone());
-			if (rnode == nullptr) {
-				error(ERR_NOPOINTER);
-				return (ep1);
-			}
-			rnode->nodetype = en_fieldref;
-			rnode->bit_offset = pnode;
-			rnode->bit_width = qnode;
-			rnode->esize = tp3->size;
-			ep1 = rnode;//compiler.ef.Makenode(en_bitoffset, rnode, pnode, qnode);
-			snode = pnode;
-			//ep1 = compiler.ef.Makenode(en_void, rnode, nullptr);
-		}
-		//rnode->bit_offset = pnode;
-		//rnode->bit_width = qnode;
-		//ep1->bit_offset = pnode->Clone();
-		//ep1->bit_width = qnode->Clone();
-		needpunc(closebr, 9);
-		//tp1 = CondDeref(&ep1, tp2);
-		tp1->type = bt_bitfield;
-		tp1->bit_offset = snode->Clone();
-		tp1->bit_width = qnode->Clone();
-		ep1->tp = tp1;
-		return (ep1);
-		error(ERR_NOPOINTER);
-	}
-	else
-		tp1 = tp1->btpp;
+	if (tp1->type != bt_pointer)
+		return (ParseBitfieldSpec(tp3, pnode));
+
+	// Track down the size of each dimension.
+	GetSizesForArray(tp1);
+
+	tp1 = tp1->btpp;
 	//if (cnt==0) {
 	//	switch(numdimen) {
 	//	case 1: sz1 = sa[numdimen+1]; break;
@@ -2111,24 +2161,13 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	//	}
 	//}
 	//else
-	{
-		if (numdimen > 1) {
-			sz1 = 1;
-			for (cnt2 = 1; cnt2 <= numdimen; cnt2++)
-				sz1 = sz1 * sa[cnt2];
-			elesize = sa[numdimen + 1] / sz1;
-		}
-		else
-			elesize = tp1->size;
-		sa[0] = elesize;
-		sz1 = sa[0];// sa[numdimen + 1];	// could be a void = 0
-		for (cnt2 = 1; cnt2 < numdimen - cnt; cnt2++)
-			sz1 = sz1 * sa[cnt2];
-	}
+	sz1 = sa[cnt+2];
+	for (cnt2 = 3; cnt2 <= numdimen; cnt2++)
+		sz1 = sz1 * sa[cnt2];
+
 	qnode = makeinode(en_icon, sz1);
 	qnode->etype = bt_ushort;
 	qnode->esize = cpu.sizeOfWord;
-	qnode->constflag = TRUE;
 	qnode->isUnsigned = TRUE;
 	cf = qnode->constflag;
 	/*
@@ -2137,42 +2176,41 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	}
 	else
 	*/
-	{
-		if (cf && qnode->i==elesize && 
-			(elesize==1 || elesize==2 || elesize==4 || elesize==8 || elesize==16)) {
-			qnode = rnode;
-			qnode->scale = (char)sz1;
-		}
-		else
-			qnode = makenode(en_mulu, qnode, rnode);
-		qnode->etype = bt_short;
-		qnode->esize = cpu.sizeOfWord;
-		qnode->constflag = cf & rnode->constflag;
-		qnode->isUnsigned = rnode->isUnsigned;
-		if (rnode->sym)
-			qnode->sym = rnode->sym;
-
-		//(void) cast_op(&qnode, &tp_int32, tp1);
-		cf = pnode->constflag;
-		uf = pnode->isUnsigned;
-		sp1 = pnode->sym;
-/*
-		if (qnode->scale && pnode->nodetype==en_nacon) {
-			compiler.ef.Makenode(en_scndx, pnode, qnode);
-		}
-		else
-*/
-		pnode = makenode(en_add, pnode, qnode);
-		pnode->etype = bt_pointer;
-		pnode->esize = cpu.sizeOfPtr;
-		pnode->constflag = cf & qnode->constflag;
-		pnode->isUnsigned = uf & qnode->isUnsigned;
-		if (pnode->sym == nullptr)
-			pnode->sym = sp1;
-		if (pnode->sym == nullptr)
-			pnode->sym = qnode->sym;
+	// qnode contains the size of the element multiplied by the index amount.
+	// The base size of an element was stuffed in sa[numdimen+1].
+	elesize = sa[numdimen + 1];
+	if (numdimen < 0 && cf && qnode->i == elesize &&
+		(elesize==1 || elesize==2 || elesize==4 || elesize==8 || elesize==16)) {
+		qnode = rnode;
+		qnode->scale = (char)elesize;
 	}
-	tp1 = CondDeref(&pnode, tp1);
+	else {
+		qnode = makenode(en_mulu, qnode, rnode);
+		qnode->scale = 1;
+	}
+	qnode->etype = bt_short;
+	qnode->esize = cpu.sizeOfWord;
+	qnode->constflag = cf & rnode->constflag;
+	qnode->isUnsigned = rnode->isUnsigned;
+	if (rnode->sym)
+		qnode->sym = rnode->sym;
+
+	//(void) cast_op(&qnode, &tp_int32, tp1);
+	cf = pnode->constflag;
+	uf = pnode->isUnsigned;
+	sp1 = pnode->sym;
+
+	pnode = makenode(en_add, pnode, qnode);
+	pnode->etype = bt_pointer;
+	pnode->esize = cpu.sizeOfPtr;
+	pnode->constflag = cf & qnode->constflag;
+	pnode->isUnsigned = uf & qnode->isUnsigned;
+	if (pnode->sym == nullptr)
+		pnode->sym = sp1;
+	if (pnode->sym == nullptr)
+		pnode->sym = qnode->sym;
+
+	tp1 = CondAddRef(&pnode, tp1);
 	pnode->tp = tp1;
 	ep1 = pnode;
 	needpunc(closebr, 9);

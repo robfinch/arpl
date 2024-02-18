@@ -635,7 +635,7 @@ void Expression::DerefVoid(ENODE** node, TYP* tp)
 // Build the proper dereference operation for a node using the
 // type pointer tp.
 //
-TYP* Expression::deref(ENODE **node, TYP *tp)
+TYP* Expression::AddRef(ENODE **node, TYP *tp)
 {
 	Symbol *sp;
 
@@ -790,12 +790,12 @@ TYP* Expression::deref(ENODE **node, TYP *tp)
 }
 
 /*
-* dereference the node if val_flag is zero. If val_flag is non_zero and
-* tp->type is bt_pointer (array reference) set the size field to the
+* Add a ref indicator to the node if val_flag is zero. If val_flag is non_zero
+* and tp->type is bt_pointer (array reference) set the size field to the
 * pointer size if this code is not executed on behalf of a sizeof
 * operator
 */
-TYP *Expression::CondDeref(ENODE **node, TYP *tp)
+TYP *Expression::CondAddRef(ENODE **node, TYP *tp)
 {
 	TYP *tp1;
 	int64_t sz;
@@ -811,14 +811,14 @@ TYP *Expression::CondDeref(ENODE **node, TYP *tp)
 			&& tp->type != bt_ifunc
 			&& tp->type != bt_func
 			)
-			return (deref(node, tp));
+			return (AddRef(node, tp));
 	if (tp->type == bt_pointer && sizeof_flag == 0) {
 		sz = tp->size;
 		dimen = tp->dimen;
 		numele = tp->numele;
 		tp1 = tp->btpp;// ->btpp;
 		if (tp1==NULL)
-			printf("DIAG: CondDeref: tp1 is NULL\r\n");
+			printf("DIAG: CondAddRef: tp1 is NULL\r\n");
 		tp =(TYP *) TYP::Make(bt_pointer, cpu.sizeOfPtr);
 		tp->isArray = true;
 		tp->dimen = dimen;
@@ -967,8 +967,8 @@ TYP *Expression::nameref2(std::string name, ENODE **node,int nt,bool alloc,TypeA
 		dfs.printf("tp:%p ",(char *)tp);
 		// Not sure about this if - wasn't here in the past.
 //		if (sp->tp->type!=bt_func && sp->tp->type!=bt_ifunc)
-		tp = CondDeref(node,tp);
-		dfs.printf("deref tp:%p ",(char *)tp);
+		tp = CondAddRef(node,tp);
+		dfs.printf("AddRef tp:%p ",(char *)tp);
 	}
 	if (nt==TRUE)
 		NextToken();

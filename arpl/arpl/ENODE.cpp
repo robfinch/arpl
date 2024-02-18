@@ -1642,6 +1642,7 @@ Operand* ENODE::GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg)
 	}
 	// Scale a constant index by the type size.
 	// ????
+	/*
 	if (!ap1->is_scaled && pass == 1 && ap1->tp && ap1->tp->isArray) {
 		int sz;
 		if (ap1->tp) {
@@ -1653,6 +1654,7 @@ Operand* ENODE::GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg)
 			ap1->is_scaled = true;
 		}
 	}
+	*/
 	return (ap1);
 }
 
@@ -1669,7 +1671,7 @@ Operand* ENODE::GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg)
 // ----------------------------------------------------------------------------
 Operand *ENODE::GenerateIndex(bool neg)
 {
-	Operand *ap1, *ap2, *ap3, * ap4;
+	Operand *ap1, *ap2;
 	static int ndxlvl = 0;
 
 	ndxlvl++;
@@ -1749,7 +1751,7 @@ Operand *ENODE::GenerateIndex(bool neg)
 	}
 
 	// ap1->mode must be am_reg
-	ap2->MakeLegal(am_reg, ap2->tp->size);
+	ap2->MakeLegal(am_reg, ap2->tp ? ap2->tp->size : cpu.sizeOfWord);
 	if (cpu.SupportsIndexed && ndxlvl==1) {
 		ap1->mode = am_indx2;            /* make indexed */
 		ap1->sreg = ap2->preg;
@@ -1787,7 +1789,6 @@ Operand *ENODE::GenerateIndex(bool neg)
 Operand* ENODE::GenerateScaledIndexing(int flags, int size, int rhs)
 {
 	Operand* ap1;
-	Operand* ap2;
 	Operand* ap3;
 	Operand* ap4;
 
@@ -2176,7 +2177,6 @@ Operand *ENODE::GenMultiply(int flags, int size, int op)
 Operand *ENODE::GenerateUnary(int flags, int size, int op)
 {
 	Operand *ap, *ap2;
-	OCODE* ip;
 
 	if (IsFloatType()) {
 		ap2 = GetTempFPRegister();
@@ -2325,9 +2325,8 @@ j1:
 
 Operand *ENODE::GenerateLand(int flags, int op, bool safe)
 {
-	Operand *ap1, *ap2, *ap3, *ap4, *ap5;
+	Operand *ap1, *ap2;
 	int lab0, lab1;
-	OCODE* ip;
 
 	if (safe)
 		return (cg.GenerateSafeLand(this, flags, op));
@@ -2549,19 +2548,20 @@ e_node StringToNodetype(char* str)
 std::string* ENODE::GetLabconLabel(int64_t ii)
 {
 	char buf[400];
+	int iii = (int)ii;
 
 #ifdef LOCAL_LABELS
 	sprintf_s(buf, sizeof(buf), "%s.%05lld", ""/*(char*)currentFn->sym->GetFullName()->c_str()*/, i);
 #else
 	//		sprintf_s(buf, sizeof(buf), "%s.%05lld", (char*)currentFn->sym->GetFullName()->c_str(), i);
-	if (DataLabelMap[ii])
-		sprintf_s(buf, sizeof(buf), "%s.%05lld", DataLabelMap[ii]->c_str(), ii);
+	if (DataLabelMap[iii])
+		sprintf_s(buf, sizeof(buf), "%s.%05lld", DataLabelMap[iii]->c_str(), ii);
 	else {
 		if (sym && sym->storage_class == sc_static)
-			DataLabelMap[ii] = new std::string(GetPrivateNamespace());
+			DataLabelMap[iii] = new std::string(GetPrivateNamespace());
 		else
-			DataLabelMap[ii] = new std::string(GetNamespace());
-		sprintf_s(buf, sizeof(buf), "%s.%05lld", (char*)DataLabelMap[ii]->c_str(), ii);
+			DataLabelMap[iii] = new std::string(GetNamespace());
+		sprintf_s(buf, sizeof(buf), "%s.%05lld", (char*)DataLabelMap[iii]->c_str(), ii);
 	}
 #endif
 	return (new std::string(buf));
@@ -2735,7 +2735,7 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 			if (sc == sc_global || sc==sc_external)
 				sprintf_s(buf, sizeof(buf), "%s", (char*)sp->c_str());
 			else
-				sprintf_s(buf, sizeof(buf), "%.400s.%05d", (char*)GetPrivateNamespace(), sym->value.i);
+				sprintf_s(buf, sizeof(buf), "%.400s.%05I64d", (char*)GetPrivateNamespace(), sym->value.i);
 		}
 		else
 			sprintf_s(buf, sizeof(buf), "%s", (char*)sp->c_str());
@@ -2801,7 +2801,6 @@ extern int gentype;
 
 void ENODE::GenerateShort(txtoStream& tfs)
 {
-	int64_t sz;
 	Int128 i128, t128;
 
 	if (gentype == halfgen && outcol < 60) {
@@ -2854,7 +2853,6 @@ void ENODE::GenerateShort(txtoStream& tfs)
 
 void ENODE::GenerateInt(txtoStream& tfs)
 {
-	int64_t sz;
 	Int128 i128, t128;
 
 	if (gentype == halfgen && outcol < 60) {
@@ -2907,7 +2905,6 @@ void ENODE::GenerateInt(txtoStream& tfs)
 
 void ENODE::GenerateLong(txtoStream& tfs)
 {
-	int64_t sz;
 	Int128 i128, t128;
 
 	if (gentype == longgen && outcol < 60) {
@@ -3167,7 +3164,6 @@ void ENODE::load(txtiStream& ifs)
 
 int ENODE::load(char *buf)
 {
-	int nt;
 	int ndx;
 
 	if (buf[0] == '\0')

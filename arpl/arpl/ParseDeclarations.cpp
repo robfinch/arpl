@@ -1520,7 +1520,7 @@ lxit:
 void Declaration::ParseSuffixOpenbr()
 {
 	TYP *temph, *tempt;
-	long sz2;
+	int64_t sz2;
 	TYP* dimen[20];
 	int nn, kk;
 
@@ -1533,7 +1533,7 @@ void Declaration::ParseSuffixOpenbr()
 		// size of the vector.
 		if (head->type == bt_vector) {
 			if (lastst != closebr) {
-				sz2 = (int)GetIntegerExpression((ENODE**)NULL, nullptr, 1).low;
+				sz2 = GetIntegerExpression((ENODE**)NULL, nullptr, 1).low;
 				head->numele = sz2;
 				needpunc(closebr, 22);
 				return;
@@ -1548,7 +1548,7 @@ void Declaration::ParseSuffixOpenbr()
 		dimen[nn]->isArray = true;
 		dimen[nn]->btpp = nullptr;
 		if (lastst != closebr) {
-			sz2 = (int)GetIntegerExpression((ENODE**)NULL, nullptr, 1).low;
+			sz2 = GetIntegerExpression((ENODE**)NULL, nullptr, 1).low;
 			dimen[nn]->size = head->size;
 			dimen[nn]->numele = sz2;
 			needpunc(closebr, 22);
@@ -2029,7 +2029,7 @@ void Declaration::ParseAssign(Symbol *sp)
 		}
 		ep1->constflag = false;
 		ep1->sym = sp;
-		tp1 = exp.CondDeref(&ep1, sp->tp);
+		tp1 = exp.CondAddRef(&ep1, sp->tp);
 		//tp1 = exp.nameref(&ep1, TRUE);
 		op = en_assign;
 		ep2 = nullptr;
@@ -2440,7 +2440,7 @@ void Declaration::FigureStructOffsets(int64_t bgn, Symbol* sp)
  *      be processed. ztype should be bt_struct for normal and in
  *      structure ParseSpecifierarations and sc_union for in union ParseSpecifierarations.
  */
-int Declaration::declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int ztype, Symbol** symo, bool local, short depth)
+int64_t Declaration::declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int ztype, Symbol** symo, bool local, short depth)
 {
 	Expression exp;	// for gsearch;
 	Symbol* sp;
@@ -2592,7 +2592,7 @@ int Declaration::declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int zty
 				nbytes = old_nbytes - ilc;
 			old_nbytes = ilc + nbytes;
 			if (!sp->IsTypedef() && !sp->tp->IsFunc() && nbytes > 0 && !sp->IsExternal)
-				nbytes = GenerateStorage(ofs, nbytes, al, ilc);
+				nbytes += GenerateStorage(ofs, nbytes, al, ilc);
 			dfs.printf("G");
 			// Why the follwing???
 			//if ((sp->tp->type == bt_func) && sp->storage_class == sc_global)
@@ -2602,7 +2602,7 @@ int Declaration::declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int zty
 			sp->SetStorageOffset(head, nbytes, al, ilc, ztype);
 
 			// Increase the storage allocation by the type size.
-			nbytes = sp->AdjustNbytes(nbytes, al, ztype);
+			nbytes += sp->AdjustNbytes(nbytes, al, ztype);
 
 			dfs.printf("H");
 			// For a class declaration there may not be any variables declared as
