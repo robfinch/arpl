@@ -31,6 +31,4 @@ There is a trial port of the compiler for Riscv code, but is untested and not kn
 # Status
 Still very much a work-in-progress. The code is not stable.
 The compiler generates code that looks reasonable in most cases.
-There is a bug in the stack allocation for arrays that is being tracked down.
-The compiler does not allocate enough stack space for arrays, it is close.
 
