@@ -177,6 +177,47 @@ int main(int argc, char **argv)
 	cpu.stw_op = op_stw;
 	cpu.std_op = op_std;
 #endif
+#ifdef QUPLS40
+	cpu.fileExt = ".asm";
+	cpu.lea_op = op_lda;
+	cpu.pagesize = 14;
+	cpu.RIimmSize = 24;
+	cpu.cache_line_size = 6;
+	cpu.code_align = 6;					// power of two
+	cpu.SupportsBand = false;
+	cpu.SupportsBor = false;
+	cpu.SupportsBBC = true;
+	cpu.SupportsBBS = true;
+	cpu.SupportsPop = false;
+	cpu.SupportsPush = false;
+	cpu.SupportsLink = false;
+	cpu.SupportsUnlink = false;
+	cpu.SupportsBitfield = false;
+	cpu.SupportsLDM = false;
+	cpu.SupportsSTM = false;
+	cpu.SupportsPtrdif = false;
+	cpu.SupportsEnter = false;
+	cpu.SupportsLeave = false;
+	cpu.SupportsIndexed = true;
+	cpu.Addsi = false;
+	cpu.ext_op = op_ext;
+	cpu.extu_op = op_extu;
+	cpu.mov_op = op_mov;
+	cpu.ldi_op = op_ldi;
+	cpu.ldbu_op = op_ldbu;
+	cpu.ldb_op = op_ldb;
+	cpu.ldo_op = op_ldo;
+	cpu.ldtu_op = op_ldtu;
+	cpu.ldt_op = op_ldt;
+	cpu.ldwu_op = op_ldwu;
+	cpu.ldw_op = op_ldw;
+	cpu.ldd_op = op_ldd;
+	cpu.stb_op = op_stb;
+	cpu.sto_op = op_sto;
+	cpu.stt_op = op_stt;
+	cpu.stw_op = op_stw;
+	cpu.std_op = op_std;
+#endif
 #ifdef THOR
 	cpu.fileExt = ".asm";
 	cpu.lea_op = op_lea;

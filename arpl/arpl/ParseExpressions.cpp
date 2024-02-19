@@ -379,7 +379,7 @@ void Expression::SetRefType(ENODE** node)
 	(*node)->esize = sz;
 }
 
-void Expression::DerefBit(ENODE** node, TYP* tp)
+TYP* Expression::RefBit(ENODE** node, TYP* tp)
 {
 	ENODE* pnode, *qnode;
 	*node = makenode(en_fieldref, *node, (ENODE*)NULL);
@@ -397,9 +397,10 @@ void Expression::DerefBit(ENODE** node, TYP* tp)
 	if (qnode == nullptr)
 		;// qnode = makeinode(en_icon, 0);
 	(*node)->bit_offset = qnode;
+	return (tp);
 }
 
-void Expression::DerefByte(ENODE** node, TYP* tp)
+TYP* Expression::RefByte(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	if (tp->isUnsigned)
@@ -410,18 +411,20 @@ void Expression::DerefByte(ENODE** node, TYP* tp)
 		tp = &stdubyte;//&stduint;
 	else
 		tp = &stdbyte;//&stdint;
+	return (tp);
 }
 
-void Expression::DerefUnsignedByte(ENODE** node, TYP* tp)
+TYP* Expression::RefUnsignedByte(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->isUnsigned = TRUE;
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdubyte;//&stduint;
+	return (tp);
 }
 
-void Expression::DerefChar(ENODE** node, TYP* tp)
+TYP* Expression::RefChar(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	if (tp->isUnsigned)
@@ -432,18 +435,20 @@ void Expression::DerefChar(ENODE** node, TYP* tp)
 		tp = &stduchar;//&stduint;
 	else
 		tp = &stdchar;//&stdint;
+	return (tp);
 }
 
-void Expression::DerefUnsignedChar(ENODE** node, TYP* tp)
+TYP* Expression::RefUnsignedChar(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->isUnsigned = TRUE;
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stduchar;//&stduint;
+	return (tp);
 }
 
-void Expression::DerefIChar(ENODE** node, TYP* tp)
+TYP* Expression::RefIChar(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	if (tp->isUnsigned)
@@ -454,18 +459,20 @@ void Expression::DerefIChar(ENODE** node, TYP* tp)
 		tp = &stdiuchar;
 	else
 		tp = &stdichar;
+	return (tp);
 }
 
-void Expression::DerefUnsignedIChar(ENODE** node, TYP* tp)
+TYP* Expression::RefUnsignedIChar(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->isUnsigned = TRUE;
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdiuchar;
+	return (tp);
 }
 
-void Expression::DerefEnum(ENODE** node, TYP* tp)
+TYP* Expression::RefEnum(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	if (tp->isUnsigned)
@@ -473,9 +480,10 @@ void Expression::DerefEnum(ENODE** node, TYP* tp)
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdenum;
+	return (tp);
 }
 
-void Expression::DerefShort(ENODE** node, TYP* tp)
+TYP* Expression::RefShort(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	if (tp->isUnsigned)
@@ -486,18 +494,20 @@ void Expression::DerefShort(ENODE** node, TYP* tp)
 		tp = &stdushort;//&stduint;
 	else
 		tp = &stdshort;//&stdint;
+	return (tp);
 }
 
-void Expression::DerefUnsignedShort(ENODE** node, TYP* tp)
+TYP* Expression::RefUnsignedShort(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->isUnsigned = TRUE;
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdushort;//&stduint;
+	return (tp);
 }
 
-void Expression::DerefInt(ENODE** node, TYP* tp)
+TYP* Expression::RefInt(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	if (tp->isUnsigned)
@@ -508,18 +518,20 @@ void Expression::DerefInt(ENODE** node, TYP* tp)
 		tp = &stduint;
 	else
 		tp = &stdint;
+	return (tp);
 }
 
-void Expression::DerefUnsignedInt(ENODE** node, TYP* tp)
+TYP* Expression::RefUnsignedInt(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->isUnsigned = true;
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stduint;
+	return (tp);
 }
 
-void Expression::DerefLong(ENODE** node, TYP* tp)
+TYP* Expression::RefLong(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	if (tp->isUnsigned)
@@ -530,35 +542,40 @@ void Expression::DerefLong(ENODE** node, TYP* tp)
 		tp = &stdulong;
 	else
 		tp = &stdlong;
+	return (tp);
 }
 
-void Expression::DerefUnsignedLong(ENODE** node, TYP* tp)
+TYP* Expression::RefUnsignedLong(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->isUnsigned = true;
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdulong;
+	return (tp);
 }
 
-void Expression::DerefPointer(ENODE** node, TYP* tp)
+TYP* Expression::RefPointer(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->isUnsigned = true;
 //	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
-	tp = &stdptr;
+	// Cannot just assign stdptr. Need to copy the type for ->btpp
+	//tp = &stdptr;
+	return (tp);
 }
 
-void Expression::DerefFloat(ENODE** node, TYP* tp)
+TYP* Expression::RefFloat(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdflt;
+	return (tp);
 }
 
-void Expression::DerefBitfield(ENODE** node, TYP* tp)
+TYP* Expression::RefBitfield(ENODE** node, TYP* tp)
 {
 	*node = makenode(en_fieldref, *node, (ENODE*)NULL);
 	if (tp->isUnsigned)
@@ -571,49 +588,55 @@ void Expression::DerefBitfield(ENODE** node, TYP* tp)
 	(*node)->etype = tp->type;//(enum e_bt)stdint.type;
 	(*node)->esize = tp->size;
 	tp = &stdint;
+	return (tp);
 }
 
-void Expression::DerefDouble(ENODE** node, TYP* tp)
+TYP* Expression::RefDouble(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stddouble;
+	return (tp);
 }
 
-void Expression::DerefQuad(ENODE** node, TYP* tp)
+TYP* Expression::RefQuad(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdquad;
+	return (tp);
 }
 
-void Expression::DerefPosit(ENODE** node, TYP* tp)
+TYP* Expression::RefPosit(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdposit;
+	return (tp);
 }
 
-void Expression::DerefException(ENODE** node, TYP* tp)
+TYP* Expression::RefException(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdexception;
+	return (tp);
 }
 
-void Expression::DerefVector(ENODE** node, TYP* tp)
+TYP* Expression::RefVector(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdvector;
+	return (tp);
 }
 
-void Expression::DerefVectorMask(ENODE** node, TYP* tp)
+TYP* Expression::RefVectorMask(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = tp->size;
@@ -621,20 +644,29 @@ void Expression::DerefVectorMask(ENODE** node, TYP* tp)
 	tp = &stdvectormask;
 	(*node)->isUnsigned = TRUE;
 	(*node)->vmask = (*node)->p[0]->vmask;
+	return (tp);
 }
 
-void Expression::DerefVoid(ENODE** node, TYP* tp)
+TYP* Expression::RefVoid(ENODE** node, TYP* tp)
 {
 	SetRefType(node);
 	(*node)->esize = 0;
 	(*node)->etype = (enum e_bt)tp->type;
 	tp = &stdvoid;
+	return (tp);
 }
 
-//
-// Build the proper dereference operation for a node using the
-// type pointer tp.
-//
+/*
+*	Build the proper reference operation for a node using the
+*	type pointer tp. Adds a en_ref node into the node list. It will be
+*	dereferenced by the compiler later.
+* 
+* Parameters:
+*		node: (output) a node containing the proper reference
+*		tp:		(input) the type to generate a reference of
+* Returns:
+*		the reference type
+*/
 TYP* Expression::AddRef(ENODE **node, TYP *tp)
 {
 	Symbol *sp;
@@ -647,100 +679,100 @@ TYP* Expression::AddRef(ENODE **node, TYP *tp)
 	switch(tp->type) {
 
 	case bt_bit:
-		DerefBit(node, tp);
+		tp = RefBit(node, tp);
 		break;
 
 	case bt_byte:
-		DerefByte(node, tp);
+		tp = RefByte(node, tp);
     break;
 
 	case bt_ubyte:
-		DerefUnsignedByte(node, tp);
+		tp = RefUnsignedByte(node, tp);
 		break;
 
 	case bt_ichar:
-		DerefIChar(node, tp);
+		tp = RefIChar(node, tp);
 		break;
 
 	case bt_iuchar:
-		DerefUnsignedIChar(node, tp);
+		tp = RefUnsignedIChar(node, tp);
 		break;
 
 	case bt_uchar:
-		DerefUnsignedChar(node, tp);
+		tp = RefUnsignedChar(node, tp);
 		break;
 
 	case bt_char:
-		DerefChar(node, tp);
+		tp = RefChar(node, tp);
 		break;
 
 	case bt_enum:
-		DerefEnum(node, tp);
+		tp = RefEnum(node, tp);
 		break;
 
 	case bt_ushort:
-		DerefUnsignedShort(node, tp);
+		tp = RefUnsignedShort(node, tp);
 		break;
 
 	case bt_short:
-		DerefShort(node, tp);
+		tp = RefShort(node, tp);
 		break;
 
 	case bt_uint:
-		DerefUnsignedInt(node, tp);
+		tp = RefUnsignedInt(node, tp);
 		break;
 
 	case bt_int:
-		DerefInt(node, tp);
+		tp = RefInt(node, tp);
 		break;
 
 	case bt_exception:
-		DerefException(node, tp);
+		tp = RefException(node, tp);
 		break;
 
 	case bt_ulong:
-		DerefUnsignedLong(node, tp);
+		tp = RefUnsignedLong(node, tp);
 		break;
 
 	case bt_long:
-		DerefLong(node, tp);
+		tp = RefLong(node, tp);
 		break;
 
 	case bt_vector:
-		DerefVector(node, tp);
+		tp = RefVector(node, tp);
 		break;
 
 	case bt_vector_mask:
-		DerefVectorMask(node, tp);
+		tp = RefVectorMask(node, tp);
 		break;
 
 	// Pointers (addresses) are always unsigned
 	case bt_pointer:
-		DerefPointer(node, tp);
+		tp = RefPointer(node, tp);
 		break;
 
 	case bt_unsigned:
-		DerefUnsignedInt(node, tp);
+		tp = RefUnsignedInt(node, tp);
 		break;
 
 	case bt_quad:
-		DerefQuad(node, tp);
+		tp = RefQuad(node, tp);
 		break;
 
   case bt_double:
-		DerefDouble(node, tp);
+		tp = RefDouble(node, tp);
 		break;
 
   case bt_float:
-		DerefFloat(node, tp);
+		tp = RefFloat(node, tp);
 		break;
 
 	case bt_posit:
-		DerefPosit(node, tp);
+		tp = RefPosit(node, tp);
 		break;
 
 	case bt_bitfield:
-		DerefBitfield(node, tp);
+		tp = RefBitfield(node, tp);
 		break;
 
 		//case bt_func:
@@ -765,7 +797,7 @@ TYP* Expression::AddRef(ENODE **node, TYP *tp)
 	// It's actually a pointer to void that's desired for dereferencing.
 	// For now, uses a pointer to word or half word.
 	case bt_void:
-		DerefVoid(node, tp);
+		tp = RefVoid(node, tp);
 		break;
 
 	default:
@@ -1330,7 +1362,10 @@ j1:
 		if (tptr == nullptr || pnode == nullptr)
 			return (nullptr);
 		pnode->constflag = false;
-		pnode->sc = sp->storage_class;
+		if (sp)
+			pnode->sc = sp->storage_class;
+		else
+			pnode->sc = sc_external;
 		break;
 
 	case cconst:

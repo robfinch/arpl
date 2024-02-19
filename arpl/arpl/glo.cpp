@@ -79,6 +79,52 @@ int maxVL = 64;
 int nregs = 128;
 
 #endif
+#ifdef QUPLS40
+int regTS = 52;
+int regPC = 34;
+int regSP = 15;
+int regFP = 14;
+int regAFP = 31;      // alternate frame pointer
+int regLR = 16;
+int regXLR = 28;
+int regXHSP = 27;
+int regGP = 13;
+int regGP1 = 13;
+int regGP2 = 13;
+int regGOT = 45;
+int regTP = 52;
+int regCLP = 25;                // class pointer
+int regPP = 56;					// program pointer
+int regZero = 0;
+int regXoffs = 55;
+int regAsm = 58;
+int pregSP = 15;
+int pregFP = 14;
+int pregLR = 16;
+int pregXLR = 28;
+int pregGP = 13;
+int pregTP = 27;
+int pregCLP = 25;                // class pointer
+int pregPP = 24;					// program pointer
+int pregZero = 0;
+int pregFirstTemp = 4;
+int pregLastTemp = 7;
+int pregFirstRegvar = 8;
+int pregLastRegvar = 12;
+int pregFirstArg = 1;
+int pregLastArg = 3;
+int regRS = 46;
+int regCS = 47;
+int farcode = 0;
+int wcharSupport = 1;
+int verbose = 0;
+int use_gp = 1;
+int use_iprel = 0;
+int address_bits = 32;
+int maxVL = 64;
+int nregs = 128;
+
+#endif
 #ifdef THOR
 int regTS = 52;
 int regPC = 53;
@@ -153,16 +199,7 @@ int use_gp = 1;
 int address_bits = 32;
 int nregs = 32;
 
-int cpu.sizeOfWord = 8;
 int sizeOfFP = 8;
-int cpu.sizeOfFPS = 4;
-int cpu.sizeOfFPD = 8;
-int cpu.sizeOfFPT = 12;
-int cpu.sizeOfFPQ = 16;
-int cpu.sizeOfPtr = 8;
-int cpu.sizeOfInt = 8;
-int cpu.sizeOfDecimal = 8;
-int cpu.sizeOfPosit = 8;
 
 int use_iprel = 0;
 #endif
@@ -241,6 +278,10 @@ std::map<int, std::string*> DataLabelMap;
 CSet string_exclude;
 
 #ifdef QUPLS
+QuplsCodeGenerator cg;
+QuplsStatementGenerator sg;
+#endif
+#ifdef QUPLS40
 QuplsCodeGenerator cg;
 QuplsStatementGenerator sg;
 #endif

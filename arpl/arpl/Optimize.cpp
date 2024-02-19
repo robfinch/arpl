@@ -755,7 +755,6 @@ static void Opt0_logic(ENODE** node)
 			case en_land_safe:
 				ep1 = ep->p[1]->p[0];
 				ep2 = ep->p[1]->p[1];
-				tep = ep->p[1];
 				ep->p[1] = ep1;
 				ep->p[2] = ep2;
 				switch (nt) {
@@ -770,8 +769,8 @@ static void Opt0_logic(ENODE** node)
 			case en_or:
 			case en_lor:
 			case en_lor_safe:
-				ep1 = ep->p[0]->p[0];
-				ep2 = ep->p[0]->p[1];
+				ep1 = ep->p[1]->p[0];
+				ep2 = ep->p[1]->p[1];
 				ep->p[1] = ep1;
 				ep->p[2] = ep2;
 				switch (nt) {

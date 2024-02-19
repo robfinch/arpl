@@ -138,11 +138,45 @@ int NumTempRegs()
 	return (cpu.NumTmpRegs);
 }
 
+int NumSavedRegs()
+{
+	return (cpu.NumSavedRegs);
+}
+
 void CPU::InitRegs()
 {
 #ifdef QUPLS
 	cpu.NumRegs = 32;
 	cpu.NumArgRegs = 8;
+	cpu.argregs[0] = 1;
+	cpu.argregs[1] = 2;
+	cpu.argregs[2] = 3;
+	cpu.argregs[3] = 4;
+	cpu.argregs[4] = 5;
+	cpu.argregs[5] = 6;
+	cpu.argregs[6] = 7;
+	cpu.argregs[7] = 8;
+	cpu.argregs[8] = 0;
+	cpu.argregs[9] = 0;
+	cpu.argregs[10] = 0;
+
+	cpu.NumvArgRegs = 10;
+	cpu.vargregs[0] = 1;
+	cpu.vargregs[1] = 2;
+	cpu.vargregs[2] = 3;
+	cpu.vargregs[3] = 40;
+	cpu.vargregs[4] = 41;
+	cpu.vargregs[5] = 42;
+	cpu.vargregs[6] = 43;
+	cpu.vargregs[7] = 44;
+	cpu.vargregs[8] = 45;
+	cpu.vargregs[9] = 46;
+	cpu.vargregs[10] = 47;
+
+#endif
+#ifdef QUPLS40
+	cpu.NumRegs = 16;
+	cpu.NumArgRegs = 3;
 	cpu.argregs[0] = 1;
 	cpu.argregs[1] = 2;
 	cpu.argregs[2] = 3;
@@ -257,6 +291,34 @@ void CPU::InitRegs()
 	cpu.vtmpregs[11] = 15;
 
 #endif
+#ifdef QUPLS40
+	cpu.NumTmpRegs = 4;
+	cpu.tmpregs[0] = 4;
+	cpu.tmpregs[1] = 5;
+	cpu.tmpregs[2] = 6;
+	cpu.tmpregs[3] = 7;
+	// These are saved regs.
+	cpu.tmpregs[4] = 8;
+	cpu.tmpregs[5] = 9;
+	cpu.tmpregs[6] = 10;
+	cpu.tmpregs[7] = 11;
+	cpu.tmpregs[8] = 12;
+
+	cpu.NumvTmpRegs = 12;
+	cpu.vtmpregs[0] = 4;
+	cpu.vtmpregs[1] = 5;
+	cpu.vtmpregs[2] = 6;
+	cpu.vtmpregs[3] = 7;
+	cpu.vtmpregs[4] = 8;
+	cpu.vtmpregs[5] = 9;
+	cpu.vtmpregs[6] = 10;
+	cpu.vtmpregs[7] = 11;
+	cpu.vtmpregs[8] = 12;
+	cpu.vtmpregs[9] = 13;
+	cpu.vtmpregs[10] = 14;
+	cpu.vtmpregs[11] = 15;
+
+#endif
 #ifdef THOR
 	cpu.NumTmpRegs = 12;
 	cpu.tmpregs[0] = 4;
@@ -329,6 +391,33 @@ void CPU::InitRegs()
 	cpu.saved_regs[13] = 0;
 	cpu.saved_regs[14] = 0;
 	cpu.saved_regs[15] = 0;
+
+	cpu.NumvSavedRegs = 16;
+	cpu.vsaved_regs[0] = 16;
+	cpu.vsaved_regs[1] = 17;
+	cpu.vsaved_regs[2] = 18;
+	cpu.vsaved_regs[3] = 19;
+	cpu.vsaved_regs[4] = 20;
+	cpu.vsaved_regs[5] = 21;
+	cpu.vsaved_regs[6] = 22;
+	cpu.vsaved_regs[7] = 23;
+	cpu.vsaved_regs[8] = 24;
+	cpu.vsaved_regs[9] = 25;
+	cpu.vsaved_regs[10] = 26;
+	cpu.vsaved_regs[11] = 27;
+	cpu.vsaved_regs[12] = 28;
+	cpu.vsaved_regs[13] = 29;
+	cpu.vsaved_regs[14] = 30;
+	cpu.vsaved_regs[15] = 31;
+
+#endif
+#ifdef QUPLS40
+	cpu.NumSavedRegs = 5;
+	cpu.saved_regs[0] = 8;
+	cpu.saved_regs[1] = 9;
+	cpu.saved_regs[2] = 10;
+	cpu.saved_regs[3] = 11;
+	cpu.saved_regs[4] = 12;
 
 	cpu.NumvSavedRegs = 16;
 	cpu.vsaved_regs[0] = 16;
@@ -728,19 +817,22 @@ Operand *GetTempRegister()
   ap->preg = cpu.tmpregs[next_reg];
 	ap->pdeep = ap->deep;
   ap->deep = reg_alloc_ptr;
-	compiler.temp_in_use.add(ap->preg);
-  reg_alloc[reg_alloc_ptr].reg = cpu.tmpregs[next_reg];
+	if (IsTempReg(ap->preg))
+		compiler.temp_in_use.add(ap->preg);
+	else if (IsSavedReg(ap->preg))
+		compiler.saved_in_use.add(ap->preg);
+	reg_alloc[reg_alloc_ptr].reg = cpu.tmpregs[next_reg];
   reg_alloc[reg_alloc_ptr].Operand = ap;
   reg_alloc[reg_alloc_ptr].f.isPushed = 'F';
 	next_reg++;
-	if (next_reg >= NumTempRegs()) {// regLastTemp) {
+	if (next_reg >= NumTempRegs() + NumSavedRegs()) {// regLastTemp) {
 		wrapno++;
 		rap[wrapno] = reg_alloc_ptr;
 		next_reg = 0;// regFirstTemp;		/* wrap around */
 	}
-    if (reg_alloc_ptr++ == MAX_REG_STACK)
+  if (reg_alloc_ptr++ == MAX_REG_STACK)
 		fatal("GetTempRegister(): register stack overflow");
-		max_reg_alloc_ptr = max(max_reg_alloc_ptr, reg_alloc_ptr);
+	max_reg_alloc_ptr = max(max_reg_alloc_ptr, reg_alloc_ptr);
 	return (ap);
 }
 
@@ -807,6 +899,9 @@ Operand *GetTempFPRegister()
 	int number;
 
 #ifdef QUPLS
+	return (GetTempRegister());
+#endif
+#ifdef QUPLS40
 	return (GetTempRegister());
 #endif
 #ifdef THOR

@@ -181,7 +181,7 @@ int CSETable::AllocateGPRegisters()
 	int pass;
 	int reg;
 
-	reg = 0;
+	reg = compiler.saved_in_use.NumMember();
 	for (pass = 0; pass < 4; pass++) {
 		for (csp = First(); csp; csp = Next()) {
 			if (csp->OptimizationDesireability() > 0) {

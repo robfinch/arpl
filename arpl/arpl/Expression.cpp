@@ -2012,7 +2012,7 @@ void Expression::GetSizesForArray(TYP* tp)
 *		a node containing the bitfield spec.
 */
 
-ENODE* Expression::ParseBitfieldSpec(TYP* tp3, ENODE* pnode)
+ENODE* Expression::ParseBitfieldSpec(TYP* tp3, ENODE* pnode, ENODE* varnode)
 {
 	TYP* tp1;
 	ENODE* qnode;
@@ -2033,35 +2033,29 @@ ENODE* Expression::ParseBitfieldSpec(TYP* tp3, ENODE* pnode)
 		rnode->bit_offset = snode;
 		rnode->bit_width = qnode;
 		rnode->esize = tp3->size;
-		ep1 = rnode;//compiler.ef.Makenode(en_bitoffset, rnode, snode, qnode);
 		//ep1 = compiler.ef.Makenode(en_void, rnode, nullptr);
 	}
 	else {
+		snode = pnode->Clone();
 		qnode = makeinode(en_icon, 0);
 		//ep1 = compiler.ef.Makenode(pnode->isUnsigned ? en_extu : en_ext, rnode, pnode->Clone(), qnode->Clone());
-		if (rnode == nullptr) {
-			error(ERR_NOPOINTER);
-			return (ep1);
-		}
-		rnode = makenode(en_fieldref, nullptr, nullptr);
+		rnode = makenode(en_fieldref, varnode, nullptr);
 		rnode->bit_offset = pnode;
 		rnode->bit_width = qnode;
 		rnode->esize = tp3->size;
-		ep1 = rnode;//compiler.ef.Makenode(en_bitoffset, rnode, pnode, qnode);
-		snode = pnode;
 		//ep1 = compiler.ef.Makenode(en_void, rnode, nullptr);
 	}
+	ep1 = rnode;//compiler.ef.Makenode(en_bitoffset, rnode, snode, qnode);
 	//rnode->bit_offset = pnode;
 	//rnode->bit_width = qnode;
 	//ep1->bit_offset = pnode->Clone();
 	//ep1->bit_width = qnode->Clone();
 	needpunc(closebr, 9);
-	//tp1 = CondDeref(&ep1, tp2);
 	tp1 = TYP::Make(bt_bitfield, cpu.sizeOfWord);
-	tp1->type = bt_bitfield;
-	tp1->bit_offset = snode->Clone();
-	tp1->bit_width = qnode->Clone();
+	tp1->bit_offset = snode;
+	tp1->bit_width = qnode;
 	ep1->tp = tp1;
+	tp1 = CondAddRef(&ep1, tp1);
 	return (ep1);
 }
 
@@ -2127,12 +2121,13 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	if (cnt == 0)
 		totsz = tp1->size;
 	if (tp1->type != bt_pointer)
-		return (ParseBitfieldSpec(tp3, pnode));
+		return (ParseBitfieldSpec(tp3, pnode, rnode));
 
 	// Track down the size of each dimension.
 //	GetSizesForArray(tp1);
 
-	tp1 = tp1->btpp;
+	if (tp1->btpp)
+		tp1 = tp1->btpp;
 	//if (cnt==0) {
 	//	switch(numdimen) {
 	//	case 1: sz1 = sa[numdimen+1]; break;
@@ -2217,6 +2212,8 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	needpunc(closebr, 9);
 	cnt++;
 xit:
+	if (ep1 == nullptr)
+		printf("jo");
 	ep1->tp = tp1;
 	return (ep1);
 }

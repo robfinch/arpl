@@ -267,6 +267,10 @@ extern short int typ_sp;
 extern QuplsCodeGenerator cg;
 extern QuplsStatementGenerator sg;
 #endif
+#ifdef QUPLS40
+extern QuplsCodeGenerator cg;
+extern QuplsStatementGenerator sg;
+#endif
 #ifdef THOR
 extern ThorCodeGenerator cg;
 extern ThorStatementGenerator sg;

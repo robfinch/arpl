@@ -8,7 +8,7 @@
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
 //
-// CC64 - 'C' derived language compiler
+// Arpl - 'C' derived language compiler
 //  - 64 bit CPU
 //
 // This source file is free software: you can redistribute it and/or modify 
@@ -28,7 +28,8 @@
 //
 enum e_cpu { thor, qupls, riscv };
 //#define THOR	1
-#define QUPLS	1
+//#define QUPLS	1
+#define QUPLS40 1
 //#define RISCV 5
 
 enum e_bt {

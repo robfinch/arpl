@@ -50,7 +50,7 @@ Operand* ENODE::GenerateBitfieldDereference(int flags, int size, int opt)
 	Operand* tmpo = nullptr;
 
 	isSigned = !isUnsigned;
-	ap = cg.GenerateDereference(this, flags, esize, isSigned,0,1);
+	ap = cg.GenerateDereference(this->p[0], flags, esize, isSigned,0,1);
 	ap->MakeLegal(flags, esize);
 	if (this->tp->type == bt_bit) {
 		ap->offset->bit_offset = nullptr;

@@ -117,6 +117,8 @@ void StatementGenerator::GenerateSwitch(Statement* stmt)
 	OCODE* ip;
 	bool is_unsigned;
 
+	if (this == nullptr)
+		return;
 	st = stmt->s1;
 	deflbl = 0;
 	defcase = nullptr;

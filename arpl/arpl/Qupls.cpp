@@ -251,7 +251,7 @@ Operand* QuplsCodeGenerator::GenerateEq(ENODE *node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_seq)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_seq)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode==am_i16)
+	if (ap2->mode==am_i16 || ap2->mode==am_imm)
 		GenerateTriadic(op_seq, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_seq, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -269,7 +269,7 @@ Operand* QuplsCodeGenerator::GenerateNe(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sne)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sne)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode==am_imm)
 		GenerateTriadic(op_sne, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sne, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -287,7 +287,7 @@ Operand* QuplsCodeGenerator::GenerateLt(ENODE* node)
 	ap3 = GetTempRegister();
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_slt)->amclass3, node->p[1]->GetNaturalSize(), 1);
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_slt)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode==am_imm)
 		GenerateTriadic(op_slt, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_slt, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -307,6 +307,8 @@ Operand* QuplsCodeGenerator::GenerateLe(ENODE* node)
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sle)->amclass3, node->p[1]->GetNaturalSize(), 1);
 	if (ap2->mode == am_i16)
 		GenerateTriadic(op_sle, 0, ap3, ap1, ap2);
+	else if (ap2->mode == am_imm)
+		GenerateTriadic(op_sle, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sle, 0, ap3, ap1, ap2, MakeImmediate(1));
 	ReleaseTempRegister(ap2);
@@ -323,7 +325,7 @@ Operand* QuplsCodeGenerator::GenerateGt(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sgt)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sgt)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode==am_imm)
 		GenerateTriadic(op_sgt, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sgt, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -342,7 +344,7 @@ Operand* QuplsCodeGenerator::GenerateGe(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sge)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sge)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode==am_imm)
 		GenerateTriadic(op_sge, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sge, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -360,7 +362,7 @@ Operand* QuplsCodeGenerator::GenerateLtu(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sltu)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sltu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode == am_imm)
 		GenerateTriadic(op_sltu, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sltu, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -378,7 +380,7 @@ Operand* QuplsCodeGenerator::GenerateLeu(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sleu)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sleu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode == am_imm)
 		GenerateTriadic(op_sleu, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sleu, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -396,7 +398,7 @@ Operand* QuplsCodeGenerator::GenerateGtu(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sgtu)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sgtu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode==am_imm)
 		GenerateTriadic(op_sgtu, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sgtu, 0, ap3, ap1, ap2, MakeImmediate(1));
@@ -415,7 +417,7 @@ Operand* QuplsCodeGenerator::GenerateGeu(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sgeu)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sgeu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
+	if (ap2->mode == am_i16 || ap2->mode==am_imm)
 		GenerateTriadic(op_sgeu, 0, ap3, ap1, ap2);
 	else
 		Generate4adic(op_sgeu, 0, ap3, ap1, ap2, MakeImmediate(1));

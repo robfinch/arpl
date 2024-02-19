@@ -465,7 +465,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 		pdeep = ap2->pdeep;
 		size = 2;
 	}
-	if (tp->type == bt_vector) {
+	if (tp && tp->type == bt_vector) {
 		ap2 = GetTempVectorRegister();
 		ap2->typep = &stdvector;
 	}
@@ -488,7 +488,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 	default:
 		cg.GenerateLoad(ap2, this, size, size);
 	}
-	if (tp->type == bt_vector)
+	if (tp && tp->type == bt_vector)
 		mode = am_vreg;
 	else
 		mode = am_reg;

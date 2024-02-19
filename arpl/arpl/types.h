@@ -1044,7 +1044,7 @@ private:
 	ENODE* ParseOpenpa(TYP* tp1, ENODE* ep1, Symbol* symi);
 	ENODE* ParseOpenbr(TYP*tp1, ENODE* ep1);
 	ENODE* AdjustForBitArray(int pop, TYP* tp1, ENODE* ep1);
-	ENODE* ParseBitfieldSpec(TYP* typ, ENODE* node);
+	ENODE* ParseBitfieldSpec(TYP* typ, ENODE* fldspec, ENODE* var);
 
 	void ApplyVMask(ENODE* node, ENODE* mask);
 
@@ -1075,30 +1075,30 @@ private:
 	ENODE* MakeConstNameNode(Symbol* sp);
 	ENODE* MakeMemberNameNode(Symbol* sp);
 	ENODE* MakeUnknownFunctionNameNode(std::string nm, TYP** tp, TypeArray* typearray, ENODE* args);
-	void DerefBit(ENODE** node, TYP* tp);
-	void DerefByte(ENODE** node, TYP* tp);
-	void DerefUnsignedByte(ENODE** node, TYP* tp);
-	void DerefChar(ENODE** node, TYP* tp);
-	void DerefUnsignedChar(ENODE** node, TYP* tp);
-	void DerefIChar(ENODE** node, TYP* tp);
-	void DerefUnsignedIChar(ENODE** node, TYP* tp);
-	void DerefEnum(ENODE** node, TYP* tp);
-	void DerefShort(ENODE** node, TYP* tp);
-	void DerefUnsignedShort(ENODE** node, TYP* tp);
-	void DerefInt(ENODE** node, TYP* tp);
-	void DerefUnsignedInt(ENODE** node, TYP* tp);
-	void DerefLong(ENODE** node, TYP* tp);
-	void DerefUnsignedLong(ENODE** node, TYP* tp);
-	void DerefException(ENODE** node, TYP* tp);
-	void DerefPointer(ENODE** node, TYP* tp);
-	void DerefFloat(ENODE** node, TYP* tp);
-	void DerefDouble(ENODE** node, TYP* tp);
-	void DerefQuad(ENODE** node, TYP* tp);
-	void DerefPosit(ENODE** node, TYP* tp);
-	void DerefBitfield(ENODE** node, TYP* tp);
-	void DerefVector(ENODE** node, TYP* tp);
-	void DerefVectorMask(ENODE** node, TYP* tp);
-	void DerefVoid(ENODE** node, TYP* tp);
+	TYP* RefBit(ENODE** node, TYP* tp);
+	TYP* RefByte(ENODE** node, TYP* tp);
+	TYP* RefUnsignedByte(ENODE** node, TYP* tp);
+	TYP* RefChar(ENODE** node, TYP* tp);
+	TYP* RefUnsignedChar(ENODE** node, TYP* tp);
+	TYP* RefIChar(ENODE** node, TYP* tp);
+	TYP* RefUnsignedIChar(ENODE** node, TYP* tp);
+	TYP* RefEnum(ENODE** node, TYP* tp);
+	TYP* RefShort(ENODE** node, TYP* tp);
+	TYP* RefUnsignedShort(ENODE** node, TYP* tp);
+	TYP* RefInt(ENODE** node, TYP* tp);
+	TYP* RefUnsignedInt(ENODE** node, TYP* tp);
+	TYP* RefLong(ENODE** node, TYP* tp);
+	TYP* RefUnsignedLong(ENODE** node, TYP* tp);
+	TYP* RefException(ENODE** node, TYP* tp);
+	TYP* RefPointer(ENODE** node, TYP* tp);
+	TYP* RefFloat(ENODE** node, TYP* tp);
+	TYP* RefDouble(ENODE** node, TYP* tp);
+	TYP* RefQuad(ENODE** node, TYP* tp);
+	TYP* RefPosit(ENODE** node, TYP* tp);
+	TYP* RefBitfield(ENODE** node, TYP* tp);
+	TYP* RefVector(ENODE** node, TYP* tp);
+	TYP* RefVectorMask(ENODE** node, TYP* tp);
+	TYP* RefVoid(ENODE** node, TYP* tp);
 	ENODE* FindLastMulu(ENODE*);
 public:
 	Expression();
@@ -2553,6 +2553,7 @@ public:
 	short int table_density;		// switch table density threshold as a percentage.
 	short int reg_in_use[256];
 	CSet temp_in_use;
+	CSet saved_in_use;
 	char firstid[128];
 	char lastid[128];
 	int64_t lc_static;
@@ -2567,6 +2568,9 @@ public:
 		autoInline = 5;
 		table_density = 33;
 #ifdef QUPLS
+		sg = new QuplsStatementGenerator;
+#endif
+#ifdef QUPLS40
 		sg = new QuplsStatementGenerator;
 #endif
 #ifdef THOR
