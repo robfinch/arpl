@@ -526,7 +526,7 @@ Operand* CodeGenerator::GenerateAutoconDereference(ENODE* node, TYP* tp, bool is
 	ap1->isUnsigned = !su;
 	ap1->tp = tp;
 
-	ni = nn = (currentFn->depth + 1) - (node->sym->IsParameter?node->sym->depth + 3 : node->sym->depth);
+	ni = nn = (currentFn->depth) - (node->sym->IsParameter?node->sym->depth + 3 : node->sym->depth);
 	if (nn > 0) {
 		ap3 = GetTempRegister();
 		ap3->tp = tp;

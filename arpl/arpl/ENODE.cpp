@@ -1723,7 +1723,7 @@ Operand *ENODE::GenerateIndex(bool neg)
 			ap2->deep2 = ap1->deep;
 		}
 		else {
-			GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
+			//GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
 			GenerateTriadic(op_add, 0, ap2, ap1, ap2);
 			ap2->mode = am_indx;
 			ap2->deep2 = ap1->deep;
@@ -1733,6 +1733,7 @@ Operand *ENODE::GenerateIndex(bool neg)
 				ap2->mode = am_reg;
 			}
 		}
+		ap2->scale = 1;
 		ndxlvl--;
 		return (ap2);
 	}
@@ -1764,6 +1765,7 @@ Operand *ENODE::GenerateIndex(bool neg)
 		ap1->sreg = ap2->preg;
 		ap1->deep2 = ap2->deep;
 		ap1->offset = makeinode(en_icon, 0);
+		//ap1->scale = 1;
 		/*
 		ap4 = GetTempRegister();
 		ap3 = GetTempRegister();

@@ -860,7 +860,10 @@ void Function::UnlinkStack(int64_t amt)
 	else if (!IsLeaf) {
 //		if (doesJAL) {	// ??? Not a leaf, so it must be transferring control
 			if (alstk) {
-				cg.GenerateLoad(makereg(regLR), MakeIndexed(1 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+				ap = GetTempRegister();
+				cg.GenerateLoad(ap, MakeIndexed(1 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+				GenerateDiadic(op_mov, 0, makereg(regLR), ap);
+				ReleaseTempRegister(ap);
 				//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
 				if (IsFar) {
 					ap = GetTempRegister();
@@ -946,7 +949,7 @@ void Function::GenerateCoroutineData()
 
 void Function::GenerateCoroutineEntry()
 {
-	Operand* ap, * ap2, * ap3, * ap4;
+	Operand* ap;
 	ENODE* node;
 
 	cg.GenerateLoadConst(MakeStringAsNameConst((char *)"_start_data", dataseg), makereg(regGP));
@@ -976,14 +979,10 @@ void Function::Generate()
 	Statement* stmt = this->body;// sym->stmt;
 	int lab0;
 	int o_throwlab, o_retlab, o_contlab, o_breaklab;
-	OCODE* ip;
-	OCODE* ip2;
 	bool doCatch = true;
-	int n, nn;
+	int n;
 	int sp, bp, gp, gp1, gp2;
 	bool o_retgen;
-	Operand* ap;
-	ENODE* node;
 	extern bool first_dataseg;
 	first_dataseg = true;
 	ZeroMemory(seg_aligned, sizeof(seg_aligned));
@@ -1634,8 +1633,6 @@ void Function::GenerateLocalFunctions()
 
 void Function::Summary(Statement *stmt)
 {
-	Symbol* symb;
-
 	dfs.printf("<FuncSummary>\n");
 	irfs.printf("\nFunction:%s\n", (char *)this->sym->name->c_str());
 	nl(ofs);

@@ -2401,7 +2401,7 @@ int QuplsCodeGenerator::GetSegmentIndexReg(e_sg segment)
 // For a leaf routine don't bother to store the link register.
 OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 {
-	Operand* ap, * ap1;
+	Operand* ap, * ap1, * ap2;
 	int n;
 	char buf[300];
 	OCODE* ip;
@@ -2445,8 +2445,12 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
 		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord);
 		cg.GenerateMove(makereg(regFP), makereg(regSP));
-		if (!currentFn->IsLeaf)
-			cg.GenerateStore(makereg(regLR), cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
+		if (!currentFn->IsLeaf) {
+			ap2 = GetTempRegister();
+			GenerateDiadic(op_mov, 0, ap2, makereg(regLR));
+			cg.GenerateStore(ap2, cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
+			ReleaseTempRegister(ap2);
+		}
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
 		fn->alstk = true;
 		fn->has_return_block = true;

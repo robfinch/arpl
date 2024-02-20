@@ -2174,8 +2174,8 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 	*/
 	// qnode contains the size of the element multiplied by the index amount.
 	// The base size of an element was stuffed in sa[numdimen].
-	elesize = sa[numdimen];
-	if (numdimen < 0 && cf && qnode->i == elesize &&
+	elesize = sz1;// sa[numdimen];
+	if (cf && qnode->i == elesize &&
 		(elesize==1 || elesize==2 || elesize==4 || elesize==8 || elesize==16)) {
 		qnode = rnode;
 		qnode->scale = (char)elesize;
