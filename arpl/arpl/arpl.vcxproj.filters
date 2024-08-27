@@ -246,6 +246,12 @@
     <ClCompile Include="xtolower.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Bigfoot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BigfootCSE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">

@@ -41,6 +41,7 @@
 #define isFISA64    (gCpu==FISA64)
 #define isDSD7      (gCpu==DSD7)
 #define isRiscv     (gCpu==RISCV)
+#define isBigfoot   (gCpu==BIGFOOT)
 //#define DOTRACE	1
 #ifdef DOTRACE
 #define TRACE(x)	x
@@ -279,6 +280,10 @@ extern ThorStatementGenerator sg;
 extern RiscvCodeGenerator cg;
 extern RiscvStatementGenerator sg;
 #endif
+#ifdef BIGFOOT
+extern BigfootCodeGenerator cg;
+extern BigfootStatementGenerator sg;
+#endif
 extern int DataLabels[65535];
 extern ENODE* gNameRefNode;
 extern TYP* typ_vector[100];
@@ -401,7 +406,7 @@ extern BasicBlock *basicBlocks[10000];
 extern BasicBlock *sortedBlocks[10000];
 extern Forest forest;
 extern IGraph iGraph;
-extern Instruction opl[374];
+extern Instruction opl[376];
 extern BasicBlock *LastBlock;
 extern Instruction *GetInsn(int);
 extern char inpline[100000];

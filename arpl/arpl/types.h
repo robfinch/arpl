@@ -193,7 +193,7 @@ public:
 	bool isFP;
 	bool isPosit;
 	ENODE *offset;
-	int val;
+	int64_t val;
 	Int128 val128;
 public:
 	static bool IsCalleeSave(int regno);
@@ -567,7 +567,7 @@ public:
 		tp = t;
 } ;
 	void SetStorageOffset(TYP *head, int nbytes, int al, int ilc, int ztype);
-	int AdjustNbytes(int nbytes, int al, int ztype);
+	int64_t AdjustNbytes(int64_t nbytes, int al, int ztype);
 	int64_t Initialize(txtoStream& tfs, ENODE* pnode, TYP* tp2, int opt);
 	int64_t InitializeArray(txtoStream& tfs, ENODE*, TYP*);
 	int64_t InitializeCharArray(txtoStream& tfs, ENODE*, TYP*);
@@ -602,6 +602,7 @@ public:
 	bool isDecimal;
 	bool unknown_size;	// true if the array size is unknown
 	__int16 precision;			// precision of the numeric in bits
+	__int16 lane_precision;	// precision for one lane of a vector type
 	ENODE* bit_width;
 	ENODE* bit_offset;
 	int8_t		ven;			// vector element number
@@ -635,7 +636,10 @@ public:
 	bool IsFloatType() const { 
 		if (this == nullptr)
 			return (false);
-		return (type==bt_quad || type==bt_float || type==bt_double); };
+		return (type==bt_quad || type==bt_float || type==bt_double || type==bt_single || type==bt_half); };
+	static const bool IsFloatType(int t) {
+		return (t == bt_quad || t == bt_float || t == bt_double || t == bt_single || t == bt_half);
+	};
 	bool IsPositType() const {
 		if (this == nullptr)
 			return (false);
@@ -738,7 +742,7 @@ public:
 	static CSet initializedSet;
 public:
 	int number;										// number of this node for reference
-	int order;										// list ordering for initializers
+	int64_t order;								// list ordering for initializers
 	enum e_node nodetype;
 	enum e_node new_nodetype;			// nodetype replaced by optimization
 
@@ -837,7 +841,7 @@ public:
 	static bool IsEqualOperand(Operand *a, Operand *b);
 	char fsize();
 	int64_t GetReferenceSize();
-	int GetNaturalSize();
+	int64_t GetNaturalSize();
 
 	static bool IsSameType(ENODE *ep1, ENODE *ep2);
 	static bool IsEqual(ENODE *a, ENODE *b, bool lit = false);
@@ -871,32 +875,32 @@ public:
 	Operand *MakeIndexed(ENODE *node, int rg);
 
 	void GenerateHint(int num);
-	void GenMemop(int op, Operand *ap1, Operand *ap2, int ssize, int typ);
-	void GenerateLoad(Operand *ap3, Operand *ap1, int ssize, int size);
-	void GenStore(Operand *ap1, Operand *ap3, int size);
+	void GenMemop(int op, Operand *ap1, Operand *ap2, int64_t ssize, int typ);
+	void GenerateLoad(Operand *ap3, Operand *ap1, int64_t ssize, int64_t size);
+	void GenStore(Operand *ap1, Operand *ap3, int64_t size);
 	static void GenRedor(Operand *ap1, Operand *ap2);
 	Operand *GenerateIndex(bool neg);
 	Operand* GenerateRegRegIndex();
 	Operand* GenerateImmExprIndex(Operand* ap1, bool neg);
 	Operand* GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg);
-	Operand *GenSafeHook(int flags, int size);
-	Operand *GenerateShift(int flags, int size, int op);
-	Operand *GenMultiply(int flags, int size, int op);
-	Operand *GenDivMod(int flags, int size, int op);
-	Operand *GenerateUnary(int flags, int size, int op);
-	Operand *GenerateBinary(int flags, int size, int op);
-	Operand *GenerateAssignShift(int flags, int size, int op);
-	Operand *GenerateAssignAdd(int flags, int size, int op);
-	Operand *GenerateAssignLogic(int flags, int size, int op);
+	Operand *GenerateSafeHook(int flags, int64_t size);
+	Operand *GenerateShift(int flags, int64_t size, int op);
+	Operand *GenerateMultiply(int flags, int64_t size, int op);
+	Operand *GenerateDivMod(int flags, int64_t size, int op);
+	Operand *GenerateUnary(int flags, int64_t size, int op);
+	Operand *GenerateBinary(int flags, int64_t size, int op);
+	Operand *GenerateAssignShift(int flags, int64_t size, int op);
+	Operand *GenerateAssignAdd(int flags, int64_t size, int op);
+	Operand *GenerateAssignLogic(int flags, int64_t size, int op);
 	Operand *GenerateLand(int flags, int op, bool safe);
-	Operand* GenerateBitfieldDereference(int flags, int size, int opt);
+	Operand* GenerateBitfieldDereference(int flags, int64_t size, int opt);
 	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width);
 	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, Operand* width);
 	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width);
-	Operand* GenerateBitfieldAssign(int flags, int size);
-	Operand* GenerateBitfieldAssignAdd(int flags, int size, int op);
-	Operand* GenerateBitfieldAssignLogic(int flags, int size, int op);
-	Operand* GenerateScaledIndexing(int flags, int size, int rhs);
+	Operand* GenerateBitfieldAssign(int flags, int64_t size);
+	Operand* GenerateBitfieldAssignAdd(int flags, int64_t size, int op);
+	Operand* GenerateBitfieldAssignLogic(int flags, int64_t size, int op);
+	Operand* GenerateScaledIndexing(int flags, int64_t size, int rhs);
 
 	// Serialization
 	void store(txtoStream& ofs);
@@ -906,7 +910,7 @@ public:
 	void loadHex(txtiStream& ifs);
 
 	std::string* GetLabconLabel(int64_t ii);
-	int PutStructConst(txtoStream& ofs);
+	int64_t PutStructConst(txtoStream& ofs);
 	void PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshift, bool opt = false, int display_opt = 0);
 	void PutConstantHex(txtoStream& ofs, unsigned int lowhigh, unsigned int rshift);
 	static ENODE *GetConstantHex(std::ifstream& ifs);
@@ -1132,8 +1136,8 @@ class Operand : public CompilerType
 public:
 	int num;					// number of the operand
 	unsigned int mode;
-	unsigned int preg : 12;		// primary virtual register number
-	unsigned int sreg : 12;		// secondary virtual register number (indexed addressing modes)
+	unsigned int preg : 16;		// primary virtual register number
+	unsigned int sreg : 16;		// secondary virtual register number (indexed addressing modes)
 	bool pcolored;
 	bool scolored;
 	unsigned short int pregs;	// subscripted register number
@@ -1176,11 +1180,13 @@ public:
 	static bool IsEqual(Operand *ap1, Operand *ap2);
 	char fpsize();
 
-	void GenZeroExtend(int isize, int osize);
-	Operand *GenerateSignExtend(int isize, int osize, int flags);
+	Operand* GenerateBitfieldClear(int startpos, int width);
+	Operand* GenerateZeroExtend(int startpos, int width);
+	Operand *GenerateSignExtend(int64_t isize, int64_t osize, int flags);
 	void MakeLegalReg(int flags, int64_t size);
 	void MakeLegal(int flags, int64_t size);
 	int OptRegConst(int regclass, bool tally=false);
+	bool GetConstValue(Int128* pval);
 
 	// Storage
 	void PutAddressMode(txtoStream& ofs);
@@ -1282,8 +1288,8 @@ public:
 class OperandFactory : public Factory
 {
 public:
-	Operand *MakeDataLabel(int labno, int ndxreg);
-	Operand *MakeCodeLabel(int lab);
+	Operand *MakeDataLabel(int64_t labno, int ndxreg);
+	Operand *MakeCodeLabel(int64_t lab);
 	Operand *MakeStrlab(std::string s, e_sg seg);
 	Operand *MakeString(char *s);
 	Operand *MakeStringAsNameConst(char *s, e_sg seg);
@@ -1319,11 +1325,12 @@ class CodeGenerator
 public:
 	Statement* stmt;
 public:
+	virtual void banner() {};
 	virtual Operand* GetTempRegister();
 	virtual Operand* GetTempFPRegister();
 	bool IsPascal(ENODE* ep);
-	Operand* MakeDataLabel(int lab, int ndxreg);
-	Operand* MakeCodeLabel(int lab);
+	Operand* MakeDataLabel(int64_t lab, int ndxreg);
+	Operand* MakeCodeLabel(int64_t lab);
 	Operand* MakeStringAsNameConst(char* s, e_sg seg);
 	Operand* MakeString(char* s);
 	Operand* MakeImmediate(int64_t i, int display_opt = 0);
@@ -1341,65 +1348,76 @@ public:
 	virtual void GenerateSubtractFrom(Operand* dst, Operand* src, int sz = 0) {
 		GenerateTriadic(op_sub, sz, dst, dst, src);
 	};
-	virtual void GenerateBne(Operand* ap1, Operand* ap2, int lab) {
+	virtual void GenerateBne(Operand* ap1, Operand* ap2, int64_t lab) {
 		GenerateTriadic(op_bne, 0, ap1, ap2, MakeCodeLabel(lab));
 	};
-	virtual void GenerateBeq(Operand* ap1, Operand* ap2, int lab) {
+	virtual void GenerateBeq(Operand* ap1, Operand* ap2, int64_t lab) {
 		GenerateTriadic(op_beq, 0, ap1, ap2, MakeCodeLabel(lab));
 	};
-	virtual void GenerateBgt(Operand* ap1, Operand* ap2, int lab) {
+	virtual void GenerateBgt(Operand* ap1, Operand* ap2, int64_t lab) {
 		GenerateTriadic(op_bgt, 0, ap1, ap2, MakeCodeLabel(lab));
 	};
-	virtual void GenerateBgtu(Operand* ap1, Operand* ap2, int lab) {
+	virtual void GenerateBgtu(Operand* ap1, Operand* ap2, int64_t lab) {
 		GenerateTriadic(op_bgtu, 0, ap1, ap2, MakeCodeLabel(lab));
 	};
-	virtual void GenerateBlt(Operand* ap1, Operand* ap2, int lab) {
+	virtual void GenerateBlt(Operand* ap1, Operand* ap2, int64_t lab) {
 		GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(lab));
 	};
-	virtual void GenerateBltu(Operand* ap1, Operand* ap2, int lab) {
+	virtual void GenerateBltu(Operand* ap1, Operand* ap2, int64_t lab) {
 		GenerateTriadic(op_bltu, 0, ap1, ap2, MakeCodeLabel(lab));
 	};
-	virtual void GenerateBra(int lab) {
-		GenerateMonadic(op_bra, 0, MakeCodeLabel(lab));
+	virtual void GenerateBra(int64_t lab) {
+		GenerateMonadic(op_branch, 0, MakeCodeLabel(lab));
 	};
 	virtual Operand* MakeBoolean(Operand* oper) { return (oper); };
 	void GenerateHint(int num);
 	void GenerateComment(char* cm);
-	void GenMemop(int op, Operand* ap1, Operand* ap2, int ssize, int typ);
-	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask = nullptr) {
+	void GenMemop(int op, Operand* ap1, Operand* ap2, int64_t ssize, int typ);
+	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr) {
 		throw new C64PException(ERR_CODEGEN, 0);
 	};
-	virtual void GenerateLoad(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask = nullptr);
+	virtual void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
 	virtual void GenerateLoadAddress(Operand* ap3, Operand* ap1);
-	virtual void GenerateStore(Operand* ap1, Operand* ap3, int size, Operand* mask = nullptr);
-	Operand* GenerateMux(ENODE*, int flags, int size);
-	Operand* GenerateHook(ENODE*, int flags, int size);
+	virtual void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
+	Operand* GenerateMux(ENODE*, int flags, int64_t size);
+	Operand* GenerateHook(ENODE*, int flags, int64_t size);
 	virtual Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
 	Operand* GenerateSafeLand(ENODE*, int flags, int op) { return (nullptr); };
-	virtual void GenerateBranchTrue(Operand* ap, int label) {};
-	virtual void GenerateBranchFalse(Operand* ap, int label) {};
-	virtual bool GenerateBranch(ENODE* node, int op, int label, int predreg, unsigned int prediction, bool limit) { return (false); };
+	virtual void GenerateBranchTrue(Operand* ap, int64_t label) {};
+	virtual void GenerateBranchFalse(Operand* ap, int64_t label) {};
+	virtual bool GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit) { return (false); };
 	virtual void GenerateLea(Operand* ap1, Operand* ap2) {
 		GenerateDiadic(op_lea, 0, ap1, ap2);
 	};
 	virtual void GenerateMove(Operand* dstreg, Operand* srcreg, Operand* mask=nullptr) {
-		GenerateTriadic(op_mov, 0, dstreg, srcreg, mask);
+		GenerateTriadic(op_move, 0, dstreg, srcreg, mask);
 	};
 	virtual void GenerateFcvtdq(Operand* dst, Operand* src) {
 		GenerateDiadic(op_fcvtdq, 0, dst, src);
 	};
 	virtual void SignExtendBitfield(Operand* ap3, uint64_t mask) {};
-	Operand* GenerateBitfieldAssign(ENODE* node, int flags, int size);
-	Operand* GenerateBitfieldAssignAdd(ENODE* node, int flags, int size, int op);
+	virtual Operand* GenerateBitfieldClear(Operand* oper, int startpos, int width) {
+		return (oper->GenerateBitfieldClear(startpos, width));
+	};
+	Operand* GenerateBitfieldAssign(ENODE* node, int flags, int64_t size);
+	Operand* GenerateBitfieldAssignAdd(ENODE* node, int flags, int64_t size, int op);
 	virtual void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width) {};
 	virtual void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, Operand* width) {};
 	virtual void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width) {};
 	virtual Operand* GenerateBitfieldExtract(Operand* ap1, ENODE* offset, ENODE* width) { return (nullptr); };
 	virtual Operand* GenerateBitfieldExtract(Operand* ap1, Operand* offset, Operand* width) { return (nullptr); };
-	Operand* GenerateBinary(ENODE*, int flags, int size, int op);
-	Operand* GenerateBinaryFloat(ENODE* node, int flags, int size, e_op op);
-	Operand* GenerateVectorBinary(ENODE* node, int flags, int size, e_op op);
-	Operand* GenerateVectorBinaryFloat(ENODE* node, int flags, int size, e_op op);
+	virtual Operand* GenerateShift(ENODE* node, int flags, int64_t size, int op) {
+		return (node->GenerateShift(flags, size, op));
+	}
+	virtual Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
+	virtual Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
+	virtual Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
+	virtual Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateBinary(ENODE*, int flags, int64_t size, int op);
+	Operand* GenerateBinaryFloat(ENODE* node, int flags, int64_t size, e_op op);
+	Operand* GenerateBinaryPosit(ENODE* node, int flags, int64_t size, e_op op);
+	Operand* GenerateVectorBinary(ENODE* node, int flags, int64_t size, e_op op);
+	Operand* GenerateVectorBinaryFloat(ENODE* node, int flags, int64_t size, e_op op);
 	Operand* GenerateAsaddDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int64_t siz1, int su, bool neg);
 	Operand* GenerateAddDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int64_t siz1, int su);
 	Operand* GenerateAutoconDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int64_t siz1, int su);
@@ -1410,17 +1428,17 @@ public:
 	Operand* GenerateAutovconDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size);
 	Operand* GenerateAutovmconDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size);
 	Operand* GenerateLabconDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int64_t siz1, int su);
-	Operand* GenerateBitfieldDereference(ENODE* node, int flags, int size, int opt);
+	Operand* GenerateBitfieldDereference(ENODE* node, int flags, int64_t size, int opt);
 	Operand* GenerateBitoffsetDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int opt);
 	Operand* GenerateFieldrefDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size);
 	Operand* GenerateRegvarDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size);
 	Operand* GenerateFPRegvarDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size);
 	Operand* GeneratePositRegvarDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size);
-	Operand* GenerateDereference(ENODE* node, int flags, int size, int su, int opt, int rhs);
+	Operand* GenerateDereference(ENODE* node, int flags, int64_t size, int su, int opt, int rhs);
 	Operand* GenerateDereference2(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int64_t siz1, int su, int opt);
-	Operand* GenerateAssignAdd(ENODE* node, int flags, int size, int op);
-	Operand* GenerateAssignMultiply(ENODE* node, int flags, int size, int op);
-	Operand* GenerateAssignModiv(ENODE* node, int flags, int size, int op);
+	Operand* GenerateAssignAdd(ENODE* node, int flags, int64_t size, int op);
+	Operand* GenerateAssignMultiply(ENODE* node, int flags, int64_t size, int op);
+	Operand* GenerateAssignModiv(ENODE* node, int flags, int64_t size, int op);
 	void GenerateStructAssign(TYP* tp, int64_t offset, ENODE* ep, Operand* base);
 	void GenerateArrayAssign(TYP* tp, ENODE* node1, ENODE* node2, Operand* base);
 	Operand* GenerateAggregateAssign(ENODE* node1, ENODE* node2);
@@ -1430,16 +1448,17 @@ public:
 	virtual Operand* GenLabelcon(ENODE* node, int flags, int64_t size);
 	virtual Operand* GenNacon(ENODE* node, int flags, int64_t size);
 	Operand* GenerateAssign(ENODE* node, int flags, int64_t size);
-	Operand* GenerateBigAssign(Operand* ap1, Operand* ap2, int size, int ssize);
-	Operand* GenerateImmToMemAssign(Operand* ap1, Operand* ap2, int ssize);
-	Operand* GenerateRegToMemAssign(Operand* ap1, Operand* ap2, int ssize);
-	Operand* GenerateRegToRegAssign(ENODE* node, Operand* ap1, Operand* ap2, int ssize);
-	Operand* GenerateVregToVregAssign(ENODE* node, Operand* ap1, Operand* ap2, int ssize);
-	Operand* GenerateImmToRegAssign(Operand* ap1, Operand* ap2, int ssize);
-	Operand* GenerateMemToRegAssign(Operand* ap1, Operand* ap2, int size, int ssize);
+	Operand* GenerateBigAssign(Operand* ap1, Operand* ap2, int64_t size, int64_t ssize);
+	Operand* GenerateImmToMemAssign(Operand* ap1, Operand* ap2, int64_t ssize);
+	Operand* GenerateRegToMemAssign(Operand* ap1, Operand* ap2, int64_t ssize);
+	Operand* GenerateVregToMemAssign(Operand* ap1, Operand* ap2, int64_t ssize);
+	Operand* GenerateRegToRegAssign(ENODE* node, Operand* ap1, Operand* ap2, int64_t ssize);
+	Operand* GenerateVregToVregAssign(ENODE* node, Operand* ap1, Operand* ap2, int64_t ssize);
+	Operand* GenerateImmToRegAssign(Operand* ap1, Operand* ap2, int64_t ssize);
+	Operand* GenerateMemToRegAssign(Operand* ap1, Operand* ap2, int64_t size, int64_t ssize);
 	Operand* GenerateExpression(ENODE* node, int flags, int64_t size, int rhs);
-	virtual void GenerateTrueJump(ENODE* node, int label, unsigned int prediction);
-	virtual void GenerateFalseJump(ENODE* node, int label, unsigned int prediction);
+	virtual void GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction);
+	virtual void GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction);
 	virtual Operand* GenerateEq(ENODE* node) { return (nullptr); };
 	virtual Operand* GenerateNe(ENODE* node) { return (nullptr); };
 	virtual Operand* GenerateLt(ENODE* node) { return (nullptr); };
@@ -1468,18 +1487,18 @@ public:
 		throw new C64PException(ERR_CODEGEN, 0);
 	};
 	int GenerateInlineArgumentList(Function *func, ENODE *plist);
-	virtual int PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat) { return(0); };
-	virtual int PushArguments(Function *func, ENODE *plist) { return (0); };
+	virtual int64_t PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat) { return(0); };
+	virtual int64_t PushArguments(Function *func, ENODE *plist) { return (0); };
 	virtual void PopArguments(Function *func, int howMany, bool isPascal = true) {};
 	virtual void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0) {};
 	virtual void GenerateDirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0) {};
 	virtual bool GenerateInlineCall(ENODE* node, Function* func);
 	virtual Operand *GenerateFunctionCall(ENODE *node, int flags, int lab=0);
-	virtual int GeneratePrepareFunctionCall(ENODE* node, Function* sym, int* sp, int* fsp, int* psp, int* vsp);
+	virtual int64_t GeneratePrepareFunctionCall(ENODE* node, Function* sym, int* sp, int* fsp, int* psp, int* vsp);
 	void GenerateFunction(Function *fn) { fn->Generate(); };
 	virtual void GenerateCoroutineExit(Function* func);
 	virtual void GenerateReturn(Function* func, Statement* stmt);
-	Operand* GenerateTrinary(ENODE* node, int flags, int size, int op);
+	Operand* GenerateTrinary(ENODE* node, int flags, int64_t size, int op);
 	virtual void GenerateUnlink(int64_t amt) {};
 	virtual void RestoreRegisterVars(Function* func);
 	Operand* GenerateCase(ENODE* node, Operand* sw);
@@ -1504,6 +1523,7 @@ public:
 	virtual void GenerateLoadBssPointer(void);
 	virtual void GenerateLoadRodataPointer(void);
 	virtual void GenerateSmallDataRegDecl(void);
+	virtual void GenerateSignBitExtend(Operand*, Operand*);
 	virtual void GenerateSignExtendByte(Operand*, Operand*);
 	virtual void GenerateSignExtendWyde(Operand*, Operand*);
 	virtual void GenerateSignExtendTetra(Operand*, Operand*);
@@ -1558,8 +1578,8 @@ public:
 	Operand* GenerateFge(ENODE* node);
 	Operand *GenExpr(ENODE *node);
 	void LinkAutonew(ENODE *node);
-	int PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat, int* push_count, bool large_argcount=true);
-	int PushArguments(Function *func, ENODE *plist);
+	int64_t PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat, int* push_count, bool large_argcount=true);
+	int64_t PushArguments(Function *func, ENODE *plist);
 	void PopArguments(Function *func, int howMany, bool isPascal = true);
 	Operand* GenerateSafeLand(ENODE *, int flags, int op);
 	void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
@@ -1595,25 +1615,25 @@ public:
 	Operand* MakeBoolean(Operand* oper);
 	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
 	void GenerateLea(Operand* ap1, Operand* ap2);
-	void GenerateBranchTrue(Operand* ap, int label);
-	void GenerateBranchFalse(Operand* ap, int label);
-	void GenerateTrueJump(ENODE* node, int label, unsigned int prediction);
-	void GenerateFalseJump(ENODE* node, int label, unsigned int prediction);
-	bool GenerateBranch(ENODE* node, int op, int label, int predreg, unsigned int prediction, bool limit);
-	void GenerateBeq(Operand*, Operand*, int);
-	void GenerateBne(Operand*, Operand*, int);
-	void GenerateBlt(Operand*, Operand*, int);
-	void GenerateBle(Operand*, Operand*, int);
-	void GenerateBgt(Operand*, Operand*, int);
-	void GenerateBge(Operand*, Operand*, int);
-	void GenerateBltu(Operand*, Operand*, int);
-	void GenerateBleu(Operand*, Operand*, int);
-	void GenerateBgtu(Operand*, Operand*, int);
-	void GenerateBgeu(Operand*, Operand*, int);
-	void GenerateBand(Operand*, Operand*, int);
-	void GenerateBor(Operand*, Operand*, int);
-	void GenerateBnand(Operand*, Operand*, int);
-	void GenerateBnor(Operand*, Operand*, int);
+	void GenerateBranchTrue(Operand* ap, int64_t label);
+	void GenerateBranchFalse(Operand* ap, int64_t label);
+	void GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction);
+	void GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction);
+	bool GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit);
+	void GenerateBeq(Operand*, Operand*, int64_t);
+	void GenerateBne(Operand*, Operand*, int64_t);
+	void GenerateBlt(Operand*, Operand*, int64_t);
+	void GenerateBle(Operand*, Operand*, int64_t);
+	void GenerateBgt(Operand*, Operand*, int64_t);
+	void GenerateBge(Operand*, Operand*, int64_t);
+	void GenerateBltu(Operand*, Operand*, int64_t);
+	void GenerateBleu(Operand*, Operand*, int64_t);
+	void GenerateBgtu(Operand*, Operand*, int64_t);
+	void GenerateBgeu(Operand*, Operand*, int64_t);
+	void GenerateBand(Operand*, Operand*, int64_t);
+	void GenerateBor(Operand*, Operand*, int64_t);
+	void GenerateBnand(Operand*, Operand*, int64_t);
+	void GenerateBnor(Operand*, Operand*, int64_t);
 	Operand* GenerateEq(ENODE* node);
 	Operand* GenerateNe(ENODE* node);
 	Operand* GenerateLt(ENODE* node);
@@ -1632,8 +1652,8 @@ public:
 	Operand* GenerateFge(ENODE* node);
 	Operand* GenExpr(ENODE* node);
 	void LinkAutonew(ENODE* node);
-	int PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount = true);
-	int PushArguments(Function* func, ENODE* plist);
+	int64_t PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount = true);
+	int64_t PushArguments(Function* func, ENODE* plist);
 	void PopArguments(Function* func, int howMany, bool isPascal = true);
 	Operand* GenerateSafeLand(ENODE*, int flags, int op);
 	void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
@@ -1659,10 +1679,10 @@ public:
 	};
 	void GenerateReturnAndDeallocate(int64_t amt);
 	void GenerateReturnAndDeallocate(Operand* ap1);
-	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask = nullptr);
+	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
 	void GenerateInterruptSave(Function* func);
 	void GenerateInterruptLoad(Function* func);
-	void GenerateLoadConst(Operand* ap1, Operand* ap2);
+	void GenerateLoadConst(Operand* operi, Operand* dst);
 	void GenerateLoadDataPointer(void);
 	void GenerateLoadBssPointer(void);
 	void GenerateLoadRodataPointer(void);
@@ -1671,9 +1691,13 @@ public:
 	void GenerateSignExtendWyde(Operand*, Operand*);
 	void GenerateSignExtendTetra(Operand*, Operand*);
 	void GenerateLoadAddress(Operand* ap3, Operand* ap1);
-	void GenerateLoad(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask = nullptr);
-	void GenerateStore(Operand* ap1, Operand* ap3, int size, Operand* mask = nullptr);
+	void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
+	void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
 	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
+	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
 
 	OCODE* GenerateReturnBlock(Function* fn);
 
@@ -1740,8 +1764,8 @@ public:
 	void GenerateMove(Operand* dstreg, Operand* srcreg, Operand* mask = nullptr) {
 		GenerateTriadic(op_mv, 0, dstreg, srcreg, mask);
 	};
-	int PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount = true);
-	int PushArguments(Function* func, ENODE* plist);
+	int64_t PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount = true);
+	int64_t PushArguments(Function* func, ENODE* plist);
 	void PopArguments(Function* func, int howMany, bool isPascal = true);
 	void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
 	void GenerateDirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
@@ -1754,6 +1778,108 @@ public:
 	void GenerateInterruptSave(Function* func);
 	void GenerateInterruptLoad(Function* func);
 	void GenerateLoadConst(Operand* ap1, Operand* ap2);
+};
+
+class BigfootCodeGenerator : public CodeGenerator
+{
+public:
+	void banner();
+	Operand* MakeBoolean(Operand* oper);
+	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
+	void GenerateLea(Operand* ap1, Operand* ap2);
+	void GenerateBranchTrue(Operand* ap, int64_t label);
+	void GenerateBranchFalse(Operand* ap, int64_t label);
+	void GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction);
+	void GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction);
+	bool GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit);
+	void GenerateBeq(Operand*, Operand*, int64_t);
+	void GenerateBne(Operand*, Operand*, int64_t);
+	void GenerateBlt(Operand*, Operand*, int64_t);
+	void GenerateBle(Operand*, Operand*, int64_t);
+	void GenerateBgt(Operand*, Operand*, int64_t);
+	void GenerateBge(Operand*, Operand*, int64_t);
+	void GenerateBltu(Operand*, Operand*, int64_t);
+	void GenerateBleu(Operand*, Operand*, int64_t);
+	void GenerateBgtu(Operand*, Operand*, int64_t);
+	void GenerateBgeu(Operand*, Operand*, int64_t);
+	void GenerateBand(Operand*, Operand*, int64_t);
+	void GenerateBor(Operand*, Operand*, int64_t);
+	void GenerateBnand(Operand*, Operand*, int64_t);
+	void GenerateBnor(Operand*, Operand*, int64_t);
+	Operand* GenerateEq(ENODE* node);
+	Operand* GenerateNe(ENODE* node);
+	Operand* GenerateLt(ENODE* node);
+	Operand* GenerateLe(ENODE* node);
+	Operand* GenerateGt(ENODE* node);
+	Operand* GenerateGe(ENODE* node);
+	Operand* GenerateLtu(ENODE* node);
+	Operand* GenerateLeu(ENODE* node);
+	Operand* GenerateGtu(ENODE* node);
+	Operand* GenerateGeu(ENODE* node);
+	Operand* GenerateFeq(ENODE* node);
+	Operand* GenerateFne(ENODE* node);
+	Operand* GenerateFlt(ENODE* node);
+	Operand* GenerateFle(ENODE* node);
+	Operand* GenerateFgt(ENODE* node);
+	Operand* GenerateFge(ENODE* node);
+	Operand* GenExpr(ENODE* node);
+	void LinkAutonew(ENODE* node);
+	int64_t PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount = true);
+	int64_t PushArguments(Function* func, ENODE* plist);
+	void PopArguments(Function* func, int howMany, bool isPascal = true);
+	Operand* GenerateSafeLand(ENODE*, int flags, int op);
+	void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
+	void GenerateDirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
+	void SignExtendBitfield(Operand* ap3, uint64_t mask);
+	void GenerateBitfieldInsert(Operand* dst, Operand* src, int offset, int width);
+	void GenerateBitfieldInsert(Operand* dst, Operand* src, Operand* offset, Operand* width);
+	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width);
+	Operand* GenerateBitfieldExtract(Operand* src, Operand* offset, Operand* width);
+	Operand* GenerateBitfieldExtract(Operand* ap1, ENODE* offset, ENODE* width);
+	void GenerateUnlink(int64_t amt);
+	void GenerateCall(Operand* tgt) {
+		GenerateMonadic(op_bsr, 0, tgt);
+	};
+	void GenerateLocalCall(Operand* tgt) {
+		GenerateMonadic(op_bsr, 0, tgt);
+	};
+	void GenerateReturnInsn() {
+		GenerateZeradic(op_rts);
+	};
+	void GenerateInterruptReturn(Function* func) {
+		GenerateZeradic(op_rti);
+	};
+	void GenerateReturnAndDeallocate(int64_t amt);
+	void GenerateReturnAndDeallocate(Operand* ap1);
+	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
+	void GenerateInterruptSave(Function* func);
+	void GenerateInterruptLoad(Function* func);
+	void GenerateLoadConst(Operand* operi, Operand* dst);
+	void GenerateLoadDataPointer(void);
+	void GenerateLoadBssPointer(void);
+	void GenerateLoadRodataPointer(void);
+	void GenerateSmallDataRegDecl(void);
+	void GenerateSignExtendByte(Operand*, Operand*);
+	void GenerateSignExtendWyde(Operand*, Operand*);
+	void GenerateSignExtendTetra(Operand*, Operand*);
+	void GenerateLoadAddress(Operand* ap3, Operand* ap1);
+	void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
+	void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
+	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
+	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
+
+	OCODE* GenerateReturnBlock(Function* fn);
+
+	Operand* GenerateFloatcon(ENODE* node, int flags, int64_t size);
+	Operand* GenPositcon(ENODE* node, int flags, int64_t size);
+	Operand* GenLabelcon(ENODE* node, int flags, int64_t size);
+	Operand* GenNacon(ENODE* node, int flags, int64_t size);
+	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
+	int GetSegmentIndexReg(e_sg seg);
+	void SaveRegisterVars(CSet* mask);
 };
 
 // Control Flow Graph
@@ -2124,6 +2250,12 @@ public:
 	int OptimizationDesireability();
 };
 
+class BigfootCSE : public CSE
+{
+public:
+	int OptimizationDesireability();
+};
+
 class CSETable
 {
 public:
@@ -2358,6 +2490,13 @@ public:
 	void GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel);
 };
 
+class BigfootStatementGenerator : public StatementGenerator
+{
+public:
+	void GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel);
+	void GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel);
+};
+
 class StatementFactory : public Factory
 {
 public:
@@ -2407,7 +2546,7 @@ public:
 	Declaration(Statement* st);
 	Declaration *next;
 	void AssignParameterName();
-	int64_t declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int ztype, Symbol** symo, bool local, short int depth=0);
+	int64_t declare(Symbol* parent, TABLE* table, e_sc sc, int64_t ilc, int ztype, Symbol** symo, bool local, short int depth=0);
 	void ParseEnumerationList(TABLE *table, Float128 amt, Symbol *parent, bool power);
 	void ParseEnum(TABLE *table);
 	void ParseVoid();
@@ -2557,6 +2696,7 @@ public:
 	char firstid[128];
 	char lastid[128];
 	int64_t lc_static;
+	int expr_depth;
 public:
 	Compiler() { 
 		int i;
@@ -2691,6 +2831,11 @@ class QuplsCPU : public CPU
 class RiscvCPU : public CPU
 {
 	RiscvCPU();
+};
+
+class BigfootCPU : public CPU
+{
+	BigfootCPU();
 };
 
 //#define SYM     struct sym

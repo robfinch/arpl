@@ -26,11 +26,12 @@
 //                                                                          
 // ============================================================================
 //
-enum e_cpu { thor, qupls, riscv };
+enum e_cpu { thor, qupls, riscv, bigfoot };
 //#define THOR	1
-#define QUPLS	1
+//#define QUPLS	1
 //#define QUPLS40 1
 //#define RISCV 5
+#define BIGFOOT 386
 
 enum e_bt {
 	bt_none,
@@ -131,7 +132,7 @@ enum e_stmt {
 
 enum e_sym {
 	tk_nop,
-	id, cconst, iconst, lconst, sconst, isconst, asconst, rconst, pconst, plus, minus,
+	id, cconst, iconst, uiconst, lconst, sconst, isconst, asconst, rconst, pconst, plus, minus,
 	star, divide, lshift, rshift, lrot, rrot,
 	modop, eq, neq, lt, leq, gt,
 	geq, assign, asplus, asminus, astimes, asdivide, asmodop,
@@ -191,7 +192,7 @@ enum e_op {
 	op_aslx, op_reglist, op_stm, op_ldm,
 	op_move, op_add, op_addu, op_addi, op_asfmul,
 	op_bf, op_bt, op_gcsub, op_bal,
-	op_sub, op_subi, op_mov, op_mtspr, op_mfspr, op_ldi, op_ld,
+	op_sub, op_subi, op_mov, op_mtspr, op_mfspr, op_loadi, op_ld,
 	op_mul, op_muli, op_mulu, op_divi, op_modi, op_modui,
 	op_div, op_divs, op_divsi, op_divu, op_and, op_andi, op_eor, op_eori,
 	op_bit,
@@ -204,7 +205,7 @@ enum e_op {
 	op_jmp, op_jsr, op_mului, op_mod, op_modu,
 	op_bmi, op_subu, op_lddr, op_stdc, op_loop, op_iret,
 	op_sext32, op_sext16, op_sext8, op_sxb, op_sxc, op_sxh, op_sxw, op_sxt, op_sxp, op_sxo,
-	op_zxb, op_zxc, op_zxh, op_extr,
+	op_zxb, op_zxw, op_zxt, op_extr,
 	op_dw, op_cache,
 	op_subui, op_addui, op_sei,
 	op_std, op_sth, op_sto, op_stos, op_stp, op_stt, op_stw, op_stb, op_outb, op_inb, op_inbu,
@@ -224,11 +225,11 @@ enum e_op {
 	op_inc, op_dec,
 	op_ldbu, op_ldwu, op_ldpu, op_ldou, op_sti,
 	op_ldf, op_stf,
-	op_rts, op_rtd,
+	op_rts, op_retd,
 	op_push, op_pop, op_movs,
 	op_seq, op_sne, op_slt, op_sle, op_sgt, op_sge, op_sltu, op_sleu, op_sgtu, op_sgeu,
 	op_sand, op_sor, op_andcm, op_orcm,
-	op_bra, op_eq, op_ne, op_lt, op_le, op_gt, op_ge,
+	op_branch, op_eq, op_ne, op_lt, op_le, op_gt, op_ge,
 	op_feq, op_fne, op_flt, op_fle, op_fgt, op_fge,
 	op_gtu, op_geu, op_ltu, op_leu, op_nr,
 	op_bhi, op_bhs, op_blo, op_bls, op_ext, op_extu, op_lea, op_stdap,
@@ -304,8 +305,9 @@ enum e_op {
 	op_adds, op_ors, op_orh, op_orm, op_movsxb, op_movsxw, op_movsxt,
 	op_or_and, op_or_or, op_and_and, op_and_or,
 	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
+	op_storev, op_subtract,
 	// Built in functions
-	op_abs, op_mulf, op_bytendx, op_zxw, op_zxt, op_bmap,
+	op_abs, op_mulf, op_bytendx, op_zxo, op_bmap,
 	op_movzxb, op_movzxw, op_movzxt,
 	op_wydendx, op_sync,
 	op_phi, op_pfi,
@@ -510,6 +512,7 @@ enum e_decltype { dt_global, dt_auto, dt_parameter };
 #define ERR_BAD_PRECISION 73
 #define ERR_UNKNOWN_FN	74
 #define ERR_MISSING_PARM	75
+#define ERR_SHIFT_TOOMANYBITS	76
 #define ERR_NULLPOINTER		1000
 #define ERR_CIRCULAR_LIST 1001
 #define ERR_MISSING_HIDDEN_STRUCTPTR	1002
