@@ -2130,16 +2130,9 @@ void BigfootCodeGenerator::GenerateInterruptSave(Function* func)
 	nn = popcnt(tsm);
 	// Allocate storage for registers on stack
 	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
+	GenerateDiadic(op_storem, 0, MakeImmediate(tsm), MakeIndexed((int64_t)0, regSP));
+	/*
 	for (kk = nn = 0; nn < 63; nn++) {
-		/*
-		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
-			GenerateDiadic(op_storeg, 0, makereg((nn / 4) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
-			kk += 4;
-			tsm = tsm >> 4;
-			nn += 3;
-		}
-		else 
-		*/
 		if (tsm & 1) {
 			GenerateStore(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 			last_reg = nn;
@@ -2150,6 +2143,7 @@ void BigfootCodeGenerator::GenerateInterruptSave(Function* func)
 	// Always save the condition register group
 	GenerateMove(makereg(last_reg), makecreg(0xfffL | rt_cr));
 	GenerateStore(makereg(last_reg), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord);
+	*/
 	/*
 	if (DoesContextSave) {
 		for (kk = 0; kk < 16; kk++)
@@ -2174,22 +2168,20 @@ void BigfootCodeGenerator::GenerateInterruptLoad(Function* func)
 	int nn, kk, first_reg, first = 1;
 	int64_t tsm = func->int_save_mask;
 
+	/*
 	if (DoesContextSave) {
 		for (kk = 0; kk < 16; kk++)
 			GenerateDiadic(op_loadg, 0, makereg(kk | rt_group), MakeIndexed(kk * cpu.sizeOfWord * 4, regTS));
 	}
+	*/
 
 	nn = popcnt(tsm);
+	GenerateDiadic(op_loadm, 0, MakeImmediate(tsm), MakeIndexed((int64_t)0,regSP));
+	GenerateAddOnto(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
+
+	/*
+	nn = popcnt(tsm);
 	for (kk = nn = 0; nn < 63; nn++) {
-		/*
-		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
-			GenerateDiadic(op_loadg, 0, makereg((nn >> 2) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
-			kk += 4;
-			nn += 3;
-			tsm = tsm >> 4;
-		}
-		else
-		*/
 		if (tsm & 1) {
 			// Always save the condition register group
 			if (first) {
@@ -2204,6 +2196,7 @@ void BigfootCodeGenerator::GenerateInterruptLoad(Function* func)
 	}
 	// Deallocate stack storage
 	GenerateAddOnto(makereg(regSP), MakeImmediate(kk * cpu.sizeOfWord));
+	*/
 }
 
 void BigfootCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)

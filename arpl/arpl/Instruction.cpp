@@ -101,6 +101,7 @@ bool Instruction::IsLoad()
 		|| opcode == op_ldo
 		|| opcode == op_ldh
 		|| opcode == op_load
+		|| opcode == op_loadm
 		|| opcode == op_ldbu
 		|| opcode == op_ldwu
 		|| opcode == op_ldtu
@@ -146,6 +147,8 @@ bool Instruction::IsStore()
 		|| opcode == op_stt
 		|| opcode == op_stp
 		|| opcode == op_sto
+		|| opcode == op_store
+		|| opcode == op_storem
 		|| opcode == op_sth
 		|| opcode == op_stdc
 		|| opcode == op_stf

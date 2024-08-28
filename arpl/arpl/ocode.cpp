@@ -61,6 +61,8 @@ bool OCODE::HasTargetReg(int regno) const
 {
 	int rg1, rg2;
 	if (HasTargetReg()) {
+		if (insn->opcode == op_loadm)
+			return ((oper1->offset->i >> regno) & 1LL);
 		GetTargetReg(&rg1, &rg2);
 		if (rg1 == regno || rg2 == regno)
 			return (true);
@@ -72,6 +74,8 @@ bool OCODE::HasSourceReg(int regno) const
 {
 	if (insn == nullptr)
 		return (false);
+	if (insn->opcode==op_storem)
+		return ((oper1->offset->i >> regno) & 1LL);
 	if ((IsStore() || IsLoad()) && oper1->preg == regno)
 		return (true);
 	// Push has an implied target, so oper1 is actually a source.
@@ -587,6 +591,8 @@ void OCODE::OptLoad()
 {
 	if (oper2->mode != am_imm)
 		return;
+	if (insn->opcode == op_loadm)
+		return;
 	// This optimization is also caught by the code generator.
 	if (oper2->tp && oper2->tp->IsPositType()) {
 		if (oper2->offset->posit.val == 0) {
@@ -753,8 +759,9 @@ void OCODE::OptDefUse()
 	}
 	// If we get to the end, and no use, then eliminate
 	// But, do not remove frame pointer load at end of function.
-	if (!isVolatile) {
+	if (!isVolatile && insn->opcode!=op_loadm) {
 		if (oper1->preg != regFP
+			&& oper1->preg != regSP
 			&& oper1->preg != regLR
 			&& !IsArgReg(oper1->preg)
 			&& !IsSavedReg(oper1->preg)
@@ -785,8 +792,9 @@ void OCODE::OptNoUse()
 	}
 	// If we get to the end, and no use, then eliminate
 	// But, do not remove frame pointer load at end of function.
-	if (!isVolatile) {
+	if (!isVolatile && insn->opcode!=op_loadm) {
 		if (oper1->preg != regFP
+			&& !oper1->preg==regSP
 			&& !IsArgReg(oper1->preg)
 			&& !IsSavedReg(oper1->preg)
 			&& oper1->preg != regLR
@@ -1339,6 +1347,8 @@ void OCODE::OptDoubleTargetRemoval()
 		return;
 	// push has an implicit target, but we don't want to remove it.
 	if (opcode == op_push)
+		return;
+	if (opcode == op_loadm || opcode == op_storem)
 		return;
 	//if (rg3 == regSP)
 	//	return;

@@ -4316,7 +4316,11 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	if (!cpu.SupportsLeave) {
 		RestoreRegisterVars(func);
 		func->UnlinkStack(0);
+#ifdef BIGFOOT
+		toAdd = func->has_return_block ? compiler.GetReturnBlockSize()-cpu.sizeOfWord : 0;
+#else
 		toAdd = func->has_return_block ? compiler.GetReturnBlockSize() : 0;
+#endif
 	}
 	if (!func->alstk) {
 		// The size of the return block is included in the link instruction, so the

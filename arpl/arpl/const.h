@@ -307,6 +307,7 @@ enum e_op {
 	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
 	op_storev, op_subtract,
 	// Bigfoot
+	op_loadm, op_storem,
 	op_stib, op_stiw, op_stit, op_stio, op_addq,
 	op_zseq, op_zsne, op_zslt, op_zsle, op_zsgt, op_zsge, op_zsltu, op_zsleu, op_zsgtu, op_zsgeu,
 	// Built in functions
