@@ -310,7 +310,7 @@ void PeepList::SetLabelReference()
 					if (p = PeepList::FindLabel(ct->cases[nn].label))
 						p->isReferenced = true;
 			}
-			if (q->opcode == op_bra) {
+			if (q->opcode == op_branch) {
 				if (p = PeepList::FindLabel(q->oper1->offset->i))
 					p->isReferenced = true;
 			}
@@ -372,7 +372,7 @@ int PeepList::CountSPReferences()
 		*/
 		if (ip->opcode != op_label && ip->opcode != op_nop
 			&& ip->opcode != op_link && ip->opcode != op_unlk
-			&& ip->opcode != op_rtd
+			&& ip->opcode != op_retd
 			) {
 			if (ip->insn) {
 				if (ip->insn->opcode == op_push || ip->insn->opcode == op_pop || ip->insn->opcode == op_leave || ip->insn->opcode == op_leave_far || ip->insn->opcode == op_bsr) {
@@ -596,7 +596,7 @@ void PeepList::OptBranchToNext()
 	pip = head;
 	for (ip = head; ip != NULL; ip = ip->fwd) {
 		if (ip->opcode == op_label) {
-			if (pip->opcode == op_br || pip->opcode == op_bra) {
+			if (pip->opcode == op_br || pip->opcode == op_branch) {
 				if ((int64_t)ip->oper1 == pip->oper1->offset->i) {
 					pip->MarkRemove();
 					optimized++;
@@ -807,13 +807,15 @@ void PeepList::OptInstructions()
 				}
 				break;
 			//case op_ld:		ip->OptLoad();	break;
-			case op_ldi:	ip->OptLdi();	break;
+			case op_loadi:	ip->OptLdi();	break;
 			case op_l:		ip->OptLdi(); break;
 			case op_lea:	ip->OptLea();	break;
 			case op_la:		ip->OptLea(); break;
+			case op_move:
 			case op_mv:
 			case op_mov:	ip->OptMove();	break;
 			case op_add:	ip->OptAdd(); break;
+			case op_subtract:
 			case op_sub:	ip->OptSubtract(); break;
 			case op_gcsub:	ip->OptSubtract(); break;
 			case op_ldb:		ip->OptLoadByte(); break;
@@ -829,7 +831,7 @@ void PeepList::OptInstructions()
 			case op_bne:	ip->OptBne(); ip->OptIncrBranch(); break;
 			case op_ble:	ip->OptIncrBranch(); break;
 			case op_blt:	ip->OptIncrBranch(); break;
-			case op_bra:	ip->OptBra(); break;
+			case op_branch:	ip->OptBra(); break;
 			case op_jal:	ip->OptJAL(); break;
 			case op_brk:
 			case op_jmp:
@@ -839,7 +841,7 @@ void PeepList::OptInstructions()
 			case op_rtl:
 			case op_rts:
 			case op_rte:
-			case op_rtd:	ip->OptUctran(); break;
+			case op_retd:	ip->OptUctran(); break;
 			case op_label:	ip->OptLabel(); break;
 			case op_hint:	ip->OptHint(); break;
 			case op_stp:
@@ -855,7 +857,7 @@ void PeepList::OptInstructions()
 			case op_sllp:	ip->OptSll(); break;
 			case op_vmask: ip->OptVmask(); break;
 			case op_zxb:	ip->OptZxb();	break;
-			case op_zxw:	ip->OptZxw();	break;
+			case op_zxo:	ip->OptZxw();	break;
 			case op_not:	break;
 			}
 		}
@@ -1249,8 +1251,8 @@ void PeepList::RemoveStackCode()
 					ip->MarkRemove();
 			}
 		}
-		if (ip->opcode == op_ret || ip->opcode == op_rts || ip->opcode == op_rtd) {
-			if (ip->opcode == op_rtd) {
+		if (ip->opcode == op_ret || ip->opcode == op_rts || ip->opcode == op_retd) {
+			if (ip->opcode == op_retd) {
 				ip->opcode = op_rts;
 				ip->insn = Instruction::Get(op_rts);
 			}

@@ -45,7 +45,7 @@ public:
        std::ofstream::write(buf, 1);
        }};
 	void puts(const char *);
-	void writeAsHex(const void *, int);
+	void writeAsHex(const void *, int64_t);
 };
 
 // Make it easy to disable debugging output

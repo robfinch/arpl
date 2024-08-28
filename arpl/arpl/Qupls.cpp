@@ -141,7 +141,7 @@ static Operand* CombineOffsetWidth(Operand* offset, Operand* width)
 	// Combine offset,width into one register.
 	ap3 = GetTempRegister();
 	if (width->mode == am_imm)
-		GenerateDiadic(op_ldi, 0, ap3, cg.MakeImmediate(width->offset->i << 8LL));
+		GenerateDiadic(op_loadi, 0, ap3, cg.MakeImmediate(width->offset->i << 8LL));
 	else
 		GenerateTriadic(op_asl, 0, ap3, width, cg.MakeImmediate(8));
 	GenerateTriadic(op_or, 0, ap3, ap3, offset);
@@ -163,12 +163,9 @@ void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Oper
 
 void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width)
 {
-	int nn;
-	uint64_t mask;
 	Operand* ap3, * ap4;
 	Operand* op_begin;
 	Operand* op_end;
-	OCODE* ip;
 
 	// If the field being inserted occupies the entire target, just use a move
 	// instruction.
@@ -176,7 +173,7 @@ void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENOD
 		if (width->i128.low >= cpu.sizeOfWord || (ap1->tp && width->i128.low >= ap1->tp->size)) {
 			switch (ap2->mode) {
 			case am_reg:
-				GenerateDiadic(op_mov, 0, ap1, ap2);
+				GenerateDiadic(op_move, 0, ap1, ap2);
 				return;
 			case am_imm:
 				GenerateLoadConst(ap1, ap2);
@@ -213,12 +210,23 @@ void QuplsCodeGenerator::ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* 
 
 Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, Operand* offset, Operand* width)
 {
-	Operand* ap1, * ap3, *op_begin, * op_end;
+	Operand* ap1, *op_begin, * op_end;
 	Int128 me;
 
 	ap1 = GetTempRegister();
 	ConvertOffsetWidthToBeginEnd(offset, width, &op_begin, &op_end);
-	Generate4adic(isSigned ? op_ext : op_extu, 0, ap1, ap, op_begin, op_end);
+	if (cpu.SupportsBitfield) {
+		Generate4adic(isSigned ? op_ext : op_extu, 0, ap1, ap, op_begin, op_end);
+	}
+	else {
+		/* under construction */
+		GenerateTriadic(op_lsr, 0, ap1, ap, op_begin);
+		if (isSigned)
+			GenerateSignBitExtend(ap1, width);
+		else {
+			//GenerateZeroBitExtend(ap1, width);
+		}
+	}
 	ReleaseTempReg(op_end);
 	ReleaseTempReg(op_begin);
 	return (ap1);
@@ -236,7 +244,10 @@ Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset,
 	ap2 = GenerateExpression(offset, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ap3 = GenerateExpression(width, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ConvertOffsetWidthToBeginEnd(ap2, ap3, &op_begin, &op_end);
-	Generate4adic(isSigned ? op_ext : op_extu, 0, ap1, ap, op_begin, op_end);
+	if (cpu.SupportsBitfield)
+		Generate4adic(isSigned ? op_ext : op_extu, 0, ap1, ap, op_begin, op_end);
+	else
+		;	/* under construction */
 	ReleaseTempReg(ap3);
 	ReleaseTempReg(ap2);
 	return (ap1);
@@ -245,7 +256,7 @@ Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset,
 Operand* QuplsCodeGenerator::GenerateEq(ENODE *node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -263,7 +274,7 @@ Operand* QuplsCodeGenerator::GenerateEq(ENODE *node)
 Operand* QuplsCodeGenerator::GenerateNe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -281,7 +292,7 @@ Operand* QuplsCodeGenerator::GenerateNe(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateLt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -299,7 +310,7 @@ Operand* QuplsCodeGenerator::GenerateLt(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateLe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -319,7 +330,7 @@ Operand* QuplsCodeGenerator::GenerateLe(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateGt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -338,7 +349,7 @@ Operand* QuplsCodeGenerator::GenerateGt(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateGe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -356,7 +367,7 @@ Operand* QuplsCodeGenerator::GenerateGe(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateLtu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -374,7 +385,7 @@ Operand* QuplsCodeGenerator::GenerateLtu(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateLeu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -392,7 +403,7 @@ Operand* QuplsCodeGenerator::GenerateLeu(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateGtu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -411,7 +422,7 @@ Operand* QuplsCodeGenerator::GenerateGtu(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateGeu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -429,7 +440,7 @@ Operand* QuplsCodeGenerator::GenerateGeu(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateFeq(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -444,7 +455,7 @@ Operand* QuplsCodeGenerator::GenerateFeq(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateFne(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -459,7 +470,7 @@ Operand* QuplsCodeGenerator::GenerateFne(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateFlt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -474,7 +485,7 @@ Operand* QuplsCodeGenerator::GenerateFlt(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateFle(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -489,7 +500,7 @@ Operand* QuplsCodeGenerator::GenerateFle(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateFgt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -504,7 +515,7 @@ Operand* QuplsCodeGenerator::GenerateFgt(ENODE* node)
 Operand* QuplsCodeGenerator::GenerateFge(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
-	int size;
+	int64_t size;
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempRegister();
@@ -519,13 +530,12 @@ Operand* QuplsCodeGenerator::GenerateFge(ENODE* node)
 Operand *QuplsCodeGenerator::GenExpr(ENODE *node)
 {
 	Operand *ap1,*ap2,*ap3,*ap4;
-	int lab0, lab1;
+	int64_t lab0, lab1;
 	int64_t size = cpu.sizeOfWord;
 	int op;
-	OCODE* ip;
 
-    lab0 = nextlabel++;
-    lab1 = nextlabel++;
+  lab0 = nextlabel++;
+  lab1 = nextlabel++;
 
 	switch(node->nodetype) {
 	case en_eq:		op = op_seq;	break;
@@ -624,7 +634,7 @@ Operand *QuplsCodeGenerator::GenExpr(ENODE *node)
 		GenerateFalseJump(node,lab0,0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(cpu.ldi_op|op_dot,0,ap1,MakeImmediate(1));
-		GenerateMonadic(op_bra,0,MakeDataLabel(lab1,regZero));
+		GenerateMonadic(op_branch,0,MakeDataLabel(lab1,regZero));
 		GenerateLabel(lab0);
 		GenerateDiadic(cpu.ldi_op|op_dot,0,ap1,MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -678,7 +688,7 @@ Operand *QuplsCodeGenerator::GenExpr(ENODE *node)
     GenerateFalseJump(node,lab0,0);
     ap1 = GetTempRegister();
     GenerateDiadic(op_ld,0,ap1,MakeImmediate(1));
-    GenerateMonadic(op_bra,0,MakeDataLabel(lab1));
+    GenerateMonadic(op_branch,0,MakeDataLabel(lab1));
     GenerateLabel(lab0);
     GenerateDiadic(op_ld,0,ap1,MakeImmediate(0));
     GenerateLabel(lab1);
@@ -686,149 +696,281 @@ Operand *QuplsCodeGenerator::GenExpr(ENODE *node)
 	*/
 }
 
-void QuplsCodeGenerator::GenerateBranchTrue(Operand* ap, int label)
+void QuplsCodeGenerator::GenerateBranchTrue(Operand* ap, int64_t label)
 {
 	gHeadif = currentFn->pl.tail;
 	GenerateDiadic(op_bnez, 0, ap, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBranchFalse(Operand* ap, int label)
+void QuplsCodeGenerator::GenerateBranchFalse(Operand* ap, int64_t label)
 {
 	gHeadif = currentFn->pl.tail;
 	GenerateDiadic(op_beqz, 0, ap, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero()))
-			GenerateDiadic(op_beqz, 0, ap1, MakeCodeLabel(label));
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (!Int128::IsEQ(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_beq, 0, ap1, ap3, MakeCodeLabel(label));
-			ReleaseTempRegister(ap3);
+			if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero()))
+				GenerateDiadic(op_beqz, 0, ap1, MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempRegister();
+				GenerateLoadConst(ap2, ap3);
+				GenerateTriadic(op_beq, 0, ap1, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 		}
 	}
 	else
 		GenerateTriadic(op_beq, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label)
 {
-	Operand* ap3;
+	Int128 i;
 
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero()))
-			GenerateDiadic(op_bnez, 0, ap1, MakeCodeLabel(label));
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (Int128::IsEQ(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_bne, 0, ap1, ap3, MakeCodeLabel(label));
-			ReleaseTempRegister(ap3);
+			if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero()))
+				GenerateDiadic(op_bnez, 0, ap1, MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempRegister();
+				GenerateLoadConst(ap2, ap3);
+				GenerateTriadic(op_bne, 0, ap1, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 		}
 	}
 	else
 		GenerateTriadic(op_bne, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_blt, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (!Int128::IsLT(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_blt, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bge, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		Int128 i;
+
+		i = regs[ap1->preg].val128;
+		// Check if branch is always false. If the branch is always false, do nothing.
+		if (regs[ap1->preg].isConst && !Int128::IsGE(&i, &ap2->offset->i128))
+			;
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_bge, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_bge, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_ble, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (!Int128::IsLE(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_ble, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_ble, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bgt, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (Int128::IsLE(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_bgt, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_bgt, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bltu, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (!Int128::IsULT(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_bltu, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_bltu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bgeu, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (Int128::IsULT(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_bgeu, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_bgeu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bleu, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (!Int128::IsULE(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_bleu, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_bleu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t label)
 {
+	Int128 i;
+
+	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bgtu, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		// Check if branch is always false. If the branch is always false, do nothing.
+		// If the branch is always true, generate unconditional branch. Unconditional
+		// branches are faster than conditional ones.
+		if (regs[ap1->preg].isConst) {
+			if (Int128::IsULE(&i, &ap2->offset->i128))
+				;
+			else
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+		}
+		else {
+			Operand* ap3 = GetTempRegister();
+			GenerateLoadConst(ap2, ap3);
+			GenerateTriadic(op_bgtu, 0, ap1, ap3, MakeCodeLabel(label));
+			ReleaseTempRegister(ap3);
+		}
 	}
 	else
 		GenerateTriadic(op_bgtu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -842,7 +984,7 @@ void QuplsCodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int label)
 	}
 }
 
-void QuplsCodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -856,7 +998,7 @@ void QuplsCodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int label)
 	}
 }
 
-void QuplsCodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -866,7 +1008,7 @@ void QuplsCodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int label)
 	ReleaseTempReg(ap3);
 }
 
-void QuplsCodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int label)
+void QuplsCodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -876,10 +1018,10 @@ void QuplsCodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int label)
 	ReleaseTempReg(ap3);
 }
 
-bool QuplsCodeGenerator::GenerateBranch(ENODE *node, int op, int label, int predreg, unsigned int prediction, bool limit)
+bool QuplsCodeGenerator::GenerateBranch(ENODE *node, int op, int64_t label, int predreg, unsigned int prediction, bool limit)
 {
-	int size, sz;
-	Operand *ap1, *ap2, *ap3, *ap4;
+	int64_t size, sz;
+	Operand *ap1, *ap2, *ap3;
 	OCODE *ip;
 
 	if ((op == op_nand || op == op_nor || op == op_and || op == op_or) && (node->p[0]->HasCall() || node->p[1]->HasCall()))
@@ -1080,7 +1222,6 @@ void QuplsCodeGenerator::SaveRegisterVars(CSet *rmask)
 	int cnt;
 	int nn;
 	int64_t mask;
-	char buf[100];
 
 	if (cpu.SupportsEnter)
 		return;
@@ -1219,7 +1360,7 @@ static void RestoreFPRegisterVars()
 // 8 we assume a structure variable and we assume we have the address in a reg.
 // Returns: number of stack words pushed.
 //
-int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat, int* push_count, bool large_argcount)
+int64_t QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat, int* push_count, bool large_argcount)
 {    
 	Operand *ap, *ap1, *ap2, *ap3;
 	int nn = 0;
@@ -1405,18 +1546,18 @@ int QuplsCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *is
 // use a push instruction rather than subtracting from the sp and using stores
 // if there are only a small number of arguments (<3).
 //
-int QuplsCodeGenerator::PushArguments(Function *sym, ENODE *plist)
+int64_t QuplsCodeGenerator::PushArguments(Function *sym, ENODE *plist)
 {
 	TypeArray *ta = nullptr;
-	int i,sum;
+	int64_t i,sum;
 	OCODE *ip;
 	ENODE *p;
 	ENODE *pl[100];
-	int nn, maxnn, kk, pc;
+	int64_t nn, maxnn;
+	int pc;
 	int push_count;
 	bool isFloat = false;
 	bool sumFloat;
-	bool o_supportsPush;
 	bool large_argcount = false;
 	Symbol** sy = nullptr;
 	int64_t stkoffs;
@@ -1577,21 +1718,21 @@ void QuplsCodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* 
 	if (sym && sym->IsLeaf) {
 		sprintf_s(buf, sizeof(buf), "%s_ip", sym->sym->name->c_str());
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_branch : op_branch, 0, MakeDirect(node->p[0]));
 		else
 			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bsr : op_bsr, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else if (sym) {
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_branch : op_branch, 0, MakeDirect(node->p[0]));
 		else
 			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bsr : op_bsr, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else {
 		if (flags & am_jmp)
-			GenerateMonadic(op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(op_branch, 0, MakeDirect(node->p[0]));
 		else
 			GenerateMonadic(op_bsr, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
@@ -1677,11 +1818,11 @@ void QuplsStatementGenerator::GenerateNakedTabularSwitch(Statement* stmt, int64_
 // Generate a jump to label if the node passed evaluates to
 // a true condition.
 //
-void QuplsCodeGenerator::GenerateTrueJump(ENODE* node, int label, unsigned int prediction)
+void QuplsCodeGenerator::GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction)
 {
-	Operand* ap1, * ap2, * ap3;
-	int lab0;
-	int siz1;
+	Operand* ap1, * ap2;
+	int64_t lab0;
+	int64_t siz1;
 
 	if (node == 0)
 		return;
@@ -1753,11 +1894,11 @@ void QuplsCodeGenerator::GenerateTrueJump(ENODE* node, int label, unsigned int p
 // Generate code to execute a jump to label if the expression
 // passed is false.
 //
-void QuplsCodeGenerator::GenerateFalseJump(ENODE* node, int label, unsigned int prediction)
+void QuplsCodeGenerator::GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction)
 {
-	Operand* ap, * ap1, * ap2, * ap3;
-	int siz1;
-	int lab0;
+	int64_t siz1;
+	int64_t lab0;
+	Operand* ap;
 
 	if (node == (ENODE*)NULL)
 		return;
@@ -1819,7 +1960,7 @@ void QuplsCodeGenerator::GenerateFalseJump(ENODE* node, int label, unsigned int 
 			GenerateDiadic(op_beqz, 0, ap, MakeCodeLabel(label));
 			if (false) {
 				//				if (ap->offset->nodetype==en_icon && ap->offset->i != 0)
-				//					GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
+				//					GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 				//				else
 				{
 					//ap1 = MakeBoolean(ap);
@@ -1832,7 +1973,7 @@ void QuplsCodeGenerator::GenerateFalseJump(ENODE* node, int label, unsigned int 
 	}
 }
 
-void QuplsCodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask)
+void QuplsCodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
 {
 	if (ap3->typep == &stdflt) {
 		GenerateTriadic(op_fload, 'd', ap3, ap1, mask);
@@ -1862,25 +2003,32 @@ void QuplsCodeGenerator::GenerateInterruptSave(Function* func)
 	// Allocate storage for registers on stack
 	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
 	for (kk = nn = 0; nn < 63; nn++) {
+		/*
 		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
 			GenerateDiadic(op_storeg, 0, makereg((nn / 4) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
 			kk += 4;
 			tsm = tsm >> 4;
 			nn += 3;
 		}
-		else if (tsm & 1) {
+		else 
+		*/
+		if (tsm & 1) {
 			GenerateStore(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 			kk++;
-			tsm = tsm >> 1;
 		}
+		tsm = tsm >> 1;
 	}
+	/*
 	if (DoesContextSave) {
 		for (kk = 0; kk < 16; kk++)
 			GenerateDiadic(op_storeg, 0, makereg(kk | rt_group), MakeIndexed(kk * cpu.sizeOfWord * 4, regTS));
 	}
+	*/
+	/*
 	if (sp_init) {
 		GenerateLoadConst(MakeImmediate(sp_init), makereg(regSP));
 	}
+	*/
 	/*
 	if (stkname) {
 		GenerateDiadic(op_lea, 0, makereg(SP), MakeStringAsNameConst(stkname,dataseg));
@@ -1901,26 +2049,30 @@ void QuplsCodeGenerator::GenerateInterruptLoad(Function* func)
 
 	nn = popcnt(tsm);
 	for (kk = nn = 0; nn < 63; nn++) {
+		/*
 		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
 			GenerateDiadic(op_loadg, 0, makereg((nn >> 2) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
 			kk += 4;
 			nn += 3;
 			tsm = tsm >> 4;
 		}
-		else if (tsm & 1) {
+		else
+		*/
+		if (tsm & 1) {
 			GenerateLoad(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			kk++;
-			tsm = tsm >> 1;
 		}
+		tsm = tsm >> 1;
 	}
 	// Deallocate stack storage
-	GenerateAddOnto(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
+	GenerateAddOnto(makereg(regSP), MakeImmediate(kk * cpu.sizeOfWord));
 }
 
 void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 {
 	Operand* ap3;
 
+	ap1->isConst = true;
 	if (ap1->isPtr) {
 		ap3 = ap1->Clone();
 		ap3->mode = am_direct;
@@ -1948,7 +2100,7 @@ void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 					if (!ap1->offset->i128.IsNBit(24))
 						ip = GenerateTriadic(op_or, 0, ap2, makereg(regZero), MakeImmediate(ap1->offset->i128.low & 0xffffffLL));
 					else
-						ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0xffffffLL));
+						ip = GenerateDiadic(op_loadi, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0xffffffLL));
 					if (!ap1->offset->i128.IsNBit(24)) {
 						if (!ap1->offset->i128.IsNBit(48))
 							GenerateTriadic(op_ors, 0, ap2, MakeImmediate((ap1->offset->i128.low >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
@@ -1972,13 +2124,15 @@ void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 				}
 				else {
 					error(1000);	// NULL pointer
-					ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(0xdeadbeefLL));
+					ip = GenerateDiadic(op_loadi, 0, ap2, MakeImmediate(0xdeadbeefLL));
 				}
 			}
 		}
-		if (ip->oper2)
+		if (ip->oper2) {
+			ip->oper2->isConst = true;
 			if (ip->oper2->offset)
 				ip->oper2->offset->constflag = true;
+		}
 		regs[ap2->preg].isConst = true;
 		if (ap2->tp) {
 			//				ap2->tp->type = bt_long;
@@ -2090,12 +2244,12 @@ void QuplsCodeGenerator::GenerateSignExtendTetra(Operand* tgt, Operand* src)
 
 void QuplsCodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
 {
-	GenerateDiadic(op_rtd, 0, ap1, MakeImmediate(0));
+	GenerateDiadic(op_retd, 0, ap1, MakeImmediate(0));
 }
 
 void QuplsCodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
 {
-	GenerateDiadic(op_rtd, 0, MakeImmediate(amt), MakeImmediate(0));
+	GenerateDiadic(op_retd, 0, MakeImmediate(amt), MakeImmediate(0));
 }
 
 void QuplsCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
@@ -2174,10 +2328,8 @@ void QuplsCodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* a
 		GenerateDiadic(opcode, 0, ap1, ap2);
 }
 
-void QuplsCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask)
+void QuplsCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
 {
-	std::string* str;
-
 	if (ap3->typep == &stdposit) {
 		switch (ap3->tp->precision) {
 		case 16:
@@ -2192,7 +2344,7 @@ void QuplsCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int ssize, int
 		}
 	}
 	else if (ap3->typep == &stdvector) {
-		GenerateTriadic(op_loadv, 0, ap3, ap1, mask);
+		GenerateTriadic(op_load, 0, ap3, ap1, mask);
 	}
 	else if (ap3->typep->IsFloatType())
 		GenerateLoadFloat(ap3, ap1, ssize, size, mask);
@@ -2208,6 +2360,7 @@ void QuplsCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int ssize, int
 		case 4:	GenerateLoadStore(op_ldtu, ap3, ap1); break;
 		case 8: GenerateLoadStore(op_ldou, ap3, ap1); break;
 		case 16:	GenerateLoadStore(op_ldh, ap3, ap1); break;
+		case 64:	GenerateLoadStore(op_load, ap3, ap1); break;
 		}
 	}
 	else {
@@ -2216,18 +2369,17 @@ void QuplsCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int ssize, int
 		case 1:	GenerateLoadStore(op_ldb, ap3, ap1); break;
 		case 2:	GenerateLoadStore(op_ldw, ap3, ap1); break;
 		case 4:	GenerateLoadStore(op_ldt, ap3, ap1); break;
-		case 8:	GenerateLoadStore(op_ldo, ap3, ap1); break;
+		case 8:	GenerateLoadStore(op_load, ap3, ap1); break;
 		case 16: GenerateLoadStore(op_ldh, ap3, ap1); break;
+		case 64:	GenerateLoadStore(op_load, ap3, ap1); break;
 		}
 	}
 	ap3->memref = true;
 	ap3->memop = ap1->Clone();
 }
 
-void QuplsCodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int size, Operand* mask)
+void QuplsCodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask)
 {
-	std::string* str;
-
 	//if (ap1->isPtr) {
 	//	GenerateTriadic(op_std, 0, ap1, ap3);
 	//}
@@ -2248,10 +2400,10 @@ void QuplsCodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int size, Ope
 	if (ap3->typep == &stdposit) {
 		GenerateTriadic(op_sto, 0, ap1, ap3, mask);
 	}
-	else if (ap1->typep == &stdvector)
-		GenerateTriadic(op_sv, 0, ap1, ap3, mask);
+	else if (ap1->tp->IsVectorType())//typep == &stdvector)
+		GenerateTriadic(op_store, 0, ap1, ap3, mask);
 	else if (ap1->typep == &stdflt) {
-		GenerateTriadic(op_sto, 0, ap1, ap3, mask);
+		GenerateTriadic(op_store, 0, ap1, ap3, mask);
 	}
 	else if (ap1->typep == &stddouble) {
 		if (ap1->mode == am_fpreg)
@@ -2271,8 +2423,9 @@ void QuplsCodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int size, Ope
 		case 1: GenerateLoadStore(op_stb, ap1, ap3); break;
 		case 2: GenerateLoadStore(op_stw, ap1, ap3); break;
 		case 4: GenerateLoadStore(op_stt, ap1, ap3); break;
-		case 8:	GenerateLoadStore(op_sto, ap1, ap3); break;
+		case 8:	GenerateLoadStore(op_store, ap1, ap3); break;
 		case 16:	GenerateLoadStore(op_sth, ap1, ap3); break;
+		case 64:  GenerateLoadStore(op_store, ap1, ap3); break;
 		default:
 			;
 		}
@@ -2281,7 +2434,7 @@ void QuplsCodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int size, Ope
 
 Operand* QuplsCodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 {
-	Operand* ap1, * ap2;
+	Operand* ap1;
 
 	// Code for generating a reference to the constant which is 
 	// stored in rodata.
@@ -2313,7 +2466,7 @@ Operand* QuplsCodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t si
 
 Operand* QuplsCodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
 {
-	Operand* ap1, * ap2;
+	Operand* ap1;
 
 	ap1 = allocOperand();
 	ap1->isPtr = node->IsPtr();
@@ -2401,7 +2554,7 @@ int QuplsCodeGenerator::GetSegmentIndexReg(e_sg segment)
 // For a leaf routine don't bother to store the link register.
 OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 {
-	Operand* ap, * ap1, * ap2;
+	Operand* ap, * ap2;
 	int n;
 	char buf[300];
 	OCODE* ip;
@@ -2422,7 +2575,7 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 		else {
 			GenerateDiadic(op_enter, 0, MakeImmediate(15), MakeImmediate(8388600LL));
 			ip = currentFn->pl.tail;
-			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 8388600LL));
+			GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 8388600LL));
 			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
 			fn->alstk = true;
 		}
@@ -2436,22 +2589,22 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 		}
 		else {
 			GenerateMonadic(op_link, 0, MakeImmediate(8388600LL));
-			GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 8388600LL));
+			GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 8388600LL));
 			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
 			fn->alstk = true;
 		}
 	}
 	else {
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
+		GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
 		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord);
 		cg.GenerateMove(makereg(regFP), makereg(regSP));
 		if (!currentFn->IsLeaf) {
 			ap2 = GetTempRegister();
-			GenerateDiadic(op_mov, 0, ap2, makereg(regLR));
+			GenerateDiadic(op_move, 0, ap2, makereg(regLR));
 			cg.GenerateStore(ap2, cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
 			ReleaseTempRegister(ap2);
 		}
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
+		GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
 		fn->alstk = true;
 		fn->has_return_block = true;
 	}
@@ -2517,13 +2670,152 @@ Operand* QuplsCodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool s
 	ap1 = cg.MakeBoolean(ap2);
 	ReleaseTempReg(ap2);
 	/*
-	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(1));
+	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(1));
 	cg.GenerateFalseJump(this, lab0, 0);
-	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(0));
+	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(0));
 	GenerateLabel(lab0);
 	*/
 	ap1->MakeLegal(flags, 8);
 	ap1->isBool = true;
 	return (ap1);
+}
+
+/* Generate code for an immediate 'add' operation. Uses the CPU's shifted and
+* operations if the immediate constant is large. Note the CPU does not require
+* the use of temporary registers to extend the operation.
+*
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* QuplsCodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+		GenerateTriadic(op_add, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+		return (dst);
+	}
+	ap5 = nullptr;
+
+	if (!src2->offset->i128.IsNBit(24LL)) {
+		ap5 = GetTempRegister();
+		GenerateLoadConst(src2, ap5);
+		GenerateTriadic(op_add, 0, dst, src1, ap5);
+		ReleaseTempRegister(ap5);
+		return (dst);
+	}
+	GenerateTriadic(op_add, 0, dst, src1, MakeImmediate(src2->offset->i128.low & 0xffffffLL));
+	/* Should update this sometime to use adds. But managing the sign extended constant is tricky.
+	if (src2->offset->i128.low & 0x800000LL) {
+		if (((src2->offset->i128.low >> 24) & 0xffffffLL) == 0xffffffLL)
+			GenerateTriadic(op_ands, 0, dst, MakeImmediate(1LL), MakeImmediate(2LL));
+		else
+			GenerateTriadic(op_ands, 0, dst, MakeImmediate(((src2->offset->i128.low >> 24LL) & 0xffffffLL) + 1), MakeImmediate(1LL));
+	}
+	else
+		GenerateTriadic(op_ands, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
+	*/
+	return (dst);
+}
+
+/* Generate code for an immediate 'and' operation. Uses the CPU's shifted and
+* operations if the immediate constant is large. Note the CPU does not require
+* the use of temporary registers to extend the operation.
+* 
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* QuplsCodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+		GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+		return (dst);
+	}
+	ap5 = nullptr;
+	GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i & 0xffffffLL));
+	GenerateTriadic(op_ands, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
+	if (!src2->offset->i128.IsNBit(48LL))
+		GenerateTriadic(op_ands, 0, dst, MakeImmediate((src2->offset->i >> 48LL) & 0xffffffLL), MakeImmediate(2LL));
+	return (dst);
+}
+
+/* Generate code for an immediate 'or' operation. Uses the CPU's shifted and
+* operations if the immediate constant is large. Note the CPU does not require
+* the use of temporary registers to extend the operation.
+*
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* QuplsCodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+		GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+		return (dst);
+	}
+	ap5 = nullptr;
+	GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i & 0xffffffLL));
+	GenerateTriadic(op_ors, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
+	if (!src2->offset->i128.IsNBit(48LL))
+		GenerateTriadic(op_ors, 0, dst, MakeImmediate((src2->offset->i >> 48LL) & 0xffffffLL), MakeImmediate(2LL));
+	return (dst);
+}
+
+/* Generate code for an immediate 'or' operation. Uses the CPU's shifted and
+* operations if the immediate constant is large. Note the CPU does not require
+* the use of temporary registers to extend the operation.
+*
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* QuplsCodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+		GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+		return (dst);
+	}
+	ap5 = nullptr;
+	GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i & 0xffffffLL));
+	GenerateTriadic(op_eors, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
+	if (!src2->offset->i128.IsNBit(48LL))
+		GenerateTriadic(op_eors, 0, dst, MakeImmediate((src2->offset->i >> 48LL) & 0xffffffLL), MakeImmediate(2LL));
+	return (dst);
 }
 

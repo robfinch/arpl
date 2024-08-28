@@ -1862,15 +1862,15 @@ int64_t TYP::walignment()
 			worstAlignment = 2;
 		while (sp != NULL) {
 			if (sp->tp && sp->tp->alignment) {
-				worstAlignment = imax(worstAlignment, sp->tp->alignment);
+				worstAlignment = max(worstAlignment, sp->tp->alignment);
 			}
 			else
-				worstAlignment = imax(worstAlignment, sp->tp->walignment());
+				worstAlignment = max(worstAlignment, sp->tp->walignment());
 			sp = sp->GetNextPtr();
 		}
 		retval = worstAlignment;
 		goto xit;
-	default:                level--; return (imax(AL_CHAR, worstAlignment));
+	default:                level--; return (max(AL_CHAR, worstAlignment));
 	}
 xit:
 	level--;

@@ -1136,8 +1136,8 @@ class Operand : public CompilerType
 public:
 	int num;					// number of the operand
 	unsigned int mode;
-	unsigned int preg : 16;		// primary virtual register number
-	unsigned int sreg : 16;		// secondary virtual register number (indexed addressing modes)
+	unsigned int preg : 32;		// primary virtual register number
+	unsigned int sreg : 32;		// secondary virtual register number (indexed addressing modes)
 	bool pcolored;
 	bool scolored;
 	unsigned short int pregs;	// subscripted register number
@@ -1149,7 +1149,7 @@ public:
 	bool memref;
 	bool argref;							// refers to a function argument
 	bool preserveNextReg;
-	unsigned int type : 16;
+	unsigned int type : 32;
 	TYP* typep;
 	TYP* tp;
 	char FloatSize;
@@ -1184,6 +1184,7 @@ public:
 	Operand* GenerateZeroExtend(int startpos, int width);
 	Operand *GenerateSignExtend(int64_t isize, int64_t osize, int flags);
 	void MakeLegalReg(int flags, int64_t size);
+	void MakeLegalCrReg(int flags, int64_t size);
 	void MakeLegal(int flags, int64_t size);
 	int OptRegConst(int regclass, bool tally=false);
 	bool GetConstValue(Int128* pval);
@@ -1477,7 +1478,7 @@ public:
 	virtual Operand* GenerateFge(ENODE* node) { return (nullptr); };
 	virtual Operand *GenExpr(ENODE *node) { return (nullptr); };
 	OCODE* GenerateLoadFloatConst(Operand* ap1, Operand* ap2);
-	virtual void GenerateLoadConst(Operand *ap1, Operand *ap2);
+	virtual void GenerateLoadConst(Operand *val, Operand *dst);
 	void SaveTemporaries(Function *sym, int *sp, int *fsp, int* psp, int* vsp);
 	void RestoreTemporaries(Function *sym, int sp, int fsp, int psp, int vsp);
 	virtual void GenerateInterruptSave(Function* func) {
@@ -1865,6 +1866,7 @@ public:
 	void GenerateLoadAddress(Operand* ap3, Operand* ap1);
 	void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
 	void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
+	void GenerateStoreImmediate(Operand* ap1, Operand* ap2, int64_t size);
 	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
 	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
@@ -2691,8 +2693,11 @@ public:
 	short int autoInline;
 	short int table_density;		// switch table density threshold as a percentage.
 	short int reg_in_use[256];
+	short int CrRegInUse[256];
 	CSet temp_in_use;
 	CSet saved_in_use;
+	CSet savedCrInUse;
+	CSet tempCrInUse;
 	char firstid[128];
 	char lastid[128];
 	int64_t lc_static;
@@ -2748,6 +2753,7 @@ public:
 	int NumRegs;
 	int NumArgRegs;
 	int NumTmpRegs;
+	int NumTmpCrRegs;
 	int NumSavedRegs;
 	int NumFargRegs;
 	int NumFtmpRegs;
@@ -2758,6 +2764,7 @@ public:
 	int NumvmArgRegs;
 	int NumvmTmpRegs;
 	int NumvmSavedRegs;
+	int NumSavedCrRegs;
 	int argregs[64];
 	int tmpregs[64];
 	int saved_regs[64];
@@ -2770,6 +2777,8 @@ public:
 	int vmargregs[64];
 	int vmtmpregs[64];
 	int vmsaved_regs[64];
+	int tmpCrRegs[64];
+	int savedCrRegs[64];
 	bool SupportsBand;
 	bool SupportsBor;
 	bool SupportsBBS;
@@ -2821,6 +2830,9 @@ public:
 	void InitRegs();
 	int GetTypePrecision(e_bt typ);
 	int GetTypeSize(e_bt typ);
+	virtual int ReturnBlockSize() {
+		return (4 * sizeOfWord);
+	};
 };
 
 class QuplsCPU : public CPU
@@ -2836,6 +2848,15 @@ class RiscvCPU : public CPU
 class BigfootCPU : public CPU
 {
 	BigfootCPU();
+	int ReturnBlockSize() {
+		return (4 * sizeOfWord);
+	};
+};
+
+class BigfootOCODE : public OCODE
+{
+public:
+	void OptAdd();
 };
 
 //#define SYM     struct sym

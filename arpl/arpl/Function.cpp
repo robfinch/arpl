@@ -862,7 +862,7 @@ void Function::UnlinkStack(int64_t amt)
 			if (alstk) {
 				ap = GetTempRegister();
 				cg.GenerateLoad(ap, MakeIndexed(1 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
-				GenerateDiadic(op_mov, 0, makereg(regLR), ap);
+				GenerateDiadic(op_move, 0, makereg(regLR), ap);
 				ReleaseTempRegister(ap);
 				//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
 				if (IsFar) {
@@ -1067,7 +1067,7 @@ void Function::Generate()
 	/*
 	if (exceptions) {
 		ip = pl.tail;
-		GenerateMonadic(op_bra, 0, MakeDataLabel(lab0, regZero));
+		GenerateMonadic(op_branch, 0, MakeDataLabel(lab0, regZero));
 		doCatch = GenDefaultCatch();
 		GenerateLabel(lab0);
 		if (!doCatch) {
@@ -1082,7 +1082,7 @@ void Function::Generate()
 
 	// Inline code needs to branch around the default exception handler.
 	if (compiler.exceptions && sym->IsInline)
-		GenerateMonadic(op_bra,0,MakeCodeLabel(lab0));
+		GenerateMonadic(op_branch,0,MakeCodeLabel(lab0));
 	// Generate code for the hidden default catch
 	if (compiler.exceptions && !IsNocall)
 		GenerateDefaultCatch();
@@ -1118,7 +1118,7 @@ void Function::GenerateDefaultCatch()
 		if (!hasDefaultCatch)
 			GenerateLabel(defCatchLabel);
 		GenerateDiadic(op_jsr, 0, makereg(regLR+1), MakeStringAsNameConst((char *)"_DEFCAT", codeseg));
-		GenerateMonadic(op_bra, 0, MakeCodeLabel(retlab));										// And execute return code
+		GenerateMonadic(op_branch, 0, MakeCodeLabel(retlab));										// And execute return code
 		//GenerateDiadic(cpu.ldo_op, 0, ap, MakeIndexed((int64_t)0, regFP));				// Get previous frame pointer
 		//GenerateDiadic(cpu.ldo_op, 0, ap2, MakeIndexed((int64_t)32, ap->preg));		// Get previous handler address
 		//GenerateDiadic(cpu.sto_op, 0, ap2, MakeIndexed((int64_t)16, regFP));				// move it to return address loc

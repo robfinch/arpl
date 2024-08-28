@@ -331,15 +331,16 @@ int64_t radix36(char c)
  */
 void getbase(int64_t b)
 {       
-        register int64_t i0, i1, i2;
-        register int64_t i, j;
-        int k;
-        Int128 i128, b128, j128;
-        b128 = Int128::Convert(b);
-        i = 0;
-        i128 = *Int128::Zero();
-        i0 = 0;
-        i1 = 0;
+  register int64_t i0, i1, i2;
+  register int64_t i, j;
+  int k;
+  bool isUnsigned = false;
+  Int128 i128, b128, j128;
+  b128 = Int128::Convert(b);
+  i = 0;
+  i128 = *Int128::Zero();
+  i0 = 0;
+  i1 = 0;
         while(isalnum(lastch)) {
                 if((j = radix36(lastch)) < b) {
                   j128 = Int128::Convert(j);
@@ -364,6 +365,8 @@ void getbase(int64_t b)
                 else break;
                 }
         if (lastch == 'L' || lastch == 'U' || lastch == 'l' || lastch == 'u' || lastch == 'S' || lastch == 's') { // ignore a 'L'ong suffix and 'U'nsigned
+          if (lastch == 'u' || lastch == 'U')
+            isUnsigned = true;
           if (lastch != 'U' && lastch != 'u')
             int_precision = toupper(lastch);
           getch();
@@ -390,7 +393,9 @@ void getbase(int64_t b)
              rval.man5 = (rval.man5 << 1);
         }
 */
-        lastst = iconst;
+  lastst = iconst;
+  if (isUnsigned)
+    lastst = uiconst;
 }
  
 //
@@ -495,120 +500,130 @@ void getexp()
  *      decimal, octal, hexidecimal, and floating point numbers.
  */
 void getnum()
-{       register int    i;
+{
+  register int    i;
   bool isPosit = false;
-        i = 0;
-        float_precision = ' ';
-        int_precision = ' ';
-        ival = 0;
-        rval = 0.0;
-        pval64.Zero();
-		Float128::Assign(&rval128,Float128::Zero());
-        numstrptr = &numstr[0];
-         *numstrptr = lastch;
-         numstrptr++; 
-        if(lastch == '0') {
-                getch();
-                if (lastch=='.')
-                     goto j1;
-                if(lastch == 'x' || lastch == 'X') {
-                        getch();
-                        getbase(16);
-                        }
-                else getbase(8);
-                // Ignore 'U' unsigned suffix
-                if (lastch == 'U' || lastch == 'u') {
-                  getch();
-                }
-                // Ignore 'L' unsigned suffix
-                if (lastch == 'L' || lastch == 'l' || lastch == 'S' || lastch == 's') {
-                  int_precision = lastch;
-                  getch();
-                  if (lastch == 'L' || lastch == 'l') {
-                    getch();
-                    if (lastch == 'U' || lastch == 'u') {
-                      getch();
-                    }
-                  }
-                }
-        }
-        else    {
-                getbase(10);
-                // Ignore 'U' unsigned suffix
-                if (lastch == 'U' || lastch == 'u') {
-                  getch();
-                }
-                // Ignore 'L' unsigned suffix
-                if (lastch == 'L' || lastch == 'l' || lastch == 'S' || lastch == 's') {
-                  int_precision = lastch;
-                  getch();
-                  if (lastch == 'L' || lastch == 'l') {
-                    getch();
-                    if (lastch == 'U' || lastch == 'u') {
-                      getch();
-                    }
-                  }
-                }
-j1:
-                if(lastch == '.') {
-                  if (lptr[0] == '.' && lptr[1] == '.') {
-                    lptr--;
-                    lastch = '.';
-                    goto j2;
-                  }
-                  getch();
-                  rval = (double)ival;    /* float the integer part */
-						Float128::IntToFloat(&rval128, (__int64)ival);
-            pval64 = pval64.Posit64::IntToPosit(ival);
-                        getfrac();      /* add the fractional part */
-                        lastst = rconst;
-                        }
-j2:
-                if (lastch == 'p' || lastch == 'P') {
-                  getch();
-                  isPosit = true;
-                  lastst = pconst;
-                  if (lastch == 's' || lastch == 'h' || lastch=='S' || lastch=='H') {
-                    float_precision = tolower(lastch);
-                    getch();
-                  }
-                }
-                if(lastch == 'e' || lastch == 'E') {
-                        getch();
-                        getexp();       /* get the exponent */
-						// This must be reset because getting the exponent
-						// calls getbase() which will set lastst=iconst
-						lastst = isPosit ? pconst : rconst;
-                        }
-				
-				if (lastst==rconst && (lastch=='Q' || lastch=='q' ||
-					lastch=='D' || lastch=='d' || lastch=='s' || lastch=='S' || lastch=='T' || lastch=='t')) {
-						float_precision = tolower(lastch);
-						getch();
-				}
-				else if (!isPosit)
-					float_precision = 'd';
-				
-				// Ignore 'U' unsigned suffix
-				if (lastch=='U' || lastch=='u') {
-					getch();
-				}
-        // Ignore 'L' unsigned suffix
-        if (lastch == 'L' || lastch == 'l') {
+  bool isUnsigned = false;
+
+  i = 0;
+  float_precision = ' ';
+  int_precision = ' ';
+  ival = 0;
+  rval = 0.0;
+  pval64.Zero();
+	Float128::Assign(&rval128,Float128::Zero());
+  numstrptr = &numstr[0];
+  *numstrptr = lastch;
+  numstrptr++; 
+  if(lastch == '0') {
+    getch();
+    if (lastch=='.')
+      goto j1;
+    if(lastch == 'x' || lastch == 'X') {
+      getch();
+      getbase(16);
+    }
+    else getbase(8);
+    // Ignore 'U' unsigned suffix
+    if (lastch == 'U' || lastch == 'u') {
+      isUnsigned = true;
+      getch();
+    }
+    // Ignore 'L' unsigned suffix
+    if (lastch == 'L' || lastch == 'l' || lastch == 'S' || lastch == 's') {
+      int_precision = lastch;
+      getch();
+      if (lastch == 'L' || lastch == 'l') {
+        getch();
+        if (lastch == 'U' || lastch == 'u') {
+          isUnsigned = true;
           getch();
-          if (lastch == 'L' || lastch == 'l') {
-            getch();
-            if (lastch == 'U' || lastch == 'u') {
-              getch();
-            }
-          }
         }
       }
-    numstrptr[-1]='\0';
-    numstrptr = NULL;
+    }
+  }
+  else {
+    getbase(10);
+    // Ignore 'U' unsigned suffix
+    if (lastch == 'U' || lastch == 'u') {
+      isUnsigned = true;
+      getch();
+    }
+    // Ignore 'L' unsigned suffix
+    if (lastch == 'L' || lastch == 'l' || lastch == 'S' || lastch == 's') {
+      int_precision = lastch;
+      getch();
+      if (lastch == 'L' || lastch == 'l') {
+        getch();
+        if (lastch == 'U' || lastch == 'u') {
+          isUnsigned = true;
+          getch();
+        }
+      }
+    }
+j1:
+    if(lastch == '.') {
+      if (lptr[0] == '.' && lptr[1] == '.') {
+        lptr--;
+        lastch = '.';
+        goto j2;
+      }
+      getch();
+      rval = (double)ival;    /* float the integer part */
+			Float128::IntToFloat(&rval128, (__int64)ival);
+      pval64 = pval64.Posit64::IntToPosit(ival);
+      getfrac();      /* add the fractional part */
+      lastst = rconst;
+    }
+j2:
+    if (lastch == 'p' || lastch == 'P') {
+      getch();
+      isPosit = true;
+      lastst = pconst;
+      if (lastch == 's' || lastch == 'h' || lastch=='S' || lastch=='H') {
+        float_precision = tolower(lastch);
+        getch();
+      }
+    }
+    if(lastch == 'e' || lastch == 'E') {
+      getch();
+      getexp();       /* get the exponent */
+		// This must be reset because getting the exponent
+		// calls getbase() which will set lastst=iconst
+  		lastst = isPosit ? pconst : rconst;
+    }
+				
+		if (lastst==rconst && (lastch=='Q' || lastch=='q' ||
+			lastch=='D' || lastch=='d' || lastch=='s' || lastch=='S' || lastch=='T' || lastch=='t')) {
+			float_precision = tolower(lastch);
+			getch();
+		}
+		else if (!isPosit)
+			float_precision = 'd';
+				
+		// Ignore 'U' unsigned suffix
+		if (lastch=='U' || lastch=='u') {
+      isUnsigned = true;
+			getch();
+		}
+    // Ignore 'L' unsigned suffix
+    if (lastch == 'L' || lastch == 'l') {
+      getch();
+      if (lastch == 'L' || lastch == 'l') {
+        getch();
+        if (lastch == 'U' || lastch == 'u') {
+          isUnsigned = true;
+          getch();
+        }
+      }
+    }
+  }
+  numstrptr[-1]='\0';
+  numstrptr = NULL;
 //    dd_real::read(numstr,rval);
 //    printf("leave getnum=%s\r\n", numstr);
-				
+  if (lastst == iconst && isUnsigned)
+    lastst = uiconst;
 }
 
 void SkipSpaces()

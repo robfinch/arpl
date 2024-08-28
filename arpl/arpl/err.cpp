@@ -106,7 +106,8 @@ static const char *errtextstr[] = {
 	"E End of file reached.",
 	"E Bad precision.",
 	"E Calling unknown function, arguments may not be removed correctly.",
-	"E Missing parameter specification, is the function declared?"
+	"E Missing parameter specification, is the function declared?",
+	"W Shifting by too many bits, result will be zero."
 };
 
 static const char *errtext1000[] =

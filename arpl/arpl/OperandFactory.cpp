@@ -28,7 +28,7 @@
 //
 //      construct a reference node for an internal label number.
 //
-Operand *OperandFactory::MakeDataLabel(int lab, int ndxreg)
+Operand *OperandFactory::MakeDataLabel(int64_t lab, int ndxreg)
 {
 	ENODE *lnode;
 	Operand *ap;
@@ -49,7 +49,7 @@ Operand *OperandFactory::MakeDataLabel(int lab, int ndxreg)
 	return (ap);
 }
 
-Operand *OperandFactory::MakeCodeLabel(int lab)
+Operand *OperandFactory::MakeCodeLabel(int64_t lab)
 {
 	ENODE *lnode;
 	Operand *ap;
@@ -330,8 +330,8 @@ Operand *OperandFactory::makecreg(int r)
 {
 	Operand *ap;
 	ap = allocOperand();
-	ap->mode = am_creg;
-	ap->preg = r|=0x70;
+	ap->mode = amCrReg;
+	ap->preg = r|rt_cr;
 	ap->isBool = true;
 	return (ap);
 }

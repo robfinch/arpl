@@ -47,7 +47,7 @@ struct nlit *numeric_tab = nullptr;
 // Please keep table in alphabetical order.
 // Instruction.cpp has the number of table elements hard-coded in it.
 //
-Instruction opl[374] =
+Instruction opl[381] =
 {   
 { ";", op_remark },
 { ";asm",op_asm,300 },
@@ -59,6 +59,7 @@ Instruction opl[374] =
 { "addh",op_addh,1,1,false,am_reg,am_imm,0, 0 },
 { "addm",op_addm,1,1,false,am_reg,am_imm,0, 0 },
 { "addmo",op_addmo,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "addq",op_addq,1,1,false,am_reg, am_imm,0, 0 },
 { "adds",op_adds,1,1,false,am_reg,am_imm,am_imm, 0 },
 { "addu", op_addu,1,1 },
 { "and",op_and,1,1,false,am_reg,am_reg,am_reg|am_imm,0 },
@@ -105,7 +106,7 @@ Instruction opl[374] =
 { "bnor", op_bnor,2,0,false,am_reg,am_reg,0,0 },
 { "bor", op_bor,3,0 },
 { "br",op_br,3,0,false,0,0,0,0 },
-{ "bra",op_bra,3,0,false,am_direct,0,0,0 },
+{ "branch",op_branch,3,0,false,am_direct,0,0,0 },
 { "brk", op_brk,1,0 },
 { "bsr", op_bsr,3,0,false,am_direct,0,0,0 },
 { "bt", op_bt,3,0,false,am_reg,am_direct,0,0 },
@@ -218,7 +219,7 @@ Instruction opl[374] =
 { "ldft", op_ldft,4,1,true, am_reg, am_mem,0,0 },
 { "ldh", op_ldh,4,1,true,am_reg,am_mem,0,0 },
 { "ldhs", op_ldhs,4,1,true,am_reg,am_mem,0,0 },
-{ "ldi",op_ldi,1,1,false,am_reg,am_imm,0,0 },
+//{ "ldi",op_loadi,1,1,false,am_reg,am_imm,0,0 },
 { "ldm", op_ldm,20,1,true,am_mem,0,0,0 },
 { "ldo", op_ldo,4,1,true,am_reg,am_mem,0,0 },
 { "ldos", op_ldos,4,1,true,am_reg,am_mem,0,0 },
@@ -240,6 +241,7 @@ Instruction opl[374] =
 { "lm", op_lm },
 { "load", op_load,4,1,true,am_reg,am_mem,0,0 },
 { "loadg", op_loadg,4,1,true,am_reg,am_mem,0,0 },
+{ "loadi",op_loadi,1,1,false,am_reg,am_imm,0,0 },
 { "loadv", op_loadv,4,1, true, am_vreg, am_mem,0,0 },
 { "loadz", op_loadz,4,1,true,am_reg,am_mem,0,0 },
 { "loop", op_loop,1,0 },
@@ -320,9 +322,9 @@ Instruction opl[374] =
 { "rem", op_rem,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "remu",op_remu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "ret", op_ret,1,0,false,am_imm,0,0,0 },
+{ "retd", op_retd,1,0,false,am_reg,am_reg,am_reg,am_reg | am_imm },
 { "rol", op_rol,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "ror", op_ror,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
-{ "rtd", op_rtd,1,0,false,am_reg,am_reg,am_reg,am_reg|am_imm },
 { "rte", op_rte,2,0 },
 { "rti", op_rti,2,0 },
 { "rtl", op_rtl,1,0,false,am_imm,0,0,0 },
@@ -357,16 +359,22 @@ Instruction opl[374] =
 { "sth", op_sth,4,0,true,am_reg,am_mem,0,0 },
 { "sths",op_sths,4,0,true,am_reg,am_mem,0,0 },
 { "sti", op_sti,1,0 },
+{ "stib",op_stib,4,0,true,am_imm,am_mem,0,0 },
+{ "stit",op_stit,4,0,true,am_imm,am_mem,0,0 },
+{ "stiw",op_stiw,4,0,true,am_imm,am_mem,0,0 },
+{ "stio",op_stio,4,0,true,am_imm,am_mem,0,0 },
 { "stm", op_stm,20,1,true,am_mem,0,0,0 },
 { "sto",op_sto,4,0,true,am_reg,am_mem,0,0 },
 { "stop", op_stop },
 { "store",op_store,4,0,true,am_reg,am_mem,0,0 },
 { "storeg",op_storeg,4,0,true,am_reg,am_mem,0,0 },
+{ "storev", op_storev,4,1, true, am_vreg, am_mem,0,0 },
 { "stos",op_stos,4,0,true,am_reg,am_mem,0,0 },
 { "stp",op_stp,4,0,true,am_reg,am_mem,0,0 },
 { "stt",op_stt,4,0,true,am_reg,am_mem,0,0 },
 { "stw",op_stw,4,0,true,am_reg,am_mem,0,0 },
 { "sub",op_sub,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "subtract",op_subtract,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "subu", op_subu,1,1 },
 { "sv", op_sv,256,0 },
 { "sw",op_sw,4,0,true,am_reg,am_mem,0,0 },
@@ -410,19 +418,19 @@ Instruction opl[374] =
 { "wydendx", op_wydendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "xnor",op_xnor,1,1,false,am_reg,am_reg,am_reg,0 },
 { "xor",op_xor,1,1,false,am_reg,am_reg,am_reg|am_imm,0 },
-{ "zseq", op_seq,1,1,false,am_reg,am_reg,am_reg|am_i16,am_reg|am_imm },
-{ "zsge",op_sge,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zsgeu",op_sgeu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zsgt",op_sgt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zsgtu",op_sgtu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zsle",op_sle,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zsleu",op_sleu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zslt", op_slt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zsltu", op_sltu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
-{ "zsne",op_sne,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zseq", op_zseq,1,1,false,am_reg,am_reg,am_reg|am_i16,am_reg|am_imm },
+{ "zsge",op_zsge,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgeu",op_zsgeu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgt",op_zsgt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgtu",op_zsgtu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsle",op_zsle,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsleu",op_zsleu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zslt", op_zslt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsltu", op_zsltu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsne",op_zsne,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
 { "zxb",op_zxb,1,1,false,am_reg,am_reg,0,0 },
 { "zxt",op_zxt,1,1,false,am_reg,am_reg,0,0 },
-{ "zxw",op_zxw,1,1,false,am_reg,am_reg,0,0 }
+{ "zxw",op_zxo,1,1,false,am_reg,am_reg,0,0 }
 };
 
 Instruction *GetInsn(int op)
@@ -455,7 +463,7 @@ static char *segstr(int op)
 
 // Output a friendly register moniker
 
-char *RegMoniker(int regno)
+char *RegMoniker(int32_t regno)
 {
 	static char buf[4][20];
 	static int n;
@@ -464,6 +472,7 @@ char *RegMoniker(int regno)
 	bool vector = false;
 	bool group = false;
 	bool is_float = false;
+	bool is_cr = false;
 
 	if (regno & rt_group) {
 		group = true;
@@ -480,6 +489,10 @@ char *RegMoniker(int regno)
 	if (regno & rt_float) {
 		is_float = true;
 		regno &= 0x3f;
+	}
+	if (regno & rt_cr) {
+		is_cr = true;
+		regno &= 0xfffL;
 	}
 	n = (n + 1) & 3;
 	if (vector) {
@@ -505,8 +518,13 @@ char *RegMoniker(int regno)
 			sprintf_s(&buf[n][0], 20, "~fs%d", rg-1);
 		return (invert ? &buf[n][0] : &buf[n][1]);
 	}
-
-	if (rg = IsTempReg(regno)) {
+	if (is_cr) {
+		if (regno==0xfffL)
+			sprintf_s(&buf[n][0], 20, "crg");
+		else
+			sprintf_s(&buf[n][0], 20, "cr%d", regno & 7);
+	}
+	else if (rg = IsTempReg(regno)) {
 		if (invert)
 			sprintf_s(&buf[n][0], 20, "~t%d", rg - 1);// tmpregs[rg - 1]);
 		else
@@ -628,8 +646,6 @@ char *put_labels(txtoStream& tfs, char *buf)
 */
 void PutZeroBytes(txtoStream& tfs, int64_t count)
 {
-	int64_t nn;
-
 	if (count <= 0)
 		return;
 	if (syntax == MOT) {
@@ -641,7 +657,7 @@ void PutZeroBytes(txtoStream& tfs, int64_t count)
 /*
 * Pass -1 as the label number, lab, to just just the namespace parameter as the label.
 */
-char *put_label(txtoStream& tfs, int lab, char *nm, char *ns, char d, int sz, int segment)
+char *put_label(txtoStream& tfs, int64_t lab, char *nm, char *ns, char d, int64_t sz, int64_t segment)
 {
   static char buf[500];
 	int nn;
@@ -732,7 +748,7 @@ char *put_label(txtoStream& tfs, int lab, char *nm, char *ns, char d, int sz, in
 	return (buf);
 }
 
-char* put_label(txtoStream& tfs, int lab, const char* nm, const char* ns, char d, int sz, int segment) {
+char* put_label(txtoStream& tfs, int64_t lab, const char* nm, const char* ns, char d, int64_t sz, int64_t segment) {
 	return (put_label(tfs, lab, (char*)nm, (char*)ns, d, sz, segment));
 }
 
@@ -1701,7 +1717,7 @@ void roseg(txtoStream& tfs)
     }
 }
 
-void seg(txtoStream& tfs, int sg, int algn)
+void seg(txtoStream& tfs, int sg, int64_t algn)
 {    
 	nl(tfs);
 	if( curseg != sg) {

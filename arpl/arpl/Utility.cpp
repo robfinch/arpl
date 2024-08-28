@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2021  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -133,5 +133,15 @@ std::string MakeConame(std::string nme, std::string suffix)
 	bufs[n] += "_";
 	bufs[n] += suffix;
 	return (bufs[n]);
+}
+
+inline int64_t CopyRawDouble(double dbl)
+{
+	union {
+		int64_t i;
+		double f;
+	} x;
+	x.f = dbl;
+	return (x.i);
 }
 

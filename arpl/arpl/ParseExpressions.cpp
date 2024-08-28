@@ -632,7 +632,6 @@ TYP* Expression::RefVector(ENODE** node, TYP* tp)
 	SetRefType(node);
 	(*node)->esize = tp->size;
 	(*node)->etype = (enum e_bt)tp->type;
-	tp = &stdvector;
 	return (tp);
 }
 
@@ -832,7 +831,7 @@ TYP *Expression::CondAddRef(ENODE **node, TYP *tp)
 	TYP *tp1;
 	int64_t sz;
 	int dimen;
-	int numele;
+	int64_t numele;
   
 	//if (tp->type == bt_pointer && !tp->isArray)
 	//	return (tp);
@@ -1272,10 +1271,11 @@ Symbol *CreateDummyParameters(ENODE *ep, Symbol *parent, TYP *tp)
 // ----------------------------------------------------------------------------
 TYP *Expression::ParsePrimaryExpression(ENODE **node, int got_pa, Symbol* symi)
 {
-	ENODE *pnode, *qnode, *qnode1, *qnode2, * qnode3;
+	ENODE *pnode, *qnode1, *qnode2;
   TYP *tptr;
 	TypeArray typearray;
 	bool wasBr = false;
+	bool isUnsigned = false;
 	Symbol* sp;
 
 	qnode1 = (ENODE *)NULL;
@@ -1372,21 +1372,24 @@ j1:
 		tptr = ParseCharConst(&pnode, 1);
 		break;
 
+	case uiconst:
+		isUnsigned = true;
 	case iconst:
 		if (int_precision == ' ')
 		{
-			tptr = &stdint;
+			tptr = isUnsigned ? &stduint : &stdint;
 			pnode = SetIntConstSize(tptr, ival);
 		}
 		else if (int_precision == 'L') {
-			tptr = &stdlong;
+			tptr = isUnsigned ? & stdulong : &stdlong;
 			pnode = makei128node(en_icon, ival128);
 		}
 		else if (int_precision == 'S') {
-			tptr = &stdshort;
+			tptr = isUnsigned ? & stdushort : &stdshort;
 			pnode = makei128node(en_icon, ival128);
 		}
 		pnode->sym = symi==nullptr?currentSym:symi;
+		tptr->isUnsigned = isUnsigned;
 		pnode->SetType(tptr);
     NextToken();
 		break;
@@ -1711,7 +1714,7 @@ ENODE* Expression::FindLastMulu(ENODE* ep, ENODE *pep)
 
 ENODE* Expression::AdjustForBitArray(int pop, TYP*tp1, ENODE* ep1)
 {
-	ENODE* ep, *mep;
+	ENODE* mep;
 
 	mep = nullptr;
 	if (pop == openbr) {
@@ -1746,7 +1749,7 @@ ENODE* Expression::AdjustForBitArray(int pop, TYP*tp1, ENODE* ep1)
 
 TYP* Expression::ParsePostfixExpression(ENODE** node, int got_pa, Symbol* symi)
 {
-	TYP* tp1, * firstType = nullptr, * tp2;
+	TYP* tp1, * firstType = nullptr;
 	ENODE* ep1, * ep2;
 	bool classdet = false;
 	bool wasBr = false;
@@ -2026,10 +2029,9 @@ TYP *Expression::ParseUnaryExpression(ENODE **node, int got_pa, Symbol* symi)
 TYP *Expression::ParseCastExpression(ENODE **node, Symbol* symi)
 {
 	TYP *tp, *tp1, *tp2;
-	ENODE *ep1, *ep2, *ep3, *dstnode, *srcnode;
+	ENODE *ep1, *ep2, *dstnode, *srcnode;
 	Declaration decl;
 	Symbol* sp;
-	bool madenode;
 
   Enter("ParseCast ");
   *node = (ENODE *)NULL;
@@ -2494,12 +2496,16 @@ TYP *Expression::ParseShiftOps(ENODE **node, Symbol* symi)
             oper = (lastst == lshift);
 			if (lastst==lrot || lastst==rrot)
 				oper=2 + (lastst==lrot);
-            NextToken();
-            tp2 = ParseAddOps(&ep2, symi);
-            if( tp2 == 0 )
-                    error(ERR_IDEXPECT);
-            else    {
-                    tp1 = forcefit(&ep2,tp2,&ep1,tp1,true,false);
+        NextToken();
+        tp2 = ParseAddOps(&ep2, symi);
+        if( tp2 == 0 )
+          error(ERR_IDEXPECT);
+        else {
+					// Not promoting the type on a shift...
+					// The shift amount should be a small number or the result will be all
+					// zeros or all ones. The size of the destination can be used as it
+					// should always be larger than the shift amount.
+          forcefit(&ep2,tp2,&ep1,tp1,false,false);
 					if (tp1->IsFloatType())
 						error(ERR_UNDEF_OP);
 					else {
@@ -2815,11 +2821,8 @@ xit:
 
 TYP *Expression::ParseBitwiseOrOps(ENODE **node, Symbol* symi)
 {
-	ENODE *ep1, *ep2, *ep3;
+	ENODE *ep1, *ep2;
 	TYP *tp1, *tp2;
-	ENODE* p[50];
-	TYP* t[50];
-	int n,k,j;
 	bool did = false;
 	
 	Enter("Binop");
@@ -2893,7 +2896,6 @@ TYP *Expression::ParseBitwiseOrOps(ENODE **node, Symbol* symi)
 			PromoteConstFlag(ep1);
 		}
 	}
-xit1:
 	*node = ep1;
 xit:
 	if (tp1 == nullptr) {
@@ -3157,7 +3159,6 @@ TYP *Expression::ParseAssignOps(ENODE **node, Symbol* symi)
   TYP *tp1, *tp2;
 	Symbol* sp;
   int op;
-	bool madenode;
 
   Enter("Assignop");
   *node = (ENODE *)NULL;

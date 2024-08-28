@@ -66,6 +66,7 @@ int main(int argc, char **argv)
 	Posit64 a, b, c, d, e;
 	txtoStream ofs;
 	Int128 aa, bb, cc, qq, rr;
+	int xx;
 
 	syntax = STD;
 	aa = Int128::Convert(0x769bdd5fLL);
@@ -345,13 +346,14 @@ int main(int argc, char **argv)
 	cpu.InitRegs();
 
 //	printf("c64 starting...\r\n");
-	while(--argc) {
-    if( **++argv == '-')
-      options(*argv);
-		else {
-			if (PreProcessFile(*argv) == -1)
+	for (xx = 1; strchr("-/+", argv[xx][0]) && (xx < argc); xx++)
+		options(argv[xx]);
+
+	do {
+		if (xx < argc) {
+			if (PreProcessFile(argv[xx]) == -1)
 				break;
-			if( openfiles(*argv)) {
+			if (openfiles(argv[xx])) {
 				lineno = 0;
 				initsym();
 	compiler.compile();
@@ -364,7 +366,7 @@ int main(int argc, char **argv)
 			}
     }
     dfs.printf((char *)"<CmdNext>Next on command line (%d).</CmdNext>\n", argc);
-  }
+	} while (0);
 	//getchar();
 	dfs.printf("<Exit></Exit>\n");
 	dfs.close();

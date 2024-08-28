@@ -96,7 +96,7 @@ void txtoStream::puts(const char *str)
   }
 }
 
-void txtoStream::writeAsHex(const void *buf, int len)
+void txtoStream::writeAsHex(const void *buf, int64_t len)
 {
 	int n;
 	char *cbuf = (char *)buf;

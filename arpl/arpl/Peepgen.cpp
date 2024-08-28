@@ -327,7 +327,7 @@ void Function::PeepOpt()
 	if (!hasSPReferences && !hasBPReferences) {
 		if (pl.Count(pl.head) < compiler.autoInline) {
 			for (ip = pl.head; ip; ip = ip->fwd)
-				if (ip->opcode == op_rts || ip->opcode == op_ret || ip->opcode == op_rtd)
+				if (ip->opcode == op_rts || ip->opcode == op_ret || ip->opcode == op_retd)
 					ip->MarkRemove();
 			pl.Remove();
 		}

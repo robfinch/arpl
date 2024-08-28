@@ -323,7 +323,7 @@ void CSETable::InitializeTempRegs()
 	Operand *ap, *ap2;
 	CSE *csp;
 	ENODE *exptr;
-	int size;
+	int64_t size;
 
 	cg.GenerateHint(begin_regvar_init);
 	for (csp = First(); csp; csp = Next()) {
@@ -358,14 +358,14 @@ void CSETable::InitializeTempRegs()
 						//if (ap2->mode == am_fpreg) {
 						//	ap3 = GetTempRegister();
 						//	ap3->tp = ap->tp;
-						//	GenerateDiadic(op_ldi, 0, ap3, ap);
+						//	GenerateDiadic(op_loadi, 0, ap3, ap);
 						//	GenerateDiadic(op_mov, 0, ap2, ap3);
 						//	ReleaseTempReg(ap3);
 						//}
 						//else if (ap2->mode == am_preg) {
 						//	ap3 = GetTempRegister();
 						//	ap3->tp = ap->tp;
-						//	GenerateDiadic(op_ldi, 0, ap3, ap);
+						//	GenerateDiadic(op_loadi, 0, ap3, ap);
 						//	GenerateDiadic(op_mov, 0, ap2, ap3);
 						//	ReleaseTempReg(ap3);
 						//}

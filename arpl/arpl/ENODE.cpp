@@ -129,9 +129,9 @@ int64_t ENODE::GetReferenceSize()
 }
 // return the natural evaluation size of a node.
 
-int ENODE::GetNaturalSize()
+int64_t ENODE::GetNaturalSize()
 {
-	int siz0, siz1, siz2;
+	int64_t siz0, siz1, siz2;
 	if (this == NULL)
 		return 0;
 	switch (nodetype)
@@ -1550,16 +1550,16 @@ void ENODE::GenerateHint(int num)
 	GenerateMonadic(op_hint, 0, MakeImmediate(num));
 }
 
-void ENODE::GenerateLoad(Operand *ap3, Operand *ap1, int ssize, int size)
+void ENODE::GenerateLoad(Operand *ap3, Operand *ap1, int64_t ssize, int64_t size)
 {
 	cg.GenerateLoad(ap3, ap1, ssize, size);
 }
-void ENODE::GenStore(Operand *ap1, Operand *ap3, int size)
+void ENODE::GenStore(Operand *ap1, Operand *ap3, int64_t size)
 {
 	cg.GenerateStore(ap1, ap3, size);
 }
 
-void ENODE::GenMemop(int op, Operand *ap1, Operand *ap2, int ssize, int typ)
+void ENODE::GenMemop(int op, Operand *ap1, Operand *ap2, int64_t ssize, int typ)
 {
 	cg.GenMemop(op, ap1, ap2, ssize, typ);
 }
@@ -1788,7 +1788,7 @@ Operand *ENODE::GenerateIndex(bool neg)
 	return (ap1);                     /* return indexed */
 }
 
-Operand* ENODE::GenerateScaledIndexing(int flags, int size, int rhs)
+Operand* ENODE::GenerateScaledIndexing(int flags, int64_t size, int rhs)
 {
 	Operand* ap1;
 	Operand* ap3;
@@ -1809,7 +1809,7 @@ Operand* ENODE::GenerateScaledIndexing(int flags, int size, int rhs)
 // Making this dead code for now.
 // Generate code to evaluate a condition operator node (??:)
 //
-Operand *ENODE::GenSafeHook(int flags, int size)
+Operand *ENODE::GenerateSafeHook(int flags, int64_t size)
 {
 	Operand *ap1, *ap2, *ap3, *ap4;
 	int false_label, end_label;
@@ -1824,7 +1824,7 @@ Operand *ENODE::GenSafeHook(int flags, int size)
 	/*
 	if (p[0]->constflag && p[1]->constflag) {
 	GeneratePredicateMonadic(hook_predreg,op_op_ldi,MakeImmediate(p[0]->i));
-	GeneratePredicateMonadic(hook_predreg,op_ldi,MakeImmediate(p[0]->i));
+	GeneratePredicateMonadic(hook_predreg,op_loadi,MakeImmediate(p[0]->i));
 	}
 	*/
 	ip1 = currentFn->pl.tail;
@@ -1889,7 +1889,7 @@ j1:
 		cg.GenerateFalseJump(p[0], false_label, 0);
 		node = p[1];
 		ap1 = cg.GenerateExpression(node->p[0], flags, size, 0);
-		GenerateDiadic(op_bra, 0, MakeCodeLabel(end_label), 0);
+		GenerateDiadic(op_branch, 0, MakeCodeLabel(end_label), 0);
 		GenerateLabel(false_label);
 		ap2 = cg.GenerateExpression(node->p[1], flags, size, 1);
 		if (!IsEqualOperand(ap1, ap2))
@@ -1944,7 +1944,7 @@ j1:
 	cg.GenerateFalseJump(p[0], false_label, 0);
 	node = p[1];
 	ap1 = cg.GenerateExpression(node->p[0], flags, size, 0);
-	GenerateDiadic(op_bra, 0, MakeCodeLabel(end_label), 0);
+	GenerateDiadic(op_branch, 0, MakeCodeLabel(end_label), 0);
 	GenerateLabel(false_label);
 	if (!IsEqualOperand(ap1, ap2))
 	{
@@ -1995,22 +1995,47 @@ j1:
 	return (ap1);
 }
 
+/* Generate code for a shift operation. A warning message is displayed if the
+* shift is known to be by too many bits.
+* 
+* Parameters:
+*		flags (input) the legal address modes to use for the result.
+*		size (input) the size of the result in bytes.
+*		op (input) the shift opcode.
+* 
+* Returns:
+*		an operand referencing the shift value.
+*/
 // ToDo: ShiftBitfield
-Operand *ENODE::GenerateShift(int flags, int size, int op)
+Operand* ENODE::GenerateShift(int flags, int64_t size, int op)
 {
-	Operand *ap1, *ap2, *ap3;
+	Operand* ap1, * ap2, * ap3;
+	Int128 val;
 
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(p[0], am_reg, size, 0);
 	ap2 = cg.GenerateExpression(p[1], am_reg | am_ui6, cpu.sizeOfWord, 1);
-	GenerateTriadic(op, size==cpu.sizeOfWord ?0 : size, ap3, ap1, ap2);
+	if (ap2->GetConstValue(&val))
+	{
+		Int128 sz, eight;
+		eight = Int128::Convert(8LL);
+		sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
+		Int128::Mul(&sz, &sz, &eight);
+		if (Int128::IsGT(&val, &sz))
+			error(ERR_SHIFT_TOOMANYBITS);
+	}
+	GenerateTriadic(op, size==cpu.sizeOfWord ?0 : (int)size, ap3, ap1, ap2);
 	// Rotates automatically sign extend
-	if ((op == op_rol || op == op_ror) && ap2->isUnsigned)
+	if ((op == op_rol || op == op_ror) && ap2->isUnsigned && !ap1->tp->IsVectorType())
 		switch (size) {
-		case 1:	Generate4adic(op_clr, 0, ap1, ap2, MakeImmediate(8), MakeImmediate(127)); break;
-		case 2:	Generate4adic(op_clr, 0, ap1, ap2, MakeImmediate(16), MakeImmediate(127)); break;
-		case 4:	Generate4adic(op_clr, 0, ap1, ap2, MakeImmediate(32), MakeImmediate(127)); break;
-		case 8: Generate4adic(op_clr, 0, ap1, ap2, MakeImmediate(64), MakeImmediate(127)); break;
+		case 1:	ap1 = ap2->GenerateBitfieldClear(8, cpu.sizeOfWord*8-9); break;
+		case 2:	ap1 = ap2->GenerateBitfieldClear(16, cpu.sizeOfWord * 8 - 17); break;
+		case 4:
+			if (cpu.sizeOfWord > 4)
+				ap1 = ap2->GenerateBitfieldClear(32, cpu.sizeOfWord * 8 - 33); break;
+		case 8:
+			if (cpu.sizeOfWord > 8)
+				ap1 = ap2->GenerateBitfieldClear(64, cpu.sizeOfWord * 8 - 65); break;
 		default:;
 		}
 	ReleaseTempRegister(ap2);
@@ -2020,7 +2045,7 @@ Operand *ENODE::GenerateShift(int flags, int size, int op)
 }
 
 // ToDo: AssignShiftBitfield
-Operand *ENODE::GenerateAssignShift(int flags, int size, int op)
+Operand *ENODE::GenerateAssignShift(int flags, int64_t size, int op)
 {
 	Operand *ap1, *ap2, *ap3;
 	MachineReg *mr;
@@ -2029,7 +2054,7 @@ Operand *ENODE::GenerateAssignShift(int flags, int size, int op)
 	ap3 = cg.GenerateExpression(p[0], am_all & ~am_imm, size, 0);
 	ap2 = cg.GenerateExpression(p[1], am_reg | am_ui6, size, 1);
 	if (ap3->mode == am_reg) {
-		GenerateTriadic(op, size, ap3, ap3, ap2);
+		GenerateTriadic(op, (int)size, ap3, ap3, ap2);
 		mr = &regs[ap3->preg];
 		if (mr->assigned)
 			mr->modified = true;
@@ -2041,7 +2066,7 @@ Operand *ENODE::GenerateAssignShift(int flags, int size, int op)
 	}
 	ap1 = GetTempRegister();
 	GenerateLoad(ap1, ap3, size, size);
-	GenerateTriadic(op, size, ap1, ap1, ap2);
+	GenerateTriadic(op, (int)size, ap1, ap1, ap2);
 	GenStore(ap1, ap3, size);
 	ReleaseTempRegister(ap1);
 	ReleaseTempRegister(ap2);
@@ -2054,7 +2079,7 @@ Operand *ENODE::GenerateAssignShift(int flags, int size, int op)
 //      generate code to evaluate a mod operator or a divide
 //      operator.
 //
-Operand *ENODE::GenDivMod(int flags, int size, int op)
+Operand *ENODE::GenerateDivMod(int flags, int64_t size, int op)
 {
 	Operand *ap1, *ap2, *ap3, *ap4;
 
@@ -2103,7 +2128,7 @@ Operand *ENODE::GenDivMod(int flags, int size, int op)
 //
 //      generate code to evaluate a multiply node.
 //
-Operand *ENODE::GenMultiply(int flags, int size, int op)
+Operand *ENODE::GenerateMultiply(int flags, int64_t size, int op)
 {
 	Operand *ap1, *ap2, *ap3, *vap3;
 	bool square = false;
@@ -2176,7 +2201,7 @@ Operand *ENODE::GenMultiply(int flags, int size, int op)
 //
 // Generate code to evaluate a unary minus or complement.
 //
-Operand *ENODE::GenerateUnary(int flags, int size, int op)
+Operand *ENODE::GenerateUnary(int flags, int64_t size, int op)
 {
 	Operand *ap, *ap2;
 
@@ -2254,20 +2279,20 @@ Operand *ENODE::GenerateUnary(int flags, int size, int op)
 
 // Generate code for a binary expression
 
-Operand *ENODE::GenerateBinary(int flags, int size, int op)
+Operand *ENODE::GenerateBinary(int flags, int64_t size, int op)
 {
 	return (cg.GenerateBinary(this, flags, size, op));
 }
 
-Operand *ENODE::GenerateAssignAdd(int flags, int size, int op)
+Operand *ENODE::GenerateAssignAdd(int flags, int64_t size, int op)
 {
 	return (cg.GenerateAssignAdd(this, flags, size, op));
 }
 
-Operand *ENODE::GenerateAssignLogic(int flags, int size, int op)
+Operand *ENODE::GenerateAssignLogic(int flags, int64_t size, int op)
 {
 	Operand *ap1, *ap2, *ap3;
-	int ssize;
+	int64_t ssize;
 	MachineReg *mr;
 
 	ssize = p[0]->GetNaturalSize();
@@ -2339,9 +2364,9 @@ Operand *ENODE::GenerateLand(int flags, int op, bool safe)
 	ap1 = cg.MakeBoolean(ap2);
 	ReleaseTempReg(ap2);
 	/*
-	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(1));
+	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(1));
 	cg.GenerateFalseJump(this, lab0, 0);
-	GenerateDiadic(op_ldi, 0, ap1, MakeImmediate(0));
+	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(0));
 	GenerateLabel(lab0);
 	*/
 	ap1->MakeLegal(flags, 8);
@@ -2573,7 +2598,7 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 {
 	// ASM statment text (up to 3500 chars) may be placed in the following buffer.
 	static char buf[4000];
-	int ndx;
+	int64_t ndx;
 	Posit16 pos16;
 	Posit32 pos32;
 
@@ -2615,7 +2640,7 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 		if (true || this->tp->type == bt_quad)
 			sprintf_s(buf, sizeof(buf), "%.16s", f128.ToCompressedString());
 		else
-			sprintf_s(buf, sizeof(buf), "0x%llx", f);
+			sprintf_s(buf, sizeof(buf), "0x%llx", CopyRawDouble(f));
 		ofs.write(buf);
 #endif
 		break;
@@ -2686,7 +2711,6 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 		}
 		break;
 	case en_labcon:
-	j1:
 		DataLabels[i]++;
 		ofs.write(GetLabconLabel(i)->c_str());
 		if (rshift > 0) {
@@ -2858,18 +2882,20 @@ void ENODE::GenerateInt(txtoStream& tfs)
 	Int128 i128, t128;
 
 	if (gentype == halfgen && outcol < 60) {
-		tfs.printf(",");
-		if (p[1]) {
-			i128 = p[1]->i128;
-			t128 = Int128(p[0]->tp->size);
-			Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
-			PutConstant(tfs, 0, 0, false, 0);
-			p[1]->i128 = i128;
-			p[1]->i = i128.low;
+		if (p[0]->tp) {
+			tfs.printf(",");
+			if (p[1]) {
+				i128 = p[1]->i128;
+				t128 = Int128(p[0]->tp->size);
+				Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
+				PutConstant(tfs, 0, 0, false, 0);
+				p[1]->i128 = i128;
+				p[1]->i = i128.low;
+			}
+			else
+				PutConstant(tfs, 0, 0, false, 0);
+			outcol += 10;
 		}
-		else
-			PutConstant(tfs, 0, 0, false, 0);
-		outcol += 10;
 	}
 	else {
 		nl(tfs);
@@ -2887,17 +2913,19 @@ void ENODE::GenerateInt(txtoStream& tfs)
 				PutConstant(tfs, 0, 0, false, 0);
 		}
 		else {
-			tfs.printf("\t.8byte\t");
-			if (p[1]) {
-				i128 = p[1]->i128;
-				t128 = Int128(p[0]->tp->size);
-				Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
-				PutConstant(tfs, 0, 0, false, 0);
-				p[1]->i128 = i128;
-				p[1]->i = i128.low;
+			if (p[0]->tp) {
+				tfs.printf("\t.8byte\t");
+				if (p[1]) {
+					i128 = p[1]->i128;
+					t128 = Int128(p[0]->tp->size);
+					Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
+					PutConstant(tfs, 0, 0, false, 0);
+					p[1]->i128 = i128;
+					p[1]->i = i128.low;
+				}
+				else
+					PutConstant(tfs, 0, 0, false, 0);
 			}
-			else
-				PutConstant(tfs, 0, 0, false, 0);
 		}
 		gentype = halfgen;
 		outcol = 25;
@@ -3175,7 +3203,7 @@ int ENODE::load(char *buf)
 		for (ndx = 8; buf[ndx]; ndx++)
 			if (buf[ndx] == '>')
 				break;
-		if (buf[ndx] == '\0');
+		if (buf[ndx] == '\0')
 			return (ndx);
 		ndx++;
 		if (strncmp(&buf[ndx], "<nodetype:", 10) == 0) {
@@ -3193,14 +3221,13 @@ int ENODE::load(char *buf)
 	return (0);
 }
 
-int ENODE::PutStructConst(txtoStream& ofs)
+int64_t ENODE::PutStructConst(txtoStream& ofs)
 {
 	int64_t n, k;
 	ENODE *ep1, *ep2;
 	ENODE *ep = this;
 	bool isStruct;
 	bool isArray;
-	List* lst;
 
 	if (ep == nullptr)
 		return (0);

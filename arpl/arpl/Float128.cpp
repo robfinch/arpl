@@ -568,7 +568,7 @@ void Float128::FloatHalfToQuad(Float128* d, uint16_t* a)
 	d->sign = sign;
 	// Zero?
 	if (*a == 00 || *a==0x8000) {
-		d->sign = *a >> 16;
+		d->sign = *a >> 15;
 		d->exp = 0;
 		d->man[0] = 0;
 		d->man[1] = 0;
@@ -830,7 +830,6 @@ bool Float128::IsSingle()
 {
 	Float128 f128;
 	float f;
-	double d, * pd;
 	int32_t* pi;
 	float* pf = &f;
 	int32_t i;
@@ -859,11 +858,10 @@ bool Float128::IsDouble()
 char* Float128::ToCompressedString(int syntax)
 {
 	float f;
-	double d, * pd;
+	double d;
 	int32_t* pi;
 	int32_t i, n;
 	float* pf = &f;
-	OCODE* ip;
 	static char buf[4][100];
 	static char str[100];
 	std::string* s1;

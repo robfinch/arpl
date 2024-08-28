@@ -268,12 +268,12 @@ void Int128::insert(int64_t i, int64_t offset, int64_t width)
 		Shl(&mask, &mask, 1LL);
 		mask.low |= 1LL;
 	}
-	Shl(&mask, &mask, offset);
+	Shl(&mask, &mask, (int)offset);
 	// clear out bitfield
 	aa.low &= ~mask.low;
 	aa.high &= ~mask.high;
 	bb.low = i;
-	Shl(&bb, &bb, offset);
+	Shl(&bb, &bb, (int)offset);
 	bb.low &= mask.low;
 	bb.high &= mask.high;
 	aa.low |= bb.low;
@@ -286,7 +286,7 @@ int64_t Int128::extract(int64_t offset, int64_t width)
 {
 	Int128 k;
 
-	Lsr(&k, this, offset);
+	Lsr(&k, this, (int)offset);
 	k.low &= ((1LL << width) - 1LL);
 	return (k.low);
 }

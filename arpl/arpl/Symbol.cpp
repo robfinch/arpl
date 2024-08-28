@@ -794,7 +794,7 @@ void Symbol::SetStorageOffset(TYP *head, int nbytes, int al, int ilc, int ztype)
 
 // Increase the storage allocation by the type size.
 
-int Symbol::AdjustNbytes(int nbytes, int al, int ztype)
+int64_t Symbol::AdjustNbytes(int64_t nbytes, int al, int ztype)
 {
 	if (ztype == bt_union)
 		nbytes = max(nbytes, tp->roundSize());

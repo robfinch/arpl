@@ -28,7 +28,7 @@
 Int128 GetIntegerExpression(ENODE **pnode, Symbol* symi, int opt=0)       /* simple integer value */
 { 
 	TYP *tp;
-	ENODE *node, *n2, *n3;
+	ENODE *node, *n2;
 	Expression exp(cg.stmt);
 
 	if (opt)

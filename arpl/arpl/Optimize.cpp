@@ -40,7 +40,6 @@ void dooper(ENODE *node)
 {
 	ENODE *ep;
 	Int128 rm;
-	bool r, s;
 //	ENODE* orig = node->Clone();
 
 //	s = CheckIMatch(node);

@@ -188,21 +188,21 @@ void Compiler::AddStandardTypes()
 	stdint = *p;
 	pint = p;
   
-	p = TYP::Make(bt_int,cpu.sizeOfInt);
+	p = TYP::Make(bt_uint,cpu.sizeOfInt);
 	p->isUnsigned = true;
 	stduint = *p;
   
 	p = TYP::Make(bt_long,cpu.sizeOfWord);
 	stdlong = *p;
   
-	p = TYP::Make(bt_long,cpu.sizeOfWord);
+	p = TYP::Make(bt_ulong,cpu.sizeOfWord);
 	p->isUnsigned = true;
 	stdulong = *p;
   
 	p = TYP::Make(bt_short,cpu.sizeOfWord/2);
 	stdshort = *p;
   
-	p = TYP::Make(bt_short,cpu.sizeOfWord/2);
+	p = TYP::Make(bt_ushort,cpu.sizeOfWord/2);
 	p->isUnsigned = true;
 	stdushort = *p;
   

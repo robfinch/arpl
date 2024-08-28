@@ -43,7 +43,7 @@ Operand* FindBitOffset()
 	return (nullptr);
 }
 
-Operand* ENODE::GenerateBitfieldDereference(int flags, int size, int opt)
+Operand* ENODE::GenerateBitfieldDereference(int flags, int64_t size, int opt)
 {
 	Operand* ap, * ap3, * ap4;
 	int isSigned;
@@ -105,7 +105,7 @@ void ENODE::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, 
 	cg.GenerateBitfieldInsert(ap1, ap2, offset, width);
 }
 
-Operand *ENODE::GenerateBitfieldAssign(int flags, int size)
+Operand *ENODE::GenerateBitfieldAssign(int flags, int64_t size)
 {
 	Operand *ap1, *ap2 ,*ap3;
 
@@ -143,13 +143,12 @@ Operand *ENODE::GenerateBitfieldAssign(int flags, int size)
 	return (ap1);
 }
 
-Operand* ENODE::GenerateBitfieldAssignAdd(int flags, int size, int op)
+Operand* ENODE::GenerateBitfieldAssignAdd(int flags, int64_t size, int op)
 {
 	Operand* ap1, * ap2, * ap3, * ap4;
-	int ssize;
+	int64_t ssize;
 	bool negf = false;
 	bool intreg = false;
-	MachineReg* mr;
 
 	ssize = p[0]->GetNaturalSize();
 	if (ssize > size)
@@ -189,11 +188,10 @@ Operand* ENODE::GenerateBitfieldAssignAdd(int flags, int size, int op)
 	return (ap3);
 }
 
-Operand* ENODE::GenerateBitfieldAssignLogic(int flags, int size, int op)
+Operand* ENODE::GenerateBitfieldAssignLogic(int flags, int64_t size, int op)
 {
 	Operand* ap1, * ap2, * ap3;
-	int ssize;
-	MachineReg* mr;
+	int64_t ssize;
 
 	ssize = p[0]->GetNaturalSize();
 	if (ssize > size)

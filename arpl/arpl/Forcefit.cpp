@@ -529,7 +529,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_uint:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_uocta2hexi, *srcnode, nullptr);
@@ -547,7 +551,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_short:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_tetra2hexi, *srcnode, nullptr);
@@ -565,7 +573,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_ushort:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_utetra2hexi, *srcnode, nullptr);
@@ -583,7 +595,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_byte:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_byt2hexi, *srcnode, nullptr);
@@ -601,7 +617,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_ubyte:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_ubyt2hexi, *srcnode, nullptr);
@@ -619,7 +639,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_ichar:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_wyde2hexi, *srcnode, nullptr);
@@ -637,7 +661,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_iuchar:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_uwyde2hexi, *srcnode, nullptr);
@@ -655,7 +683,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_char:
 		if (srctp->type == dsttp->type)
 			return (&stdchar);
@@ -675,7 +707,11 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_uchar:
 		if (!(*srcnode)->IsRefType())
 			*srcnode = makenode(en_uwyde2hexi, *srcnode, nullptr);
@@ -691,9 +727,12 @@ j1:
 			(*srcnode)->esize = 8;
 			return (&stdposit);
 		}
-		return &stdlong;
+		if (promote)
+			return &stdlong;
+		else
+			return TYP::GetSize(srctp->type) > TYP::GetSize(dsttp->type) ? srctp : dsttp;
+
 	case bt_long:
-	case bt_ulong:
 		if (dsttp->IsFloatType()) {
 			*srcnode = makenode(en_i2d, *srcnode, *dstnode);
 			(*srcnode)->constflag = (*srcnode)->p[0]->constflag;
@@ -707,6 +746,22 @@ j1:
 			return (&stdposit);
 		}
 		return &stdlong;
+
+	case bt_ulong:
+		if (dsttp->IsFloatType()) {
+			*srcnode = makenode(en_i2d, *srcnode, *dstnode);
+			(*srcnode)->constflag = (*srcnode)->p[0]->constflag;
+			(*srcnode)->esize = 8;
+			return (&stddouble);
+		}
+		if (dsttp->IsPositType()) {
+			*srcnode = makenode(en_i2p, *srcnode, *dstnode);
+			(*srcnode)->constflag = (*srcnode)->p[0]->constflag;
+			(*srcnode)->esize = 8;
+			return (&stdposit);
+		}
+		return &stdulong;
+
 	case bt_bitfield:
 	case bt_ubitfield:
 	case bt_exception:

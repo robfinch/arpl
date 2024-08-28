@@ -57,14 +57,14 @@ extern void dumplits(txtoStream& tfs);
 extern int  stringlit(char* s, Symbol*);
 extern int quadlit(Float128* f128);
 extern void nl(txtoStream&);
-extern void seg(txtoStream&, int sg, int algn);
+extern void seg(txtoStream&, int sg, int64_t algn);
 extern void cseg(txtoStream&);
 extern void dseg(txtoStream&);
 extern void tseg(txtoStream&);
 //extern void put_code(int op, int len,Operand *aps, Operand *apd, Operand *);
 extern void put_code(txtoStream&, OCODE*);
-extern char* put_label(txtoStream&, int lab, char*, char*, char, int, int);
-extern char* put_label(txtoStream&, int lab, const char*, const char*, char, int, int);
+extern char* put_label(txtoStream&, int64_t lab, char*, char*, char, int64_t, int64_t);
+extern char* put_label(txtoStream&, int64_t lab, const char*, const char*, char, int64_t, int64_t);
 extern char* gen_label(int lab, char*, char*, char, int);
 extern char* put_labels(txtoStream&, char*);
 extern char* opstr(int op);
@@ -85,6 +85,7 @@ extern Operand *makecreg(int);
 // Register.c
 extern Operand* GetTempReg(int);
 extern Operand* GetTempRegister();
+extern Operand* GetTempCrRegister();
 extern Operand* GetTempTgtRegister();
 extern Operand* GetTempBrRegister();
 extern Operand* GetTempFPRegister();
@@ -97,6 +98,7 @@ extern int TempInvalidate(int*, int*, int*);
 extern void TempRevalidate(int sp, int fsp, int psp, int vsp);
 extern int GetTempMemSpace();
 extern bool IsArgumentReg(int);
+extern int IsTempCrReg(int);
 extern int IsArgReg(int);
 extern int IsSavedReg(int);
 extern int IsFargReg(int);
@@ -150,5 +152,7 @@ extern void tmpReset();
 extern int64_t tmpAlloc(int64_t);
 extern void tmpFree(int64_t);
 extern void GenerateLabel(int64_t);
+
+extern int64_t CopyRawDouble(double dbl);
 
 #endif

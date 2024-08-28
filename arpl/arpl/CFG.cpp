@@ -38,7 +38,7 @@ void CFG::Create()
 		if (ip->leader) {
 			if (ip->back) {
 			// if not unconditional control transfer
-				if (ip->back->opcode != op_ret && ip->back->opcode != op_bra && ip->back->opcode!=op_jmp &&
+				if (ip->back->opcode != op_ret && ip->back->opcode != op_branch && ip->back->opcode!=op_jmp &&
 					ip->back->opcode != op_leave && ip->back->opcode!=op_leave_far) {
 					ip->back->bb->MakeOutputEdge(ip->bb);
 					ip->bb->MakeInputEdge(ip->back->bb);
@@ -48,7 +48,7 @@ void CFG::Create()
 		//}
 		switch(ip->opcode) {
 		case op_bex:
-		case op_bra:
+		case op_branch:
 		case op_jmp:
 			if (ip->oper1->offset) {
 				if (ip1 = FindLabel(ip->oper1->offset->i)) {

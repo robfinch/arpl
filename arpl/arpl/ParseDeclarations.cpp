@@ -417,6 +417,7 @@ void Declaration::ParseFloat(int prec)
 		head = TYP::Make(bt_vector,64);
 		head->numele = 64/sz;
 		head->precision = 512;
+		head->lane_precision = sz;
 		head->btpp = btp;
 		tail = head;
 		NextToken();
@@ -547,14 +548,16 @@ void Declaration::ParseFloat128()
 void Declaration::ParseVector(TABLE* table, Symbol** sym, e_sc sc)
 {
 	TYP* btp;
+	bool is_float = true;
 
 	NextToken();
-	if (IsScalar((e_sym)lastst)) {
+	if (IsFloat((e_sym)lastst)) {
 		ParseSpecifier(table, sym, sc);
 		btp = head;
 	}
-	else if (IsFloat((e_sym)lastst)) {
+	else if (IsScalar((e_sym)lastst)) {
 		ParseSpecifier(table, sym, sc);
+		is_float = false;
 		btp = head;
 	}
 	else {
@@ -564,6 +567,22 @@ void Declaration::ParseVector(TABLE* table, Symbol** sym, e_sc sc)
 	head->isIO = isIO;
 	head = TYP::Make(bt_vector,64);
 	head->numele = 64 / btp->size;
+	if (is_float) {
+		switch (btp->size) {
+		case 16:	head->lane_precision = 'h'; break;
+		case 32:	head->lane_precision = 's'; break;
+		case 64:	head->lane_precision = 'd'; break;
+		case 128:	head->lane_precision = 'q'; break;
+		}
+	}
+	else {
+		switch (btp->size) {
+		case 16:	head->lane_precision = 'w'; break;
+		case 32:	head->lane_precision = 't'; break;
+		case 64:	head->lane_precision = 'o'; break;
+		case 128:	head->lane_precision = 'h'; break;
+		}
+	}
 	head->btpp = btp;
 	tail = head;
 	bit_max = head->precision;
@@ -2440,7 +2459,7 @@ void Declaration::FigureStructOffsets(int64_t bgn, Symbol* sp)
  *      be processed. ztype should be bt_struct for normal and in
  *      structure ParseSpecifierarations and sc_union for in union ParseSpecifierarations.
  */
-int64_t Declaration::declare(Symbol* parent, TABLE* table, e_sc sc, int ilc, int ztype, Symbol** symo, bool local, short depth)
+int64_t Declaration::declare(Symbol* parent, TABLE* table, e_sc sc, int64_t ilc, int ztype, Symbol** symo, bool local, short depth)
 {
 	Expression exp;	// for gsearch;
 	Symbol* sp;

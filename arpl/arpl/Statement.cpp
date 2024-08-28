@@ -523,7 +523,7 @@ j1:
 		error(ERR_ASMTOOLONG);
 	buf[nn] = '\0';
 	snp->label = (int64_t*)allocx(4000);
-	strncpy_s((char*)snp->label, sizeof(snp->label), buf, 4000);
+	strncpy_s((char*)snp->label, 4000, buf, 4000);
 	return (snp);
 }
 
@@ -1231,7 +1231,7 @@ void Statement::GenerateWhile()
 			cg.GenerateTrueJump(exp, contlab, 2);
 		}
 		else
-			GenerateMonadic(op_bra, 0, cg.MakeCodeLabel(contlab));
+			GenerateMonadic(op_branch, 0, cg.MakeCodeLabel(contlab));
 	}
 	else
 	{
@@ -1276,7 +1276,7 @@ void Statement::GenerateUntil()
 			cg.GenerateFalseJump(exp, contlab, 2);
 		}
 		else
-			GenerateMonadic(op_bra, 0, cg.MakeCodeLabel(contlab));
+			GenerateMonadic(op_branch, 0, cg.MakeCodeLabel(contlab));
 	}
 	else
 	{
@@ -1441,7 +1441,7 @@ void Statement::GenerateFor()
 		ReleaseTempRegister(cg.GenerateExpression(incrExpr, am_all | am_novalue, incrExpr->GetNaturalSize(),0));
 	}
 	if (opt_nocgo||opt_size)
-		GenerateMonadic(op_bra, 0, cg.MakeCodeLabel(loop_label));
+		GenerateMonadic(op_branch, 0, cg.MakeCodeLabel(loop_label));
 	else {
 		initstack();
 		cg.GenerateTrueJump(exp, loop_label, 2);
@@ -1477,7 +1477,7 @@ void Statement::GenerateForever()
 		s1->Generate();
 		looplevel--;
 	}
-	GenerateMonadic(op_bra, 0, cg.MakeCodeLabel(loop_label));
+	GenerateMonadic(op_branch, 0, cg.MakeCodeLabel(loop_label));
 	currentFn->pl.OptLoopInvariants(loophead);
 	breaklab = old_break;
 	contlab = old_cont;
@@ -1624,7 +1624,7 @@ j1:
 	s1->Generate();
 	if (s2 != 0)             /* else part exists */
 	{
-		GenerateDiadic(op_bra, 0, MakeCodeLabel(lab2), 0);
+		GenerateDiadic(op_branch, 0, MakeCodeLabel(lab2), 0);
 		if (mixedSource)
 			GenerateMonadic(op_remark, 0, MakeStringAsNameConst((char *)"; else",codeseg));
 		GenerateLabel(lab1);
@@ -1726,7 +1726,7 @@ void Statement::GenerateDoLoop()
 	s1->Generate();
 	looplevel--;
 	GenMixedSource2();
-	GenerateMonadic(op_bra, 0, MakeCodeLabel(contlab));
+	GenerateMonadic(op_branch, 0, MakeCodeLabel(contlab));
 	GenerateLabel(breaklab);
 	currentFn->pl.OptLoopInvariants(loophead);
 	breaklab = oldbreak;
@@ -1827,7 +1827,7 @@ void Statement::GenerateThrow()
 	// Jump to handler address.
 	//GenerateMonadic(op_brk, 0, MakeImmediate(239));
 	ap = GetTempRegister();
-	GenerateMonadic(op_bra, 0, MakeCodeLabel(throwlab));
+	GenerateMonadic(op_branch, 0, MakeCodeLabel(throwlab));
 	ReleaseTempRegister(ap);
 }
 
@@ -1852,12 +1852,12 @@ void Statement::GenerateCatch(int opt, int oldthrow, int olderthrow)
 	ReleaseTempRegister(ap);
 	// Branch around the catch handlers
 	if (opt == 0) {
-		GenerateMonadic(op_bra, 0, MakeCodeLabel(lab1));
+		GenerateMonadic(op_branch, 0, MakeCodeLabel(lab1));
 		GenerateLabel(throwlab);
 	}
 	else {
 		if (currentFn->IsInline) {
-			GenerateMonadic(op_bra, 0, MakeCodeLabel(lab1));
+			GenerateMonadic(op_branch, 0, MakeCodeLabel(lab1));
 		}
 		GenerateLabel(currentFn->defCatchLabel);
 	}
@@ -1886,7 +1886,7 @@ void Statement::GenerateCatch(int opt, int oldthrow, int olderthrow)
 		if (stmt->num == 99999 && opt==1)
 			currentFn->GenerateDefaultCatch();
 		else
-			GenerateMonadic(op_bra, 0, MakeCodeLabel(opt ? retlab : lab1));
+			GenerateMonadic(op_branch, 0, MakeCodeLabel(opt ? retlab : lab1));
 		GenerateLabel(curlab);
 	}
 	// Here the none of the catch handlers could process the throw. Move to the next
@@ -1894,7 +1894,7 @@ void Statement::GenerateCatch(int opt, int oldthrow, int olderthrow)
 	throwlab = oldthrow;
 	lab2 = nextlabel++;
 	if (opt == 0)
-		GenerateMonadic(op_bra, 0, MakeCodeLabel(throwlab));
+		GenerateMonadic(op_branch, 0, MakeCodeLabel(throwlab));
 	GenerateLabel(lab1);
 	if (opt) {
 		currentFn->GenerateDefaultCatch();
@@ -2101,7 +2101,7 @@ j1:
 			stmt->GenerateAsm();
 			break;
 		case st_goto:
-			GenerateMonadic(op_bra, 0, MakeCodeLabel((int64_t)stmt->exp));
+			GenerateMonadic(op_branch, 0, MakeCodeLabel((int64_t)stmt->exp));
 			break;
 		case st_yield:
 			stmt->GenerateYield();
@@ -2158,16 +2158,16 @@ j1:
 		case st_continue:
 			if (contlab == -1)
 				error(ERR_NOT_IN_LOOP);
-			GenerateDiadic(op_bra, 0, MakeCodeLabel(contlab), 0);
+			GenerateDiadic(op_branch, 0, MakeCodeLabel(contlab), 0);
 			break;
 		case st_break:
 			if (breaklab == -1)
 				error(ERR_NOT_IN_LOOP);
 			//(char*)GenerateSwitchTargetName(tablabel).c_str()
 			if (opt==3)
-				GenerateMonadic(op_bra, 0, cg.MakeStringAsNameConst((char*)GenerateSwitchTargetName(breaklab).c_str(),codeseg));
+				GenerateMonadic(op_branch, 0, cg.MakeStringAsNameConst((char*)GenerateSwitchTargetName(breaklab).c_str(),codeseg));
 			else
-				GenerateDiadic(op_bra, 0, MakeCodeLabel(breaklab), 0);
+				GenerateDiadic(op_branch, 0, MakeCodeLabel(breaklab), 0);
 			break;
 		case st_switch:
 			compiler.sg->GenerateSwitch(stmt);

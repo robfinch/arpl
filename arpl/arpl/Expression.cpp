@@ -651,13 +651,12 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 	ENODE* pnode;
 	TYP* tptr, *btpp;
 	int64_t sz = 0;
-	ENODE* cnode, *hnode, *qnode;
+	ENODE* cnode, *hnode;
 	Symbol* lst;
 	bool cnst = true;
 	bool consistentType = true;
 	TYP* tptr2;
 	int64_t pos = 0;
-	int count;
 	static int level = 0;
 	bool is_array = false;
 	bool is_struct = false;
@@ -2061,10 +2060,9 @@ ENODE* Expression::ParseBitfieldSpec(TYP* tp3, ENODE* pnode, ENODE* varnode)
 
 ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 {
-	ENODE* pnode, * rnode, * qnode, * snode;
+	ENODE* pnode, * rnode, * qnode;
 	TYP* tp2, * tp3, * tp4;
 	Symbol* sp1;
-	int cnt2;
 	int64_t elesize, sz1;
 	bool cf = false;	// constant flag
 	bool uf = false;	// unsigned flag

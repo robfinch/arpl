@@ -374,6 +374,17 @@ void OCODE::OptAdd()
 			}
 		}
 	}
+#ifdef BIGFOOT
+	if (oper3->mode == am_imm && oper3->offset) {
+		if (oper1->preg == oper2->preg && oper3->offset->i128.IsNBit(5)) {
+			oper2 = oper3;
+			oper3 = nullptr;
+			opcode = op_addq;
+			insn = GetInsn(op_addq);
+			optimized++;
+		}
+	}
+#endif
 }
 // 'subui' followed by a 'bne' gets turned into 'loop'
 //
@@ -381,6 +392,7 @@ void OCODE::OptSubtract()
 {
 	OCODE *ip2;
 	OCODE* fsbi;
+	Int128 i128;
 
 	ip2 = fwd;
 
@@ -400,6 +412,22 @@ void OCODE::OptSubtract()
 			optimized++;
 		}
 	}
+#ifdef BIGFOOT
+	if (oper3->mode == am_imm && oper3->offset) {
+		i128 = oper3->offset->i128;
+		// Ensure a negative value will fit in 5 bits when negated.
+		Int128::Add(&i128, &i128, Int128::One());
+		if (oper1->preg == oper2->preg && i128.IsNBit(5)) {
+			// Make the offset negative.
+			Int128::Sub(&oper3->offset->i128, Int128::Zero(), &oper3->offset->i128);
+			opcode = op_addq;
+			oper2 = oper3;
+			oper3 = nullptr;
+			insn = GetInsn(op_addq);
+			optimized++;
+		}
+	}
+#endif
 	return;
 	// The following seems not to work all the time.
 
@@ -871,7 +899,7 @@ void OCODE::OptIncrBranch()
 {
 	OCODE* bck;
 
-	if (back->opcode == op_ldi && back->oper1->preg != oper1->preg) {
+	if (back->opcode == op_loadi && back->oper1->preg != oper1->preg) {
 		bck = back->back;
 		if (bck && bck->opcode == op_add && bck->oper3->offset) {
 			if (bck->oper3->mode == am_imm) {
@@ -950,8 +978,8 @@ void OCODE::OptBne()
 				if (back->back->oper2->offset->i != 0) {
 					back->MarkRemove();
 					back->back->MarkRemove();
-					opcode = op_bra;
-					insn = Instruction::Get(op_bra);
+					opcode = op_branch;
+					insn = Instruction::Get(op_branch);
 					oper1 = oper2;
 					oper2 = nullptr;
 				}
@@ -1694,7 +1722,7 @@ void OCODE::OptLdi()
 					optimized++;
 				}
 			}
-			if (fwd->opcode == op_zxw) {
+			if (fwd->opcode == op_zxo) {
 				if (oper2->offset->i >= 0 && oper2->offset->i <= 65535) {
 					fwd->MarkRemove();
 					optimized++;
@@ -2003,7 +2031,7 @@ void OCODE::store(txtoStream& ofs)
 	ENODE *ep;
 	int predreg = pregreg;
 	char buf[8];
-	int nn;
+	int64_t nn;
 	bool addi = false;
 	char ccch;		// comment character
 
@@ -2100,6 +2128,7 @@ void OCODE::store(txtoStream& ofs)
 					case 2:	sprintf_s(buf, sizeof(buf), ".w"); nn += 2; break;
 					case 4:	sprintf_s(buf, sizeof(buf), ".t"); nn += 2; break;
 					case 8:	sprintf_s(buf, sizeof(buf), ".o"); nn += 2; break;
+					case 16:	sprintf_s(buf, sizeof(buf), ".h"); nn += 2; break;
 					}
 				}
 				else {

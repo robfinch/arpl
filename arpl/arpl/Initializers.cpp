@@ -40,7 +40,7 @@ short int brace_level;
 
 static void pad(char *p, int n)
 {
-	int nn;
+	int64_t nn;
 
 	nn = strlen(p);
 	while (nn < n) {
@@ -102,7 +102,6 @@ std::map<int, std::string> fnames;
 
 void AppendFiles()
 {
-	List* lst, *plst;
 	txtiStream ifs;
 	std::string fname;
 	char buf[4096];
@@ -130,7 +129,7 @@ static std::string GetObjdecl(Symbol* sp, int64_t sz)
 	char buf[100];
 	char nmbuf[200];
 
-	_itoa_s(sz, buf, sizeof(buf), 10);
+	_itoa_s((int)sz, buf, sizeof(buf), 10);
 	if (sp->tp->IsAggregateType())
 		sprintf_s(nmbuf, sizeof(nmbuf), "__aggregate_%s_%s", GetPrivateNamespace(), sp->name->c_str());
 	else
@@ -369,20 +368,15 @@ void doinit(Symbol *sp, bool gbls)
 	static bool first = true;
 	static char workbuf[5000];
 	char lbl[200];
-  int algn;
   enum e_sg oseg;
-  char buf[500];
   std::streampos endpoint;
 	std::streampos lblpoint;
 	std::streampos patchsz;
 	std::streampos patch_saw;
-	int64_t szpoint;
 	bool setsz = false;
 	bool parsed_something = false;
 	char* slptr;
 	TYP *tp;
-	int n;
-	ENODE* node;
 	Expression exp(cg.stmt);
 	txtoStream* old_ofs;
 	std::string ofname;
@@ -519,7 +513,6 @@ void doinit(Symbol *sp, bool gbls)
 				bar = GetBitandReference(sp);
 		}
 		else {
-			ENODE* n, *n2;
 			char buf[400];
 			int64_t val = 0;
 			Int128 val128;
@@ -730,10 +723,7 @@ int64_t inittriple(Symbol* symi, int opt)
 // Dead code
 int64_t InitializePointer(TYP *tp2, int opt, Symbol* symi)
 {   
-	Symbol *sp;
 	ENODE *n = nullptr;
-	int64_t lng;
-	TYP *tp;
 	bool need_end = false;
 	Expression exp(cg.stmt);
 /*

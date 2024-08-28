@@ -306,6 +306,9 @@ enum e_op {
 	op_or_and, op_or_or, op_and_and, op_and_or,
 	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
 	op_storev, op_subtract,
+	// Bigfoot
+	op_stib, op_stiw, op_stit, op_stio, op_addq,
+	op_zseq, op_zsne, op_zslt, op_zsle, op_zsgt, op_zsge, op_zsltu, op_zsleu, op_zsgtu, op_zsgeu,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxo, op_bmap,
 	op_movzxb, op_movzxw, op_movzxt,
@@ -321,7 +324,8 @@ enum e_regtype {
 	rt_invert = 4096,
 	rt_vector = 8192,
 	rt_group = 16384,
-	rt_float = 32768
+	rt_float = 32768,
+	rt_cr = 65536
 };
 
 enum e_am {
@@ -357,6 +361,7 @@ enum e_am {
 	am_jmp = 1 << 27,
 	am_iindx2 = 1 << 28,
 	am_i16 = 1 << 29,
+	amCrReg = 1 << 30,
 	am_all = 0x1FB,	// exclude fp reg for Thor
 };
 

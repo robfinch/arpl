@@ -40,9 +40,8 @@ Posit32 Posit32::Addsub(int8_t op, Posit32 a, Posit32 b)
   int64_t exp_mask = (((uint64_t)1 << (uint64_t)expWidth) - 1LL);
   int64_t rs_mask = (((uint64_t)1 << (uint64_t)rs) - 1LL);
   RawPosit ad((int8_t)2, (int8_t)32), bd((int8_t)2, (int8_t)32);
-  int64_t S, T, L, G, R, St, St1;
+  int64_t S, L, G, R, St;
   Int256 s1, s2;
-  int nn;
   uint64_t ulp, rnd_ulp, tmp1_rnd_ulp, tmp1_rnd;
   uint64_t abs_tmp, o;
   Posit32 out;

@@ -260,9 +260,8 @@ void Forest::PreColor()
 
 void Forest::Simplify()
 {
-	int m, nn;
+	int m;
 	bool addedLow = false;
-	Range *t;
 	int bb;
 	int degree;
 
@@ -325,7 +324,7 @@ void Forest::Simplify()
 
 void Forest::Color()
 {
-	int nn, m, num;
+	int nn, m;
 	int c;
 	int j;
 	__int16 *p;

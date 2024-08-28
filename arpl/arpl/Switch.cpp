@@ -208,7 +208,7 @@ void Statement::GenerateSwitchLop2(Case* cases, Operand* ap, Operand* ap2, int l
 	if (cases[lo + 2].val == cases[lo + 1].val && opt_size) {	// always false
 		GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(cases[lo + 2].val));
 		GenerateTriadic(op_beq, 0, ap, ap2, MakeCodeLabel(cases[lo + 1].label));
-		GenerateMonadic(op_bra, 0, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
+		GenerateMonadic(op_branch, 0, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
 	}
 	else {
 		if (opt_size) {
@@ -218,12 +218,12 @@ void Statement::GenerateSwitchLop2(Case* cases, Operand* ap, Operand* ap2, int l
 //					cases[lo + 2].stmt->GenMixedSource();
 //					GenerateLabel(cases[lo + 2].label);
 					cases[lo + 2].stmt->GenerateCase();
-					GenerateMonadic(op_bra, 0, MakeCodeLabel(xitlab));
+					GenerateMonadic(op_branch, 0, MakeCodeLabel(xitlab));
 					cases[lo + 2].done = true;
 				}
 				else {
 					GenerateTriadic(op_bbs, 0, ap, MakeImmediate(pwrof2(cases[lo + 2].val)), MakeCodeLabel(cases[lo + 2].label));
-					GenerateMonadic(op_bra, 0, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
+					GenerateMonadic(op_branch, 0, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
 				}
 			}
 			else {
@@ -234,7 +234,7 @@ void Statement::GenerateSwitchLop2(Case* cases, Operand* ap, Operand* ap2, int l
 					GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(cases[lo + 2].val));
 					GenerateTriadic(op_beq, 0, ap, ap2, MakeCodeLabel(cases[lo + 2].label));
 				}
-				GenerateMonadic(op_bra, 0, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
+				GenerateMonadic(op_branch, 0, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
 			}
 		}
 		else {
@@ -253,7 +253,7 @@ void Statement::GenerateSwitchLop2(Case* cases, Operand* ap, Operand* ap2, int l
 		if (!cases[lo + 2].done) {
 			cases[lo + 2].done = true;
 			cases[lo + 2].stmt->GenerateCase();
-			GenerateMonadic(op_bra, 0, MakeCodeLabel(xitlab));
+			GenerateMonadic(op_branch, 0, MakeCodeLabel(xitlab));
 		}
 	}
 }
@@ -373,7 +373,7 @@ void Statement::GenerateCase()
 			stmt->Generate();
 		}
 		//generated = true;
-		GenerateMonadic(op_bra, 0, MakeCodeLabel(breaklab));
+		GenerateMonadic(op_branch, 0, MakeCodeLabel(breaklab));
 	}
 }
 

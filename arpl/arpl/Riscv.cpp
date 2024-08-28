@@ -188,7 +188,7 @@ Operand* RiscvCodeGenerator::GenExpr(ENODE* node)
 		GenerateFalseJump(node, lab0, 0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(cpu.ldi_op | op_dot, 0, ap1, MakeImmediate(1));
-		GenerateMonadic(op_bra, 0, MakeDataLabel(lab1, regZero));
+		GenerateMonadic(op_branch, 0, MakeDataLabel(lab1, regZero));
 		GenerateLabel(lab0);
 		GenerateDiadic(cpu.ldi_op | op_dot, 0, ap1, MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -242,7 +242,7 @@ Operand* RiscvCodeGenerator::GenExpr(ENODE* node)
 		GenerateFalseJump(node,lab0,0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(op_ld,0,ap1,MakeImmediate(1));
-		GenerateMonadic(op_bra,0,MakeDataLabel(lab1));
+		GenerateMonadic(op_branch,0,MakeDataLabel(lab1));
 		GenerateLabel(lab0);
 		GenerateDiadic(op_ld,0,ap1,MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -1012,7 +1012,7 @@ void RiscvCodeGenerator::GenerateFalseJump(ENODE* node, int label, unsigned int 
 			GenerateDiadic(op_beqz, 0, ap, MakeCodeLabel(label));
 			if (false) {
 				//				if (ap->offset->nodetype==en_icon && ap->offset->i != 0)
-				//					GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
+				//					GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 				//				else
 				{
 					ap1 = MakeBoolean(ap);
@@ -1048,21 +1048,21 @@ void RiscvCodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* 
 	if (sym && sym->IsLeaf) {
 		sprintf_s(buf, sizeof(buf), "%s_ip", sym->sym->name->c_str());
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_branch : op_branch, 0, MakeDirect(node->p[0]));
 		else
 			GenerateDiadic(sym->sym->storage_class == sc_static ? op_jal : op_jal, 0, makereg(regLR), MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else if (sym) {
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_branch : op_branch, 0, MakeDirect(node->p[0]));
 		else
 			GenerateDiadic(sym->sym->storage_class == sc_static ? op_jal : op_jal, 0, makereg(regLR), MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else {
 		if (flags & am_jmp)
-			GenerateMonadic(op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(op_branch, 0, MakeDirect(node->p[0]));
 		else
 			GenerateDiadic(op_jal, 0, makereg(regLR), MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
@@ -1343,7 +1343,7 @@ void RiscvCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 // 8 we assume a structure variable and we assume we have the address in a reg.
 // Returns: number of stack words pushed.
 //
-int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount)
+int64_t RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount)
 {
 	Operand* ap, * ap1, * ap2, * ap3;
 	int nn = 0;
@@ -1529,7 +1529,7 @@ int RiscvCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 // use a push instruction rather than subtracting from the sp and using stores
 // if there are only a small number of arguments (<3).
 //
-int RiscvCodeGenerator::PushArguments(Function* sym, ENODE* plist)
+int64_t RiscvCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 {
 	TypeArray* ta = nullptr;
 	int i, sum;

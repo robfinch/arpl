@@ -216,7 +216,7 @@ lxit:
 
 void ClassDeclaration::ParseMembers(Symbol *sym, int ztype)
 {
-	int slc;
+	int64_t slc;
 	TYP *tp = sym->tp;
 	int ist;
 	Symbol *hsym;

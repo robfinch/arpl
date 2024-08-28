@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -62,7 +62,7 @@ bool Instruction::IsFlowControl()
 		opcode == op_call ||
 		opcode == op_jsr ||
 		opcode == op_jal ||
-		opcode == op_bra ||
+		opcode == op_branch ||
 		opcode == op_beq ||
 		opcode == op_bne ||
 		opcode == op_blt ||
@@ -154,6 +154,10 @@ bool Instruction::IsStore()
 		|| opcode == op_fsto
 		|| opcode == op_psto
 		|| opcode == op_push
+		|| opcode == op_stib
+		|| opcode == op_stiw
+		|| opcode == op_stit
+		|| opcode == op_stio
 		)
 		return (true);
 	return (false);
@@ -167,7 +171,7 @@ bool Instruction::IsExt()
 		|| opcode == op_sxw
 		|| opcode == op_sxt
 		|| opcode == op_zxb
-		|| opcode == op_zxw
+		|| opcode == op_zxo
 		|| opcode == op_zxt
 		|| opcode == op_sbx
 		|| opcode == op_clr

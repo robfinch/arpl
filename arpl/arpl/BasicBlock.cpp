@@ -43,7 +43,7 @@ bool IsBasicBlockSeparater(OCODE *ip)
 	case op_call: return true;
 	case op_jsr:  return true;
 	case op_jmp:	return true;
-	case op_bra:	return true;
+	case op_branch:	return true;
 	case op_beqz: return (true);
 	case op_bnez: return (true);
 	case op_beq:	return true;

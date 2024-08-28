@@ -100,20 +100,36 @@ char Operand::fpsize()
 	}
 }
 
-void Operand::GenZeroExtend(int isize, int osize)
+Operand* Operand::GenerateBitfieldClear(int startpos, int width)
 {
-	if (isize == osize)
-		return;
-	MakeLegal(am_reg, isize);
-	switch (osize)
-	{
-	case 1:	GenerateDiadic(op_zxb, 0, this, this); break;
-	case 2:	GenerateDiadic(op_zxc, 0, this, this); break;
-	case 4:	GenerateDiadic(op_zxh, 0, this, this); break;
+	if (startpos + width < cpu.sizeOfWord * 8) {
+		Operand* ap = GetTempRegister();
+		Generate4adic(op_clr, 0, ap, this, cg.MakeImmediate((int64_t)startpos), cg.MakeImmediate((int64_t)startpos + width - 1));
+		return (ap);
 	}
+	return (this);
 }
 
-Operand *Operand::GenerateSignExtend(int isize, int osize, int flags)
+Operand* Operand::GenerateZeroExtend(int startpos, int totwidth)
+{
+	Operand* ap;
+
+	if (startpos >= totwidth)
+		return (this);
+	ap = GetTempRegister();
+	switch (startpos)
+	{
+	case 8:	GenerateDiadic(op_zxb, 0, ap, this); break;
+	case 16:	GenerateDiadic(op_zxw, 0, ap, this); break;
+	case 32:	GenerateDiadic(op_zxt, 0, ap, this); break;
+	case 64:	GenerateDiadic(op_zxo, 0, ap, this); break;
+	default:
+		ap = GenerateBitfieldClear(startpos, totwidth-startpos);
+	}
+	return (ap);
+}
+
+Operand *Operand::GenerateSignExtend(int64_t isize, int64_t osize, int flags)
 {
 	Operand *ap1;
 	Operand *ap = this;
@@ -164,11 +180,20 @@ void Operand::MakeLegalReg(int flags, int64_t size)
 
 	if (mode == am_reg)	// Might get this if am_volatile specified
 		return;
+	if (mode == am_vreg && size == 64)
+		return;
 	ReleaseTempRegister(this);      // maybe we can use it...
-	if (this)
+	if (size == 64) {
+		ap2 = GetTempVectorRegister();
+	}
+	else if (this)
 		ap2 = GetTempRegister();// GetTempReg(ap->type);
 	else
 		ap2 = GetTempRegister();// (stdint.GetIndex());
+	if (this->tp)
+		ap2->tp = this->tp;
+	else
+		ap2->tp = &stdint;
 	switch (mode) {
 	case am_ind:
 	case am_indx:
@@ -188,6 +213,9 @@ void Operand::MakeLegalReg(int flags, int64_t size)
 	case am_reg:
 		cg.GenerateMove(ap2, this);
 		break;
+	case am_vreg:
+		cg.GenerateMove(ap2, this);
+		break;
 	case am_preg:
 		GenerateDiadic(op_ptoi, 0, ap2, this);
 		break;
@@ -201,7 +229,10 @@ void Operand::MakeLegalReg(int flags, int64_t size)
 		cg.GenerateLoad(ap2, this, size, size);
 		break;
 	}
-	mode = am_reg;
+	if (ap2->preg & rt_vector)
+		mode = am_vreg;
+	else
+		mode = am_reg;
 	switch (size) {
 	case 0: typep = &stdvoid; break;
 	case 1: typep = &stdbyte; break;
@@ -209,9 +240,100 @@ void Operand::MakeLegalReg(int flags, int64_t size)
 	case 4:	typep = &stdshort; break;
 	case 8: typep = &stdint; break;
 	case 16: typep = &stdlong; break;
+	case 64: typep = &stdvector; break;
 	default:
 		typep = &stdint;
 	}
+	preg = ap2->preg;
+	deep = ap2->deep;
+	pdeep = ap2->pdeep;
+	tempflag = 1;
+	memref = ap2->memref;
+	memop = ap2->memop;
+}
+
+void Operand::MakeLegalCrReg(int flags, int64_t size)
+{
+	Operand* ap2, * ap3;
+
+	if (mode == amCrReg)	// Might get this if am_volatile specified
+		return;
+	if (mode == am_vreg && size == 64)
+		return;
+	ReleaseTempRegister(this);      // maybe we can use it...
+	if (size == 64) {
+		ap2 = GetTempVectorRegister();
+	}
+	else if (this)
+		ap2 = GetTempCrRegister();// GetTempReg(ap->type);
+	else
+		ap2 = GetTempCrRegister();// (stdint.GetIndex());
+	if (this->tp)
+		ap2->tp = this->tp;
+	else
+		ap2->tp = &stdint;
+	switch (mode) {
+	case am_ind:
+	case am_indx:
+		ap2->isUnsigned = this->isUnsigned;
+		if (this->tp) {
+			if (this->tp->btpp)
+				ap2->isUnsigned = this->tp->btpp->isUnsigned;
+		}
+		ap3 = GetTempRegister();
+		cg.GenerateLoad(ap3, this, size, size);
+		GenerateTriadic(op_sne, 0, ap2, ap3, makereg(regZero));
+		ReleaseTempRegister(ap3);
+		break;
+	case am_indx2:
+		ap3 = GetTempRegister();
+		cg.GenerateLoad(ap3, this, size, size);
+		GenerateTriadic(op_sne, 0, ap2, ap3, makereg(regZero));
+		ReleaseTempRegister(ap3);
+		break;
+	case am_imm:
+		ap3 = GetTempRegister();
+		cg.GenerateLoadConst(this, ap3);
+		GenerateTriadic(op_sne, 0, ap2, ap3, makereg(regZero));
+		ReleaseTempRegister(ap3);
+		break;
+	case am_reg:
+		GenerateTriadic(op_sne, 0, ap2, this, makereg(regZero));
+		break;
+	case am_vreg:
+		cg.GenerateMove(ap2, this);
+		break;
+	case am_preg:
+		GenerateDiadic(op_ptoi, 0, ap2, this);
+		break;
+	case am_fpreg:
+		GenerateTriadic(op_fsne, 0, ap2, this, makereg(regZero));
+		break;
+	case am_creg:
+		GenerateTriadic(op_aslx, 0, ap2, makereg(regZero), cg.MakeImmediate((int64_t)1));
+		break;
+	default:
+		cg.GenerateLoad(ap2, this, size, size);
+		break;
+	}
+	if (ap2->preg & rt_vector)
+		mode = am_vreg;
+	else
+		mode = amCrReg;
+	typep = &stdbyte;
+	/*
+	switch (size) {
+	case 0: typep = &stdvoid; break;
+	case 1: typep = &stdbyte; break;
+	case 2: typep = &stdchar; break;
+	case 4:	typep = &stdshort; break;
+	case 8: typep = &stdint; break;
+	case 16: typep = &stdlong; break;
+	case 64: typep = &stdvector; break;
+	default:
+		typep = &stdint;
+	}
+	*/
 	preg = ap2->preg;
 	deep = ap2->deep;
 	pdeep = ap2->pdeep;
@@ -303,6 +425,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 					offset = allocEnode();
 					offset->i = 0;
 					offset->i128 = *Int128::Zero();
+					isConst = true;
 					return;
 				}
 			}
@@ -319,8 +442,8 @@ void Operand::MakeLegal(int flags, int64_t size)
 			if (flags & am_reg)
 				return;
 			break;
-		case am_creg:
-			if (flags & am_creg)
+		case amCrReg:
+			if (flags & amCrReg)
 				return;
 		case am_ind:
 		case am_indx:
@@ -336,6 +459,9 @@ void Operand::MakeLegal(int flags, int64_t size)
 	{
 		MakeLegalReg(flags, size);
 		return;
+	}
+	if (flags & amCrReg) {
+		MakeLegalCrReg(flags, size);
 	}
 	if (flags & am_fpreg)
 	{
@@ -480,7 +606,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 		break;
 	case am_imm:
 		cg.GenerateLoadConst(this, ap2);
-		//GenerateDiadic(op_ldi, 0, ap2, this);
+		//GenerateDiadic(op_loadi, 0, ap2, this);
 		break;
 	case am_reg:
 		GenerateDiadic(cpu.mov_op, 0, ap2, this);
@@ -501,7 +627,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 
 int Operand::OptRegConst(int regclass, bool tally)
 {
-	MachineReg *mr, *mr2;
+	MachineReg *mr;
 	int count = 0;
 
 	if (this == nullptr)
@@ -624,6 +750,8 @@ Operand *Operand::loadHex(txtiStream& ifs)
 
 void Operand::store(txtoStream& ofs)
 {
+	ENODE* tnode;
+
 	if (mode == 0)
 		mode = am_reg;
 	switch (mode)
@@ -663,6 +791,7 @@ void Operand::store(txtoStream& ofs)
 	case am_creg:
 	case am_preg:
 	case am_fpreg:
+	case amCrReg:
 		ofs.printf("%s", RegMoniker(preg));
 		break;
 	case am_ind:
@@ -677,15 +806,24 @@ void Operand::store(txtoStream& ofs)
 		// parameter offset the size of the return block, then later
 		// subtracts it off again.
 		if (offset) {
+			tnode = offset->Clone();
 			if (preg == regFP) {
-				if (offset->sym) {
-					if (offset->sym->IsParameter) {	// must be an parameter
-						offset->i += compiler.GetReturnBlockSize();	// The frame pointer is the second word of the return block.
-						offset->i128.Add(&offset->i128, &offset->i128, Int128::MakeInt128(compiler.GetReturnBlockSize()));
+				if (tnode->sym) {
+					if (tnode->sym->IsParameter) {	// must be an parameter
+						tnode->i += compiler.GetReturnBlockSize();	// The frame pointer is the second word of the return block.
+						tnode->i128.Add(&offset->i128, &offset->i128, Int128::MakeInt128(compiler.GetReturnBlockSize()));
 					}
 				}
 			}
-			offset->PutConstant(ofs, 0, 0);
+			if (tnode->scale) {
+				Int128 s;
+
+				tnode->i *= tnode->scale;
+				s = Int128::Convert((int64_t)tnode->scale);
+				Int128::Mul(&tnode->i128, &tnode->i128, &s);
+			}
+			tnode->PutConstant(ofs, 0, 0);
+			/*
 			if (preg == regFP) {
 				if (offset->sym) {
 					if (offset->sym->IsParameter) {
@@ -694,6 +832,7 @@ void Operand::store(txtoStream& ofs)
 					}
 				}
 			}
+			*/
 		}
 		if (offset2) {
 			if (offset2->i < 0)
@@ -769,7 +908,7 @@ void Operand::store(txtoStream& ofs)
 
 void Operand::load(txtiStream& ifp)
 {
-	char ch;
+//	char ch;
 
 	//ifp.get(&ch);
 	/*
@@ -781,4 +920,31 @@ void Operand::load(txtiStream& ifp)
 		break;
 	}
 	*/
+}
+
+/*
+* Gets the constant value associated with an operand, if the operand is known
+* to be a constant. The value could be either an immediate constant or a value
+* in a register.
+* 
+* Parameter:
+* val: (output) pointer to place to store value.
+* 
+* Returns:
+*		a Boolean indicating if the constant value could be returned.
+* 
+*/
+bool Operand::GetConstValue(Int128* val)
+{
+	if (isConst) {
+		if (mode == am_imm) {
+			val = &offset->i128;
+			return (true);
+		}
+		else if (mode == am_reg) {
+			val = &regs[preg].val128;
+			return (true);
+		}
+	}
+	return (false);
 }

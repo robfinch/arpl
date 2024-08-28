@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -43,8 +43,10 @@ static unsigned short int next_fpreg;
 static unsigned short int next_preg;
 static unsigned short int next_vreg;
 static unsigned short int next_vmreg;
+static unsigned short int nextCrReg;
 static short int next_breg;
 int max_reg_alloc_ptr;
+int maxCrRegAllocPtr;
 int max_stack_use;
 int max_freg_alloc_ptr;
 int max_fstack_use;
@@ -58,6 +60,8 @@ static short int fpreg_in_use[256];	// 0 to 15
 static short int preg_in_use[256];	// 0 to 15
 static short int breg_in_use[16];	// 0 to 15
 static short int save_reg_in_use[256];
+static short int CrRegInUse[16];
+static short int saveCrRegInUse[256];
 static short int save_fpreg_in_use[256];
 static short int save_preg_in_use[256];
 static short int vreg_in_use[256];	// 0 to 15
@@ -65,6 +69,7 @@ static short int save_vreg_in_use[256];
 static short int vmreg_in_use[256];	// 0 to 15
 
 static int wrapno, save_wrapno;
+static int CrWrapno, saveCrWrapno;
 
 static struct {
 	Operand *Operand;
@@ -83,6 +88,12 @@ static struct {
 	preg_stack[MAX_REG_STACK + 1],
 	preg_alloc[MAX_REG_STACK + 1],
 	save_preg_alloc[MAX_REG_STACK + 1],
+
+	CrRegStack[MAX_REG_STACK + 1],
+	CrRegAlloc[MAX_REG_STACK + 1],
+	stackedCrRegs[MAX_REG_STACK + 1],
+	saveCrRegAlloc[MAX_REG_STACK + 1],
+
 	stacked_regs[MAX_REG_STACK + 1],
 	stacked_fpregs[MAX_REG_STACK + 1],
 	stacked_pregs[MAX_REG_STACK + 1],
@@ -116,12 +127,17 @@ static short int save_vmreg_alloc_ptr;
 static short int breg_stack_ptr;
 static short int breg_alloc_ptr;
 
+static short int CrRegStackPtr;
+static short int CrRegAllocPtr;
+static short int saveCrRegAllocPtr;
+
 //char tmpregs[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
 char tmpfpregs[] = {1,2,3,4,5,6,7,8,9,10};
 char tmppregs[] = { 1,2,3,4,5,6,7,8,9,10 };
 char tmpvregs[] = {1,2,3,4,5,6,7,8,9,10};
 char tmpvmregs[] = {1,2,3};
 char tmpbregs[] = {5,6,7};
+char tmpCrRegs[] = { 2,3,4 };
 char regstack[18];
 char fpregstack[18];
 char pregstack[18];
@@ -132,6 +148,7 @@ int brsp=17;
 int bregmask=0;
 int rap[20];
 int save_rap[20];
+int CrMask;
 
 int NumTempRegs()
 {
@@ -141,6 +158,16 @@ int NumTempRegs()
 int NumSavedRegs()
 {
 	return (cpu.NumSavedRegs);
+}
+
+int NumTempCrRegs()
+{
+	return (cpu.NumTmpCrRegs);
+}
+
+int NumSavedCrRegs()
+{
+	return (cpu.NumSavedCrRegs);
 }
 
 void CPU::InitRegs()
@@ -252,6 +279,35 @@ void CPU::InitRegs()
 	cpu.fargregs[5] = 15 | rt_float;
 	cpu.fargregs[6] = 16 | rt_float;
 	cpu.fargregs[7] = 17 | rt_float;
+#endif
+#ifdef BIGFOOT
+	cpu.NumRegs = 32;
+	cpu.NumArgRegs = 8;
+	cpu.argregs[0] = 1;
+	cpu.argregs[1] = 2;
+	cpu.argregs[2] = 3;
+	cpu.argregs[3] = 4;
+	cpu.argregs[4] = 5;
+	cpu.argregs[5] = 6;
+	cpu.argregs[6] = 7;
+	cpu.argregs[7] = 8;
+	cpu.argregs[8] = 0;
+	cpu.argregs[9] = 0;
+	cpu.argregs[10] = 0;
+
+	cpu.NumvArgRegs = 10;
+	cpu.vargregs[0] = 1;
+	cpu.vargregs[1] = 2;
+	cpu.vargregs[2] = 3;
+	cpu.vargregs[3] = 40;
+	cpu.vargregs[4] = 41;
+	cpu.vargregs[5] = 42;
+	cpu.vargregs[6] = 43;
+	cpu.vargregs[7] = 44;
+	cpu.vargregs[8] = 45;
+	cpu.vargregs[9] = 46;
+	cpu.vargregs[10] = 47;
+
 #endif
 
 #ifdef QUPLS
@@ -372,6 +428,54 @@ void CPU::InitRegs()
 	cpu.ftmpregs[9] = 29 | rt_float;
 	cpu.ftmpregs[10] = 30 | rt_float;
 	cpu.ftmpregs[11] = 31 | rt_float;
+#endif
+#ifdef BIGFOOT
+	cpu.NumTmpRegs = 9;
+	cpu.tmpregs[0] = 9;
+	cpu.tmpregs[1] = 10;
+	cpu.tmpregs[2] = 11;
+	cpu.tmpregs[3] = 12;
+	cpu.tmpregs[4] = 13;
+	cpu.tmpregs[5] = 14;
+	cpu.tmpregs[6] = 15;
+	cpu.tmpregs[7] = 16;
+	cpu.tmpregs[8] = 17;
+
+	cpu.NumTmpCrRegs = 3;
+	cpu.tmpCrRegs[0] = 2;
+	cpu.tmpCrRegs[1] = 3;
+	cpu.tmpCrRegs[2] = 4;
+	cpu.tmpCrRegs[3] = 0;
+	cpu.tmpCrRegs[4] = 0;
+	cpu.tmpCrRegs[5] = 0;
+	cpu.tmpCrRegs[6] = 0;
+	cpu.tmpCrRegs[7] = 0;
+	cpu.tmpCrRegs[8] = 0;
+
+	// These are saved regs.
+	cpu.tmpregs[9] = 18;
+	cpu.tmpregs[10] = 19;
+	cpu.tmpregs[11] = 20;
+	cpu.tmpregs[12] = 21;
+	cpu.tmpregs[13] = 22;
+	cpu.tmpregs[14] = 23;
+	cpu.tmpregs[15] = 24;
+	cpu.tmpregs[16] = 25;
+
+	cpu.NumvTmpRegs = 12;
+	cpu.vtmpregs[0] = 4;
+	cpu.vtmpregs[1] = 5;
+	cpu.vtmpregs[2] = 6;
+	cpu.vtmpregs[3] = 7;
+	cpu.vtmpregs[4] = 8;
+	cpu.vtmpregs[5] = 9;
+	cpu.vtmpregs[6] = 10;
+	cpu.vtmpregs[7] = 11;
+	cpu.vtmpregs[8] = 12;
+	cpu.vtmpregs[9] = 13;
+	cpu.vtmpregs[10] = 14;
+	cpu.vtmpregs[11] = 15;
+
 #endif
 #ifdef QUPLS
 	cpu.NumSavedRegs = 8;
@@ -503,6 +607,61 @@ void CPU::InitRegs()
 	cpu.fsaved_regs[10] = 26 | rt_float;
 	cpu.fsaved_regs[11] = 27 | rt_float;
 #endif
+#ifdef BIGFOOT
+	cpu.NumSavedRegs = 8;
+	cpu.saved_regs[0] = 18;
+	cpu.saved_regs[1] = 19;
+	cpu.saved_regs[2] = 20;
+	cpu.saved_regs[3] = 21;
+	cpu.saved_regs[4] = 22;
+	cpu.saved_regs[5] = 23;
+	cpu.saved_regs[6] = 24;
+	cpu.saved_regs[7] = 25;
+	cpu.saved_regs[8] = 26;
+	cpu.saved_regs[9] = 0;
+	cpu.saved_regs[10] = 0;
+	cpu.saved_regs[11] = 0;
+	cpu.saved_regs[12] = 0;
+	cpu.saved_regs[13] = 0;
+	cpu.saved_regs[14] = 0;
+	cpu.saved_regs[15] = 0;
+
+	cpu.NumvSavedRegs = 16;
+	cpu.vsaved_regs[0] = 16;
+	cpu.vsaved_regs[1] = 17;
+	cpu.vsaved_regs[2] = 18;
+	cpu.vsaved_regs[3] = 19;
+	cpu.vsaved_regs[4] = 20;
+	cpu.vsaved_regs[5] = 21;
+	cpu.vsaved_regs[6] = 22;
+	cpu.vsaved_regs[7] = 23;
+	cpu.vsaved_regs[8] = 24;
+	cpu.vsaved_regs[9] = 25;
+	cpu.vsaved_regs[10] = 26;
+	cpu.vsaved_regs[11] = 27;
+	cpu.vsaved_regs[12] = 28;
+	cpu.vsaved_regs[13] = 29;
+	cpu.vsaved_regs[14] = 30;
+	cpu.vsaved_regs[15] = 31;
+
+	cpu.NumSavedCrRegs = 3;
+	cpu.savedCrRegs[0] = 5;
+	cpu.savedCrRegs[1] = 6;
+	cpu.savedCrRegs[2] = 7;
+	cpu.savedCrRegs[3] = 0;
+	cpu.savedCrRegs[4] = 0;
+	cpu.savedCrRegs[5] = 0;
+	cpu.savedCrRegs[6] = 0;
+	cpu.savedCrRegs[7] = 0;
+	cpu.savedCrRegs[8] = 0;
+	cpu.savedCrRegs[9] = 0;
+	cpu.savedCrRegs[10] = 0;
+	cpu.savedCrRegs[11] = 0;
+	cpu.savedCrRegs[12] = 0;
+	cpu.savedCrRegs[13] = 0;
+	cpu.savedCrRegs[14] = 0;
+	cpu.savedCrRegs[15] = 0;
+#endif
 }
 
 void initRegStack()
@@ -515,7 +674,8 @@ void initRegStack()
 	next_preg = 0;// regFirstTemp;
 	next_vreg = 0;// regFirstTemp;
 	next_vmreg = 0;
-    next_breg = 0;
+  next_breg = 0;
+	nextCrReg = 0;
 	//for (rsp=0; rsp < 3; rsp=rsp+1)
 	//	regstack[rsp] = tmpregs[rsp];
 	//rsp = 0;
@@ -526,6 +686,7 @@ void initRegStack()
 		vreg_in_use[i] = -1;
 		vmreg_in_use[i] = -1;
 		breg_in_use[i&15] = -1;
+		CrRegInUse[i & 15] = -1;
 	}
     reg_stack_ptr = 0;
     reg_alloc_ptr = 0;
@@ -539,7 +700,9 @@ void initRegStack()
     vmreg_alloc_ptr = 0;
     breg_stack_ptr = 0;
     breg_alloc_ptr = 0;
-//    act_scratch = 0;
+		CrRegStackPtr = 0;
+		CrRegAllocPtr = 0;
+		//    act_scratch = 0;
     memset(reg_stack,0,sizeof(reg_stack));
     memset(reg_alloc,0,sizeof(reg_alloc));
     memset(fpreg_stack,0,sizeof(fpreg_stack));
@@ -559,7 +722,10 @@ void initRegStack()
     memset(stacked_vregs,0,sizeof(stacked_vregs));
     memset(save_vreg_alloc,0,sizeof(save_vreg_alloc));
     memset(save_vmreg_alloc,0,sizeof(save_vmreg_alloc));
-	wrapno = 0;
+		memset(CrRegStack, 0, sizeof(CrRegStack));
+		memset(CrRegAlloc, 0, sizeof(CrRegAlloc));
+		wrapno = 0;
+		CrWrapno = 0;
 	ZeroMemory(rap, sizeof(rap));
 }
 
@@ -570,6 +736,20 @@ int IsTempReg(int rg)
 	for (nn = 0; nn < cpu.NumTmpRegs; nn++) {
 		if (rg == cpu.tmpregs[nn])// || rg==cpu.vtmpregs[nn])
 			return (nn+1);
+	}
+	return (0);
+}
+
+int IsTempCrReg(int rg)
+{
+	int nn;
+
+	if ((rg & rt_cr)==0)
+		return (0);
+	rg &= 0xfffL;
+	for (nn = 0; nn < cpu.NumTmpCrRegs; nn++) {
+		if (rg == cpu.tmpCrRegs[nn])// || rg==cpu.vtmpregs[nn])
+			return (nn + 1);
 	}
 	return (0);
 }
@@ -618,6 +798,20 @@ int IsSavedReg(int rg)
 	return (0);
 }
 
+int IsSavedCrReg(int rg)
+{
+	int nn;
+
+	if (((rg >> 30) & 3) != 3)
+		return (0);
+	rg &= 0x3fffffffL;
+	for (nn = 0; nn < cpu.NumSavedCrRegs; nn++) {
+		if (rg == cpu.savedCrRegs[nn])// || rg == cpu.vsaved_regs[nn])
+			return (nn + 1);
+	}
+	return (0);
+}
+
 int IsFsavedReg(int rg)
 {
 	int nn;
@@ -642,6 +836,20 @@ void SpillRegister(Operand *ap, int number)
 	fatal("SpillRegister(): register already spilled");
   reg_alloc[number].f.isPushed = 'T';
 	compiler.reg_in_use[ap->preg] = -1;
+}
+
+void SpillCrRegister(Operand* ap, int number)
+{
+//	cg.GenerateMove()
+	cg.GenerateStore(ap, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * cpu.sizeOfWord, regFP), cpu.sizeOfWord);
+	if (pass == 1)
+		max_stack_use = max(max_stack_use, (ap->deep + 1) * cpu.sizeOfWord);
+	//reg_stack[reg_stack_ptr].Operand = ap;
+	//reg_stack[reg_stack_ptr].f.allocnum = number;
+	if (CrRegAlloc[number].f.isPushed == 'T')
+		fatal("SpillRegister(): register already spilled");
+	CrRegAlloc[number].f.isPushed = 'T';
+	compiler.CrRegInUse[ap->preg] = -1;
 }
 
 void SpillVectorRegister(Operand* ap, int number)
@@ -690,6 +898,15 @@ void LoadRegister(int regno, int number)
 	compiler.reg_in_use[regno] = number;
 	cg.GenerateLoad(makereg(regno),cg.MakeIndexed(currentFn->GetTempBot()+number*cpu.sizeOfWord,regFP), cpu.sizeOfWord, cpu.sizeOfWord);
     reg_alloc[number].f.isPushed = 'F';
+}
+
+void LoadCrRegister(int regno, int number)
+{
+	if (compiler.CrRegInUse[regno & 0xfffL] >= 0)
+		fatal("LoadRegister():register still in use");
+	compiler.CrRegInUse[regno] = number;
+	cg.GenerateLoad(makereg(regno), cg.MakeIndexed(currentFn->GetTempBot() + number * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+	CrRegAlloc[number].f.isPushed = 'F';
 }
 
 // Load vector register from memory.
@@ -782,6 +999,7 @@ void GenerateTempRegPop(int reg, int rmode, int number, int stkpos)
 void initstack()
 {
 	ExpressionHasReference = false;
+	compiler.expr_depth = 0;
 	initRegStack();
 	//initFPRegStack();
 }
@@ -836,6 +1054,56 @@ Operand *GetTempRegister()
 	return (ap);
 }
 
+Operand* GetTempCrRegister()
+{
+	Operand* ap;
+	Function* sym = currentFn;
+	int number;
+
+	number = compiler.CrRegInUse[cpu.tmpCrRegs[nextCrReg]];
+	if (number >= 0) {// && number < rap[wrapno]) {
+		/*
+		nr = next_reg;
+		for (nn = regFirstTemp; nn <= regLastTemp; nn++) {
+			if (compiler.reg_in_use[nn] < 0) {
+				compiler.reg_in_use[nn] = reg_alloc_ptr;
+				ap = allocOperand();
+				ap->mode = am_reg;
+				ap->preg = next_reg;
+				ap->pdeep = ap->deep;
+				ap->deep = reg_alloc_ptr;
+				return (ap);
+			}
+		}
+		*/
+		SpillCrRegister(makereg(cpu.tmpCrRegs[nextCrReg]), number);
+	}
+	TRACE(printf("GetTempRegister:r%d\r\n", nextCrReg);)
+	compiler.CrRegInUse[cpu.tmpCrRegs[nextCrReg]] = CrRegAllocPtr;
+	ap = allocOperand();
+	ap->mode = amCrReg;
+	ap->preg = rt_cr | cpu.tmpCrRegs[nextCrReg];
+	ap->pdeep = ap->deep;
+	ap->deep = CrRegAllocPtr;
+	if (IsTempCrReg(ap->preg))
+		compiler.tempCrInUse.add(ap->preg & 7);
+	else if (IsSavedCrReg(ap->preg & 7))
+		compiler.savedCrInUse.add(ap->preg & 7);
+	CrRegAlloc[CrRegAllocPtr].reg = cpu.tmpCrRegs[nextCrReg];
+	CrRegAlloc[CrRegAllocPtr].Operand = ap;
+	CrRegAlloc[CrRegAllocPtr].f.isPushed = 'F';
+	nextCrReg++;
+	if (nextCrReg >= NumTempCrRegs() + NumSavedCrRegs()) {// regLastTemp) {
+		CrWrapno++;
+		rap[CrWrapno] = CrRegAllocPtr;
+		nextCrReg = 0;// regFirstTemp;		/* wrap around */
+	}
+	if (CrRegAllocPtr++ == MAX_REG_STACK)
+		fatal("GetTempRegister(): register stack overflow");
+	maxCrRegAllocPtr = max(maxCrRegAllocPtr, CrRegAllocPtr);
+	return (ap);
+}
+
 Operand *GetTempVectorRegister()
 {
 	Operand *ap;
@@ -852,7 +1120,7 @@ Operand *GetTempVectorRegister()
   vreg_in_use[next_vreg] = vreg_alloc_ptr;
   ap = allocOperand();
   ap->mode = am_vreg;
-  ap->preg = next_vreg;
+  ap->preg = next_vreg | rt_vector;
   ap->deep = vreg_alloc_ptr;
 //	ap->typep = &stdvector;
   vreg_alloc[vreg_alloc_ptr].reg = next_vreg;
@@ -1048,6 +1316,11 @@ void validate(Operand *ap)
 			LoadRegister(ap->preg, (int) ap->pdeep);
 		}
 		break;
+	case amCrReg:
+		if (IsTempCrReg(ap->preg) && CrRegAlloc[ap->pdeep].f.isPushed == 'T') {
+			LoadCrRegister(ap->preg, (int)ap->pdeep);
+		}
+		break;
 	case am_fpreg:
 		if (IsFtmpReg(ap->preg) && fpreg_alloc[ap->pdeep].f.isPushed == 'T') {
 			LoadFPRegister(ap->preg, (int)ap->pdeep);
@@ -1125,6 +1398,7 @@ void ReleaseTempRegister(Operand *ap)
 		case am_ainc:
 		case am_adec:
 		case am_reg:
+		case amCrReg:
 	commonv:
 			if (ap->preg >= frg && ap->preg <= cpu.NumvTmpRegs) {
 				if (vreg_in_use[ap->preg]==-1)
@@ -1198,6 +1472,21 @@ void ReleaseTempRegister(Operand *ap)
 			return;
 		}
 		*/
+		return;
+	case amCrReg:
+		if (IsTempCrReg(ap->preg)) {
+			if (compiler.CrRegInUse[ap->preg] == -1)
+				return;
+			if (nextCrReg == 0) {
+				nextCrReg = cpu.NumTmpCrRegs - 1;// regLastTemp;
+				CrWrapno--;
+			}
+			else
+				nextCrReg--;
+			number = compiler.CrRegInUse[ap->preg];
+			compiler.CrRegInUse[ap->preg] = -1;
+			break;
+		}
 		return;
 	case am_ind:
 	case am_indx:
@@ -1275,11 +1564,16 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	sp = 0;
 	TRACE(printf("TempInvalidate()\r\n");)
 	save_wrapno = wrapno;
+	saveCrWrapno = CrWrapno;
 
 	save_reg_alloc_ptr = reg_alloc_ptr;
 	memcpy(save_reg_alloc, reg_alloc, sizeof(save_reg_alloc));
 	memcpy(save_reg_in_use, compiler.reg_in_use, sizeof(save_reg_in_use));
 	memcpy(save_rap, rap, sizeof(rap));
+
+	saveCrRegAllocPtr = CrRegAllocPtr;
+	memcpy(saveCrRegAlloc, CrRegAlloc, sizeof(saveCrRegAlloc));
+	memcpy(saveCrRegInUse, compiler.CrRegInUse, sizeof(saveCrRegInUse));
 
 	save_fpreg_alloc_ptr = fpreg_alloc_ptr;
 	memcpy(save_fpreg_alloc, fpreg_alloc, sizeof(save_fpreg_alloc));
@@ -1306,6 +1600,24 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 			// mark the register void
 			compiler.reg_in_use[reg_alloc[i].reg] = -1;
     }
+	}
+	for (sp = i = 0; i < CrRegAllocPtr; i++) {
+		if (CrRegAlloc[i].f.isPushed == 'F') {
+			mode = CrRegAlloc[i].Operand->mode;
+			CrRegAlloc[i].Operand->mode = amCrReg;
+			if (!(mask & (1LL << (CrRegAlloc[i].Operand->preg & 0x3f)))) {
+				SpillCrRegister(CrRegAlloc[i].Operand, i);
+				mask = mask | (1LL << (CrRegAlloc[i].Operand->preg & 0x3f));
+			}
+			CrRegAlloc[i].Operand->mode = mode;
+			//GenerateTempRegPush(reg_alloc[i].reg, /*reg_alloc[i].Operand->mode*/am_reg, i, sp);
+			stackedCrRegs[sp].reg = CrRegAlloc[i].reg;
+			stackedCrRegs[sp].Operand = CrRegAlloc[i].Operand;
+			stackedCrRegs[sp].f.allocnum = i;
+			sp++;
+			// mark the register void
+			compiler.CrRegInUse[CrRegAlloc[i].reg] = -1;
+		}
 	}
 	for (*fsp = i = 0; i < fpreg_alloc_ptr; i++) {
 		if (fpreg_alloc[i].f.isPushed == 'F') {
@@ -1397,6 +1709,11 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	memset(compiler.reg_in_use, -1, sizeof(compiler.reg_in_use));
 	ZeroMemory(reg_alloc, sizeof(reg_alloc));
 	ZeroMemory(rap, sizeof(rap));
+	// Condition regs
+	CrWrapno = 0;
+	CrRegAllocPtr = 0;
+	memset(compiler.CrRegInUse, -1, sizeof(compiler.CrRegInUse));
+	ZeroMemory(CrRegAlloc, sizeof(CrRegAlloc));
 	// Float
 	fpreg_alloc_ptr = 0;
 	memset(fpreg_in_use, -1, sizeof(fpreg_in_use));
@@ -1442,6 +1759,13 @@ void TempRevalidate(int sp, int fsp, int psp, int vsp)
 		mask = mask | (1LL << stacked_regs[nn].Operand->preg);
 		//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode*/am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
 	}
+	CrMask = 0;
+	for (nn = sp - 1; nn >= 0; nn--) {
+		if (!(mask & (1LL << stackedCrRegs[nn].Operand->preg)))
+			LoadCrRegister(stackedCrRegs[nn].Operand->preg, stackedCrRegs[nn].f.allocnum);
+		CrMask = CrMask | (1LL << stackedCrRegs[nn].Operand->preg);
+		//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode*/am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
+	}
 	fpmask = 0;
 	for (nn = fsp - 1; nn >= 0; nn--) {
 		if (stacked_fpregs[nn].Operand) {
@@ -1463,6 +1787,10 @@ void TempRevalidate(int sp, int fsp, int psp, int vsp)
 	memcpy(reg_alloc, save_reg_alloc, sizeof(reg_alloc));
 	memcpy(compiler.reg_in_use, save_reg_in_use, sizeof(compiler.reg_in_use));
 	memcpy(rap, save_rap, sizeof(rap));
+	// Condition
+	CrRegAllocPtr = saveCrRegAllocPtr;
+	memcpy(CrRegAlloc, saveCrRegAlloc, sizeof(CrRegAlloc));
+	memcpy(CrRegInUse, saveCrRegInUse, sizeof(CrRegInUse));
 	// Float
 	fpreg_alloc_ptr = save_fpreg_alloc_ptr;
 	memcpy(fpreg_alloc, save_fpreg_alloc, sizeof(fpreg_alloc));

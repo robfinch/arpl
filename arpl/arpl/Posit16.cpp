@@ -40,9 +40,8 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
   int64_t exp_mask = (((uint64_t)1 << (uint64_t)expWidth) - 1LL);
   int64_t rs_mask = (((uint64_t)1 << (uint64_t)rs) - 1LL);
   RawPosit ad((int8_t)2, (int8_t)32), bd((int8_t)2, (int8_t)32);
-  int64_t S, T, L, G, R, St, St1;
+  int64_t S, L, G, R, St;
   Int256 s1, s2;
-  int nn;
   uint64_t ulp, rnd_ulp, tmp1_rnd_ulp, tmp1_rnd;
   uint64_t abs_tmp, o;
   Posit16 out;
@@ -73,7 +72,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
   aa_gt_bb = aa >= bb;
 
   // Determine op really wanted
-  rop = sa ^ sb ^ op;
+  rop = (int8_t)sa ^ (int8_t)sb ^ op;
 
   // Sort operand components
   rgs1 = aa_gt_bb ? rgsa : rgsb;
@@ -101,7 +100,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
   sig1s.high = sig1 << 32;
   sig2s.low = 0;
   sig2s.high = sig2 << 32;
-  Int128::Lsr(&sig2s, &sig2s, exp_diff);
+  Int128::Lsr(&sig2s, &sig2s, (int)exp_diff);
   if (rop)
     sigov = Int128::Sub(&sig_sd, &sig1s, &sig2s);
   else
@@ -113,7 +112,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
     sigi = sig_sd.low | (1LL << 63LL);
   }
   lzcnt = countLeadingZeros(sigi);
-  Int128::Shl(&sig_ls, &sig_sd, lzcnt);
+  Int128::Shl(&sig_ls, &sig_sd, (int)lzcnt);
   absrgm1 = rgs1 ? rgm1 : -rgm1;  // rgs1 = 1 = positive
   if (expWidth > 0) {
     rxtmp = ((absrgm1 << (int64_t)expWidth) | exp1) - lzcnt;
@@ -143,7 +142,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
   s1 = *s1.Zero();
   switch (es) {
   case 0:
-    S = sig_ls.StickyCalc(posWidth*2 - 3);
+    S = sig_ls.StickyCalc((int)posWidth*2 - 3);
     s1.low = srxx;
     s1.midLow = srxx;
     s1.midHigh = srxx;
@@ -154,7 +153,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
     s1.insert(srxtmp1, 34, 1);
     break;
   case 1:
-    S = sig_ls.StickyCalc(posWidth*2 - 2);
+    S = sig_ls.StickyCalc((int)posWidth*2 - 2);
     s1.low = srxx;
     s1.midLow = srxx;
     s1.midHigh = srxx;
@@ -165,7 +164,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
     s1.insert(srxtmp1, 34, 1);
     break;
   case 2:
-    S = sig_ls.StickyCalc(posWidth*3 - 1);
+    S = sig_ls.StickyCalc((int)posWidth*3 - 1);
     s1.low = srxx;
     s1.midLow = srxx;
     s1.midHigh = srxx;
@@ -176,7 +175,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
     s1.insert(srxtmp1, 34, 1);
     break;
   case 3:
-    S = sig_ls.StickyCalc(posWidth*3);
+    S = sig_ls.StickyCalc((int)posWidth*3);
     s1.low = srxx;
     s1.midLow = srxx;
     s1.midHigh = srxx;
@@ -189,36 +188,36 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
     break;
   default:
     // Error: not supported
-    S = sig_ls.StickyCalc(posWidth*3 - 1LL + expWidth - 2LL);
+    S = sig_ls.StickyCalc((int)posWidth*3 - 1LL + (int)expWidth - 2LL);
     s1.low = srxx;
     s1.midLow = srxx;
     s1.midHigh = srxx;
     s1.high = srxx;
     s1.insert(S, 0, 1);
-    s1.insert(sig_ls.extract(posWidth*3+expWidth-3LL, posWidth * 4LL -(posWidth*3 + expWidth - 3LL) ), 1LL, posWidth * 4LL - (posWidth*3 + expWidth - 3LL));
-    s1.insert(expo, posWidth * 4LL - 2LL - (posWidth*3 + expWidth - 2LL) + 2LL, expWidth);
-    s1.insert(srxtmp1, posWidth * 4LL - 2LL - (posWidth*3 + expWidth - 2LL) + expWidth + 2LL, 1LL);
+    s1.insert(sig_ls.extract((int)posWidth*3+ (int)expWidth-3LL, (int)posWidth * 4LL -((int)posWidth*3 + (int)expWidth - 3LL) ), 1LL, (int)posWidth * 4LL - ((int)posWidth*3 + (int)expWidth - 3LL));
+    s1.insert(expo, (int)posWidth * 4LL - 2LL - ((int)posWidth*3 + (int)expWidth - 2LL) + 2LL, (int)expWidth);
+    s1.insert(srxtmp1, (int)posWidth * 4LL - 2LL - ((int)posWidth*3 + (int)expWidth - 2LL) + (int)expWidth + 2LL, 1LL);
     break;
   }
-  s1.Shl(&s2, & s1, posWidth + 1LL);
-  s2.Shr(&s2, & s2, rgmo);
+  s1.Shl(&s2, & s1, (int)posWidth + 1LL);
+  s2.Shr(&s2, & s2, (int)rgmo);
 
 //             wire[3 * PSTWID - 1 + 3:0] tmp1 = { tmp,{PSTWID{1'b0}}} >> rgmo;
 // Rounding
 // Guard, Round, and Sticky
-  L = s2.extract(posWidth + 4, 1);
-  G = s2.extract(posWidth + 3, 1);
-  R = s2.extract(posWidth + 2, 1);
-  St = t1.StickyCalc(posWidth+1);
+  L = s2.extract((int)posWidth + 4, 1);
+  G = s2.extract((int)posWidth + 3, 1);
+  R = s2.extract((int)posWidth + 2, 1);
+  St = t1.StickyCalc((int)posWidth+1);
   ulp = ((G & (R | St)) | (L & G & ~(R | St)));
-  tmp1_rnd_ulp = s2.extract(posWidth + 3LL, posWidth);
+  tmp1_rnd_ulp = s2.extract((int)posWidth + 3LL, (int)posWidth);
   t1.low = tmp1_rnd_ulp;
   t1.high = 0;
   t2.low = ulp;
   t2.high = 0;
   Int128::Add(&t1, &t1, &t2);
-  t2.low = s2.extract(posWidth + 3, posWidth);
-  tmp1_rnd = (rgmo < posWidth - es - 2LL) ? tmp1_rnd_ulp : t2.low;
+  t2.low = s2.extract((int)posWidth + 3, (int)posWidth);
+  tmp1_rnd = (rgmo < (int)posWidth - es - 2LL) ? tmp1_rnd_ulp : t2.low;
 
   // Compute output sign
   switch ((zero << 3LL) | (sa << 2LL) | (op << 1LL) | sb) {
@@ -245,7 +244,7 @@ Posit16 Posit16::Addsub(int8_t op, Posit16 a, Posit16 b)
   case 6:
   case 7: o = 0; break;
   }
-  out.val = o;
+  out.val = (int)o;
   return (out);
 }
 
@@ -280,7 +279,7 @@ Posit16 Posit16Multiplier::Round(Int256 tmp1, int rgml, uint64_t so, bool zero, 
   int64_t c = tmp1.AddCarry(tmp1_rnd_ulp, tmp1.extract(posWidth + 3, posWidth), ulp);
   int64_t tmp1_rnd = (rgml < M - 2LL) ? tmp1_rnd_ulp : tmp1.extract(posWidth + 3, posWidth);
   int64_t abs_tmp = so ? -tmp1_rnd : tmp1_rnd;
-  out.val = zero ? 0LL : inf ? 0x8000000000000000LL : (so << 63LL) | ((uint64_t)abs_tmp >> 1LL);
+  out.val = (int)zero ? 0LL : inf ? 0x8000 : (so << 15LL) | ((uint64_t)abs_tmp >> 1LL);
   return (out);
 }
 
@@ -296,7 +295,7 @@ Int256 Posit16Multiplier::BuildResult(Int128 prod1, int64_t exp, int64_t rs)
   tmp.midLow = srxx;
   tmp.midHigh = srxx;
   tmp.high = srxx;
-  tmp.insert(prod1.StickyCalc(M - 3LL), 0LL, 1LL);
+  tmp.insert(prod1.StickyCalc((int)M - 3LL), 0LL, 1LL);
   tmp.insert(ext, 1LL, fldw);
   tmp.insert(exp, fldw + 1LL, expWidth);
   tmp.insert(rs, fldw + 1LL + expWidth, 1LL);
@@ -314,9 +313,7 @@ Posit16 Posit16Multiplier::Multiply(Posit16 a, Posit16 b)
   int64_t mo;
   int64_t rs = clog2(posWidth - 1);
   Posit16 o;
-  int64_t decexp;
   int64_t sigw, one;
-  int cnt;
   Int128 mask;
   int64_t expMask = (1LL << expWidth) - 1LL;
 
@@ -378,8 +375,8 @@ Posit16 Posit16Multiplier::Multiply(Posit16 a, Posit16 b)
 
 Posit16 Posit16::Divide(Posit16 a, Posit16 b)
 {
-  RawPosit aa(Posit16::expWidth, Posit16::posWidth);
-  RawPosit bb(Posit16::expWidth, Posit16::posWidth);
+  RawPosit aa(Posit16::expWidth, (int)Posit16::posWidth);
+  RawPosit bb(Posit16::expWidth, (int)Posit16::posWidth);
   Posit16 out;
   int64_t so;
   int64_t inf;
@@ -396,11 +393,10 @@ Posit16 Posit16::Divide(Posit16 a, Posit16 b)
   int8_t AW_MAX = 16;
   int64_t m2_inv0;
   Int256 div_m, div_mN, div_mNm;
-  int64_t m2_inv_X_m2_64;
   Int256 t1, t2, t3, t4;
   Int256 m2_128, mask1, mask2, mask2mp1;
   Int256 mask, t11, t12;
-  int64_t ii, jj;
+  int64_t ii;
   int64_t St, tt;
   int64_t div_m_udf;
   int64_t div_e, div_eN;
@@ -408,11 +404,9 @@ Posit16 Posit16::Divide(Posit16 a, Posit16 b)
   int64_t e_o, r_o, ro_s;
   int64_t exp_oN;
   int64_t div_e_mask;
-  int64_t tmp_o0, tmp_o1, tmp_o2, tmp_o3;
   Int256 tmp_o, tmp1_o;
   Int256 one;
   Int256 oneScaled;
-  int64_t normAmt;
   bool incr = false;
 
   if (M > IW_MAX*8)
