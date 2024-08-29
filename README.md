@@ -27,6 +27,7 @@ The current compiler is somewhat specific to the Qupls architecture. The compile
 It was not designed to be a portable compiler.
 It was used in the past to compile simple programs for the Thor project.
 There is a trial port of the compiler for Riscv code, but is untested and not known to be working.
+A port to i386 code is also in progress. Resulting code does not work yet for the i386.
 
 # Status
 Still very much a work-in-progress. The code is not stable.
