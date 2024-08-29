@@ -47,7 +47,7 @@ struct nlit *numeric_tab = nullptr;
 // Please keep table in alphabetical order.
 // Instruction.cpp has the number of table elements hard-coded in it.
 //
-Instruction opl[383] =
+Instruction opl[396] =
 {   
 { ";", op_remark },
 { ";asm",op_asm,300 },
@@ -202,8 +202,15 @@ Instruction opl[383] =
 { "isnull", op_isnullptr,1,1,false,am_reg,am_reg,0,0 },
 { "itof", op_itof, 2, 1, false, am_reg, am_reg, 0, 0 },
 { "itop", op_itop, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "jae", op_jae,3,0,false,am_direct,0, 0, 0 },
 { "jal", op_jal,1,1,false },
+{ "jeq", op_jeq,3,0,false,am_direct,0, 0, 0 },
+{ "jg", op_jg,3,0,false,am_direct,0, 0, 0 },
+{ "jge", op_jge,3,0,false,am_direct,0, 0, 0 },
+{ "jl", op_jl,3,0,false,am_direct,0, 0, 0 },
+{ "jle", op_jle,3,0,false,am_direct,0, 0, 0 },
 { "jmp",op_jmp,1,0,false,am_mem,0,0,0 },
+{ "jne", op_jne,3,0,false,am_direct,0, 0, 0 },
 { "jsr", op_jsr,1,1,false },
 { "l",op_l,1,1,false,am_reg,am_imm,0,0 },
 { "la",op_la,1,1,false,am_reg,am_mem,0,0 },
@@ -263,11 +270,14 @@ Instruction opl[383] =
 { "mod", op_mod,68,1, false,am_reg,am_reg,am_reg|am_imm,0 },
 { "modu", op_modu,68,1,false,am_reg,am_reg,am_reg,0 },
 { "mov", op_mov,1,1,false,am_reg,am_reg,0,0 },
+{ "movb", op_movb,1,1,false,am_reg,am_reg,0,0 },
 { "move",op_move,1,1,false,am_reg,am_reg,0,0 },
+{ "movl", op_movl,1,1,false,am_reg,am_reg,0,0 },
 { "movs", op_movs },
 { "movsxb", op_movsxb,1,1,false,am_reg,am_reg,0,0 },
 { "movsxt", op_movsxt,1,1,false,am_reg,am_reg,0,0 },
 { "movsxw", op_movsxw,1,1,false,am_reg,am_reg,0,0 },
+{ "movw", op_movw,1,1,false,am_reg,am_reg,0,0 },
 { "movzxb", op_movzxb,1,1,false,am_reg,am_reg,0,0 },
 { "movzxt", op_movzxt,1,1,false,am_reg,am_reg,0,0 },
 { "movzxw", op_movzxw,1,1,false,am_reg,am_reg,0,0 },
@@ -336,11 +346,14 @@ Instruction opl[383] =
 { "sbx",op_sbx,1,1,false,am_reg,am_reg,am_imm,am_imm },
 { "sd",op_sd,4,0,true,am_reg,am_mem,0,0 },
 { "sei", op_sei,1,0,false,am_reg|am_ui6,0,0,0 },
+{ "seteq", op_seteq,1,1,false,am_reg,0,0,0 },
+{ "setl", op_setl,1,1,false,am_reg,0,0,0 },
+{ "setne", op_setne,1,1,false,am_reg,0,0,0 },
 { "setwb", op_setwb, 1, 0 },
 { "sh",op_sh,4,0,true,am_reg,am_mem,0,0 },
-{ "shl", op_stpl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shl", op_shl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "shlu", op_stplu,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
-{ "shr", op_stpr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shr", op_shr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "shru", op_stpru,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "sll", op_sll,2,1,false,am_reg,am_reg,am_reg,0 },
 { "sllh", op_sllh,2,1,false,am_reg,am_reg,am_reg,0 },
@@ -526,6 +539,7 @@ char *RegMoniker(int32_t regno)
 		else
 			sprintf_s(&buf[n][0], 20, "cr%d", regno & 7);
 	}
+#ifndef I386
 	else if (rg = IsTempReg(regno)) {
 		if (invert)
 			sprintf_s(&buf[n][0], 20, "~t%d", rg - 1);// tmpregs[rg - 1]);
@@ -544,19 +558,35 @@ char *RegMoniker(int32_t regno)
 		else
 			sprintf_s(&buf[n][0], 20, "s%d", rg - 1);
 	}
+#endif
 	else
 		if (regno==regFP)
+#ifdef I386
+			sprintf_s(&buf[n][0], 20, "%%ebp");
+#else
 			sprintf_s(&buf[n][0], 20, "fp");
+#endif
 //		else if (regno == regAFP)
 //			sprintf_s(&buf[n][0], 20, "$afp");
+#ifdef I386
+		else if (regno == regGP)
+			sprintf_s(&buf[n][0], 20, "_r30");
+#else
 		else if (regno==regGP)
 			sprintf_s(&buf[n][0], 20, "gp");
+#endif
 		else if (regno == regGP1)
 			sprintf_s(&buf[n][0], 20, "gp1");
 	//	else if (regno==regPC)
 //		sprintf_s(&buf[n][0], 20, "$pc");
+#ifdef I386
+		else if (regno == regSP)
+			sprintf_s(&buf[n][0], 20, "%%esp");
+#else
 	else if (regno==regSP)
 		sprintf_s(&buf[n][0], 20, "sp");
+#endif
+#ifndef I386
 	else if (regno==regLR)
 		sprintf_s(&buf[n][0], 20, "lr0");
 	else if (regno == regLR+1)
@@ -573,6 +603,23 @@ char *RegMoniker(int32_t regno)
 		}
 	else if (regno == 2)
 			sprintf_s(&buf[n][0], 20, "r%d", regno);
+#endif
+#ifdef I386
+	else {
+		switch (regno) {
+		case 40:	sprintf_s(&buf[n][0], 20, "%%eax"); break;
+		case 41:	sprintf_s(&buf[n][0], 20, "%%ebx"); break;
+		case 42:	sprintf_s(&buf[n][0], 20, "%%ecx"); break;
+		case 43:	sprintf_s(&buf[n][0], 20, "%%edx"); break;
+		case 46:	sprintf_s(&buf[n][0], 20, "%%esi"); break;
+		case 47:	sprintf_s(&buf[n][0], 20, "%%edi"); break;
+		case 48:	sprintf_s(&buf[n][0], 20, "%%al"); break;
+		case 50:	sprintf_s(&buf[n][0], 20, "%%cl"); break;
+		default:
+			sprintf_s(&buf[n][0], 20, "_r%d", regno);
+		}
+	}
+#else
 	else {
 		if ((regno & 0x70) == 0x040)
 			sprintf_s(&buf[n][0], 20, "$p%d", regno & 0x1f);
@@ -581,6 +628,7 @@ char *RegMoniker(int32_t regno)
 		else
 			sprintf_s(&buf[n][0], 20, "r%d", regno);
 	}
+#endif
 	return &buf[n][0];
 }
 

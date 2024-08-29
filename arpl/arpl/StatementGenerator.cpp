@@ -406,7 +406,7 @@ void StatementGenerator::GenerateSwitchStatements(Statement* st)
 			stmt->Generate(2);
 			break;
 		case st_break:
-			GenerateMonadic(op_branch, 0, MakeCodeLabel(breaklab));
+			cg.GenerateBra(breaklab);
 			break;
 		default:
 			stmt->Generate(2);
@@ -447,12 +447,12 @@ void StatementGenerator::GenerateSwitchLo(Statement* stmt, Case* cases, Operand*
 		cg.GenerateBne(ap, MakeImmediate(cases[lo].val), last_case ? ((deflab > 0) ? deflab : xitlab) : lab2);
 
 	if (opt_size && cases[lo].done)
-		GenerateMonadic(op_branch, 0, MakeCodeLabel(cases[lo].label));
+		cg.GenerateBra(cases[lo].label);
 	else {
 		if (!cases[lo].done) {
 			cases[lo].done = true;
 			cases[lo].stmt->GenerateCase();
-			GenerateMonadic(op_branch, 0, MakeCodeLabel(xitlab));
+			cg.GenerateBra(xitlab);
 		}
 	}
 	GenerateLabel(lab2);
@@ -493,7 +493,7 @@ void StatementGenerator::GenerateSwitchSearch(Statement* stmt, Case* cases, Oper
 	//	cases[mid].stmt->GenMixedSource();
 	cases[mid].done = true;
 	cases[mid].stmt->GenerateCase();
-	GenerateMonadic(op_branch, 0, MakeCodeLabel(xitlab));
+	cg.GenerateBra(xitlab);
 	GenerateSwitchSearch(stmt, cases, ap, ap2, hilab, mid, hi, xitlab, deflab, is_unsigned, one_hot);
 	GenerateSwitchSearch(stmt, cases, ap, ap2, lolab, lo, mid, xitlab, deflab, is_unsigned, one_hot);
 }

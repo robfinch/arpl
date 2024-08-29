@@ -3,7 +3,7 @@
 
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Stratford
+//   \\__/ o\    (C) 2012-2024  Robert Finch, Stratford
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||

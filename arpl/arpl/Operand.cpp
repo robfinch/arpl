@@ -757,6 +757,9 @@ void Operand::store(txtoStream& ofs)
 	switch (mode)
 	{
 	case am_imm:
+#ifdef I386
+		ofs.puts("$");
+#endif
 		if (!cpu.Addsi)
 			ofs.write("");	// was "#"
 		// Fall through

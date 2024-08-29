@@ -42,6 +42,7 @@
 #define isDSD7      (gCpu==DSD7)
 #define isRiscv     (gCpu==RISCV)
 #define isBigfoot   (gCpu==BIGFOOT)
+#define isI386      (gCpu==I386)
 //#define DOTRACE	1
 #ifdef DOTRACE
 #define TRACE(x)	x
@@ -51,7 +52,6 @@
 
 extern char comment_char;
 extern Compiler compiler;
-extern CPU cpu;
 extern int pass;
 extern int maxPn;
 extern int hook_predreg;
@@ -265,24 +265,34 @@ extern Map map;
 extern int optimized;
 extern short int typ_sp;
 #ifdef QUPLS
+extern CPU cpu;
 extern QuplsCodeGenerator cg;
 extern QuplsStatementGenerator sg;
 #endif
 #ifdef QUPLS40
+extern CPU cpu;
 extern QuplsCodeGenerator cg;
 extern QuplsStatementGenerator sg;
 #endif
 #ifdef THOR
+extern CPU cpu;
 extern ThorCodeGenerator cg;
 extern ThorStatementGenerator sg;
 #endif
 #ifdef RISCV
+extern CPU cpu;
 extern RiscvCodeGenerator cg;
 extern RiscvStatementGenerator sg;
 #endif
 #ifdef BIGFOOT
+extern BigfootCPU cpu;
 extern BigfootCodeGenerator cg;
 extern BigfootStatementGenerator sg;
+#endif
+#ifdef I386
+extern i386CPU cpu;
+extern i386CodeGenerator cg;
+extern i386StatementGenerator sg;
 #endif
 extern int DataLabels[65535];
 extern ENODE* gNameRefNode;
@@ -406,7 +416,7 @@ extern BasicBlock *basicBlocks[10000];
 extern BasicBlock *sortedBlocks[10000];
 extern Forest forest;
 extern IGraph iGraph;
-extern Instruction opl[383];
+extern Instruction opl[396];
 extern BasicBlock *LastBlock;
 extern Instruction *GetInsn(int);
 extern char inpline[100000];

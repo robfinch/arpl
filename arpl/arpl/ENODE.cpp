@@ -1588,7 +1588,7 @@ Operand* ENODE::GenerateRegRegIndex()
 		ap1->isUnsigned = ap2->isUnsigned;
 	}
 	else {
-		GenerateTriadic(op_add, 0, ap1, ap1, ap2);
+		cg.GenerateAdd(ap1, ap1, ap2);
 		ap1->mode = am_indx;
 		ap1->deep2 = ap2->deep2;
 		ap1->offset = makeinode(en_icon, 0);
@@ -1724,7 +1724,7 @@ Operand *ENODE::GenerateIndex(bool neg)
 		}
 		else {
 			//GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
-			GenerateTriadic(op_add, 0, ap2, ap1, ap2);
+			cg.GenerateAdd(ap2, ap1, ap2);
 			ap2->mode = am_indx;
 			ap2->deep2 = ap1->deep;
 			ap2->offset = makeinode(en_icon, 0);

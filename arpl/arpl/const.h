@@ -31,7 +31,8 @@ enum e_cpu { thor, qupls, riscv, bigfoot };
 //#define QUPLS	1
 //#define QUPLS40 1
 //#define RISCV 5
-#define BIGFOOT 386
+#define I386 386
+//#define BIGFOOT 999
 
 enum e_bt {
 	bt_none,
@@ -310,6 +311,10 @@ enum e_op {
 	op_loadm, op_storem,
 	op_stib, op_stiw, op_stit, op_stio, op_addq,
 	op_zseq, op_zsne, op_zslt, op_zsle, op_zsgt, op_zsge, op_zsltu, op_zsleu, op_zsgtu, op_zsgeu,
+	// i386
+	op_movb, op_movw, op_movl,
+	op_shl, op_shr, op_jae, op_jeq, op_jne, op_jl, op_jge, op_jle, op_jg,
+	op_seteq, op_setne, op_setl,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxo, op_bmap,
 	op_movzxb, op_movzxw, op_movzxt,

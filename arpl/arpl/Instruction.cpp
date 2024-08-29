@@ -81,6 +81,13 @@ bool Instruction::IsFlowControl()
 		opcode == op_beqz ||
 		opcode == op_bnez ||
 		opcode == op_bnor ||
+
+		opcode == op_jeq ||
+		opcode == op_jne ||
+		opcode == op_jl ||
+		opcode == op_jg ||
+		opcode == op_jle ||
+		opcode == op_jge ||
 		//opcode == op_ibne ||
 		//opcode == op_dbnz ||
 		opcode == op_bchk ||
@@ -112,6 +119,7 @@ bool Instruction::IsLoad()
 		|| opcode == op_ldft
 		|| opcode == op_fldo
 		|| opcode == op_pldo
+		|| opcode == op_mov
 		)
 		return (true);
 	return (false);
@@ -133,6 +141,7 @@ bool Instruction::IsIntegerLoad()
 		|| opcode == op_ldtu
 		|| opcode == op_ldpu
 		|| opcode == op_lddr
+		|| opcode == op_mov
 		)
 		return (true);
 	return (false);
@@ -161,6 +170,7 @@ bool Instruction::IsStore()
 		|| opcode == op_stiw
 		|| opcode == op_stit
 		|| opcode == op_stio
+		|| opcode == op_mov
 		)
 		return (true);
 	return (false);

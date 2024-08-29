@@ -778,7 +778,7 @@ int Function::RestoreFPRegisterVars()
 			GenerateDiadic(op_fldo, 0, makefpreg(nn), MakeIndexed(cnt2 - cnt, regSP));
 			cnt -= cpu.sizeOfWord;
 		}
-		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cnt2 + cpu.sizeOfFP));
+		cg.GenerateAddImmediate(makereg(regSP), makereg(regSP), MakeImmediate(cnt2 + cpu.sizeOfFP));
 	}
 	return (cnt2);
 }
@@ -797,7 +797,7 @@ int Function::RestorePositRegisterVars()
 			GenerateDiadic(op_pldo, 0, compiler.of.makepreg(nn), MakeIndexed(cnt2 - cnt, regSP));
 			cnt -= cpu.sizeOfWord;
 		}
-		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfFP +cnt2));
+		cg.GenerateAddImmediate(makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfFP +cnt2));
 	}
 	return (cnt2);
 }

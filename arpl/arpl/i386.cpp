@@ -38,6 +38,14 @@ void ReleaseTempRegister(Operand* ap);
 Operand* GetTempRegister();
 extern void GenLoad(Operand* ap1, Operand* ap3, int ssize, int size);
 
+static Operand* eax, * ebx, * ecx, * edx, * al, *cl, * esi, * edi;
+static Operand* iregs[32];
+
+void i386CodeGenerator::banner()
+{
+	printf("i386 Code Generator v0.01\n");
+};
+
 void i386CodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
 {
 	Operand* ap2;
@@ -52,7 +60,7 @@ void i386CodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
 }
 
 // Convert a value to a Boolean.
-Operand* QuplsCodeGenerator::MakeBoolean(Operand* ap)
+Operand* i386CodeGenerator::MakeBoolean(Operand* ap)
 {
 	Operand* ap1;
 	OCODE* ip;
@@ -67,7 +75,7 @@ Operand* QuplsCodeGenerator::MakeBoolean(Operand* ap)
 	return (ap1);
 }
 
-void QuplsCodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
+void i386CodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
 {
 	switch (ap2->mode) {
 	case am_reg:
@@ -84,7 +92,7 @@ void QuplsCodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
 	}
 }
 
-Operand* QuplsCodeGenerator::GenerateSafeLand(ENODE* node, int flags, int op)
+Operand* i386CodeGenerator::GenerateSafeLand(ENODE* node, int flags, int op)
 {
 	Operand* ap1, * ap2, * ap4, * ap5;
 	int lab0;
@@ -107,19 +115,19 @@ Operand* QuplsCodeGenerator::GenerateSafeLand(ENODE* node, int flags, int op)
 
 	GenerateTriadic(op_and, 0, ap4, ap4, ap5);
 	ReleaseTempReg(ap2);
-	//ap2->MakeLegal(flags, sizeOfWord);
+	//ap2->MakeLegal(flags, cpu.sizeOfWord);
 	ap1->isBool = true;
 	return (ap1);
 }
 
 
-void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width)
+void i386CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width)
 {
 	int nn;
 	uint64_t mask;
 
-	ap1->MakeLegal(am_reg, sizeOfWord);
-	ap2->MakeLegal(am_reg, sizeOfWord);
+	ap1->MakeLegal(am_reg, cpu.sizeOfWord);
+	ap2->MakeLegal(am_reg, cpu.sizeOfWord);
 	Generate4adic(op_dep, 0, ap1, ap2, MakeImmediate(offset), MakeImmediate(((int64_t)offset + width - 1LL) & 0x3fLL));
 }
 
@@ -130,16 +138,21 @@ static Operand* CombineOffsetWidth(Operand* offset, Operand* width)
 
 	// Combine offset,width into one register.
 	ap3 = GetTempRegister();
-	if (width->mode == am_imm)
-		GenerateDiadic(op_ldi, 0, ap3, cg.MakeImmediate(width->offset->i << 8LL));
-	else
-		GenerateTriadic(op_asl, 0, ap3, width, cg.MakeImmediate(8));
-	GenerateTriadic(op_or, 0, ap3, ap3, offset);
+	if (width->mode == am_imm) {
+		GenerateDiadic(op_mov, 0, cg.MakeImmediate(width->offset->i << 8LL), eax);
+	}
+	else {
+		GenerateDiadic(op_mov, 0, width, eax);
+		GenerateDiadic(op_shl, 0, cg.MakeImmediate(8), eax);
+		GenerateDiadic(op_mov, 0, eax, ap3);
+	}
+	GenerateDiadic(op_mov, 0, offset, eax);
+	GenerateDiadic(op_or, 0, eax, ap3);
 	return (ap3);
 }
 
 
-void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, Operand* width)
+void i386CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, Operand* width)
 {
 	Operand* op_begin;
 	Operand* op_end;
@@ -151,7 +164,7 @@ void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Oper
 }
 
 
-void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width)
+void i386CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width)
 {
 	int nn;
 	uint64_t mask;
@@ -160,8 +173,8 @@ void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENOD
 	Operand* op_end;
 	OCODE* ip;
 
-	ap3 = GenerateExpression(offset, am_reg | am_imm | am_imm0, sizeOfWord, 1);
-	ap4 = GenerateExpression(width, am_reg | am_imm | am_imm0, sizeOfWord, 1);
+	ap3 = GenerateExpression(offset, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
+	ap4 = GenerateExpression(width, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ConvertOffsetWidthToBeginEnd(ap3, ap4, &op_begin, &op_end);
 	GenerateBitfieldInsert(ap1, ap2, op_begin, op_end);
 	ReleaseTempReg(op_end);
@@ -170,7 +183,7 @@ void QuplsCodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENOD
 	ReleaseTempReg(ap3);
 }
 
-void QuplsCodeGenerator::ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end)
+void i386CodeGenerator::ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end)
 {
 	Int128 me;
 
@@ -184,7 +197,7 @@ void QuplsCodeGenerator::ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* 
 	GenerateTriadic(op_add, 0, *op_end, offset, width);
 }
 
-Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, Operand* offset, Operand* width)
+Operand* i386CodeGenerator::GenerateBitfieldExtract(Operand* ap, Operand* offset, Operand* width)
 {
 	Operand* ap1, * ap3, * op_begin, * op_end;
 	Int128 me;
@@ -197,7 +210,7 @@ Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, Operand* offse
 	return (ap1);
 }
 
-Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset, ENODE* width)
+Operand* i386CodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset, ENODE* width)
 {
 	Operand* ap1;
 	Operand* ap2;
@@ -206,8 +219,8 @@ Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset,
 	Operand* op_end;
 
 	ap1 = GetTempRegister();
-	ap2 = GenerateExpression(offset, am_reg | am_imm | am_imm0, sizeOfWord, 1);
-	ap3 = GenerateExpression(width, am_reg | am_imm | am_imm0, sizeOfWord, 1);
+	ap2 = GenerateExpression(offset, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
+	ap3 = GenerateExpression(width, am_reg | am_imm | am_imm0, cpu.sizeOfWord, 1);
 	ConvertOffsetWidthToBeginEnd(ap2, ap3, &op_begin, &op_end);
 	Generate4adic(isSigned ? op_ext : op_extu, 0, ap1, ap, op_begin, op_end);
 	ReleaseTempReg(ap3);
@@ -215,7 +228,7 @@ Operand* QuplsCodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset,
 	return (ap1);
 }
 
-Operand* QuplsCodeGenerator::GenerateEq(ENODE* node)
+Operand* i386CodeGenerator::GenerateEq(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -224,13 +237,17 @@ Operand* QuplsCodeGenerator::GenerateEq(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_cmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_cmp)->amclass3 | am_imm, node->p[1]->GetNaturalSize(), 1);
-	GenerateTriadic(op_seq, 0, ap3, ap1, ap2);
+	GenerateDiadic(op_mov, 0, ap1, eax);
+	GenerateDiadic(op_mov, 0, ap2, ebx);
+	GenerateDiadic(op_cmp, 0, ebx, eax);
+	GenerateMonadic(op_seteq, 0, al);
+	GenerateDiadic(op_movsxb, 0, al, eax);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateNe(ENODE* node)
+Operand* i386CodeGenerator::GenerateNe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -239,13 +256,17 @@ Operand* QuplsCodeGenerator::GenerateNe(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_cmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_cmp)->amclass3 | am_imm, node->p[1]->GetNaturalSize(), 1);
-	GenerateTriadic(op_sne, 0, ap3, ap1, ap2);
+	GenerateDiadic(op_mov, 0, ap1, eax);
+	GenerateDiadic(op_mov, 0, ap2, ebx);
+	GenerateDiadic(op_cmp, 0, ebx, eax);
+	GenerateMonadic(op_setne, 0, al);
+	GenerateDiadic(op_movsxb, 0, al, eax);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateLt(ENODE* node)
+Operand* i386CodeGenerator::GenerateLt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -254,13 +275,17 @@ Operand* QuplsCodeGenerator::GenerateLt(ENODE* node)
 	ap3 = GetTempRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_cmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_cmp)->amclass3 | am_imm, node->p[1]->GetNaturalSize(), 1);
-	GenerateTriadic(op_slt, 0, ap3, ap1, ap2);
+	GenerateDiadic(op_mov, 0, ap1, eax);
+	GenerateDiadic(op_mov, 0, ap2, ebx);
+	GenerateDiadic(op_cmp, 0, ebx, eax);
+	GenerateMonadic(op_setl, 0, al);
+	GenerateDiadic(op_movsxb, 0, al, eax);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateLe(ENODE* node)
+Operand* i386CodeGenerator::GenerateLe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -275,7 +300,7 @@ Operand* QuplsCodeGenerator::GenerateLe(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateGt(ENODE* node)
+Operand* i386CodeGenerator::GenerateGt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -291,7 +316,7 @@ Operand* QuplsCodeGenerator::GenerateGt(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateGe(ENODE* node)
+Operand* i386CodeGenerator::GenerateGe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -306,7 +331,7 @@ Operand* QuplsCodeGenerator::GenerateGe(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateLtu(ENODE* node)
+Operand* i386CodeGenerator::GenerateLtu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -322,7 +347,7 @@ Operand* QuplsCodeGenerator::GenerateLtu(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateLeu(ENODE* node)
+Operand* i386CodeGenerator::GenerateLeu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -338,7 +363,7 @@ Operand* QuplsCodeGenerator::GenerateLeu(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateGtu(ENODE* node)
+Operand* i386CodeGenerator::GenerateGtu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -355,7 +380,7 @@ Operand* QuplsCodeGenerator::GenerateGtu(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateGeu(ENODE* node)
+Operand* i386CodeGenerator::GenerateGeu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -371,7 +396,7 @@ Operand* QuplsCodeGenerator::GenerateGeu(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateFeq(ENODE* node)
+Operand* i386CodeGenerator::GenerateFeq(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -386,7 +411,7 @@ Operand* QuplsCodeGenerator::GenerateFeq(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateFne(ENODE* node)
+Operand* i386CodeGenerator::GenerateFne(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -401,7 +426,7 @@ Operand* QuplsCodeGenerator::GenerateFne(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateFlt(ENODE* node)
+Operand* i386CodeGenerator::GenerateFlt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -416,7 +441,7 @@ Operand* QuplsCodeGenerator::GenerateFlt(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateFle(ENODE* node)
+Operand* i386CodeGenerator::GenerateFle(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -431,7 +456,7 @@ Operand* QuplsCodeGenerator::GenerateFle(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateFgt(ENODE* node)
+Operand* i386CodeGenerator::GenerateFgt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -446,7 +471,7 @@ Operand* QuplsCodeGenerator::GenerateFgt(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenerateFge(ENODE* node)
+Operand* i386CodeGenerator::GenerateFge(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int size;
@@ -461,11 +486,11 @@ Operand* QuplsCodeGenerator::GenerateFge(ENODE* node)
 	return (ap3);
 }
 
-Operand* QuplsCodeGenerator::GenExpr(ENODE* node)
+Operand* i386CodeGenerator::GenExpr(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3, * ap4;
 	int lab0, lab1;
-	int64_t size = sizeOfWord;
+	int64_t size = cpu.sizeOfWord;
 	int op;
 	OCODE* ip;
 
@@ -569,7 +594,7 @@ Operand* QuplsCodeGenerator::GenExpr(ENODE* node)
 		GenerateFalseJump(node, lab0, 0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(cpu.ldi_op | op_dot, 0, ap1, MakeImmediate(1));
-		GenerateMonadic(op_bra, 0, MakeDataLabel(lab1, regZero));
+		GenerateMonadic(op_jmp, 0, MakeDataLabel(lab1, regZero));
 		GenerateLabel(lab0);
 		GenerateDiadic(cpu.ldi_op | op_dot, 0, ap1, MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -631,101 +656,155 @@ Operand* QuplsCodeGenerator::GenExpr(ENODE* node)
 	*/
 }
 
-void QuplsCodeGenerator::GenerateBranchTrue(Operand* ap, int label)
+void i386CodeGenerator::GenerateBranchTrue(Operand* ap, int64_t label)
 {
 	gHeadif = currentFn->pl.tail;
-	GenerateDiadic(op_bnez, 0, ap, MakeCodeLabel(label));
+	GenerateDiadic(op_cmp, 0, MakeImmediate(0), ap);
+	GenerateDiadic(op_jne, 0, ap, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBranchFalse(Operand* ap, int label)
+void i386CodeGenerator::GenerateBranchFalse(Operand* ap, int64_t label)
 {
 	gHeadif = currentFn->pl.tail;
-	GenerateDiadic(op_beqz, 0, ap, MakeCodeLabel(label));
+	GenerateDiadic(op_cmp, 0, MakeImmediate(0), ap);
+	GenerateDiadic(op_jeq, 0, ap, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
-		if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero()))
-			GenerateDiadic(op_beqz, 0, ap1, MakeCodeLabel(label));
+		if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero())) {
+			GenerateDiadic(op_cmp, 0, MakeImmediate(0), ap1);
+			GenerateMonadic(op_jeq, 0, MakeCodeLabel(label));
+		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_beq, 0, ap1, ap3, MakeCodeLabel(label));
-			ReleaseTempRegister(ap3);
+			GenerateDiadic(op_mov, 0, ap1, eax);
+			GenerateLoadConst(ap2, ebx);
+			GenerateDiadic(op_cmp, 0, ebx, eax);
+			GenerateMonadic(op_jeq, 0, MakeCodeLabel(label));
 		}
 	}
-	else
-		GenerateTriadic(op_beq, 0, ap1, ap2, MakeCodeLabel(label));
+	else {
+		GenerateDiadic(op_mov, 0, ap1, eax);
+		GenerateDiadic(op_mov, 0, ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, eax);
+		GenerateMonadic(op_jeq, 0, MakeCodeLabel(label));
+	}
 }
 
-void QuplsCodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
 	if (ap2->mode == am_imm) {
-		if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero()))
-			GenerateDiadic(op_bnez, 0, ap1, MakeCodeLabel(label));
+		if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero())) {
+			GenerateDiadic(op_cmp, 0, MakeImmediate(0), ap1);
+			GenerateMonadic(op_jne, 0, MakeCodeLabel(label));
+		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_bne, 0, ap1, ap3, MakeCodeLabel(label));
-			ReleaseTempRegister(ap3);
+			GenerateDiadic(op_mov, 0, ap1, eax);
+			GenerateLoadConst(ap2, ebx);
+			GenerateDiadic(op_cmp, 0, ebx, eax);
+			GenerateMonadic(op_jne, 0, MakeCodeLabel(label));
 		}
 	}
-	else
-		GenerateTriadic(op_bne, 0, ap1, ap2, MakeCodeLabel(label));
+	else {
+		GenerateDiadic(op_mov, 0, ap1, eax);
+		GenerateDiadic(op_mov, 0, ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, eax);
+		GenerateMonadic(op_jne, 0, MakeCodeLabel(label));
+	}
 }
 
-void QuplsCodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_blt, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		GenerateDiadic(op_mov, 0, ap1, edx);
+		GenerateLoadConst(ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, edx);
+		GenerateMonadic(op_jl, 0, MakeCodeLabel(label));
 	}
-	else
-		GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(label));
+	else if (ap1->mode == am_imm) {
+		GenerateDiadic(op_mov, 0, ap2, edx);
+		GenerateLoadConst(ap1, ebx);
+		GenerateDiadic(op_cmp, 0, edx, ebx);
+		GenerateMonadic(op_jl, 0, MakeCodeLabel(label));
+	}
+	else {
+		GenerateDiadic(op_mov, 0, ap1, eax);
+		GenerateDiadic(op_mov, 0, ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, eax);
+		GenerateMonadic(op_jl, 0, MakeCodeLabel(label));
+	}
 }
 
-void QuplsCodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bge, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		GenerateDiadic(op_mov, 0, ap1, edx);
+		GenerateLoadConst(ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, edx);
+		GenerateMonadic(op_jge, 0, MakeCodeLabel(label));
 	}
-	else
-		GenerateTriadic(op_bge, 0, ap1, ap2, MakeCodeLabel(label));
+	else if (ap1->mode == am_imm) {
+		GenerateDiadic(op_mov, 0, ap2, edx);
+		GenerateLoadConst(ap1, ebx);
+		GenerateDiadic(op_cmp, 0, edx, ebx);
+		GenerateMonadic(op_jge, 0, MakeCodeLabel(label));
+	}
+	else {
+		GenerateDiadic(op_mov, 0, ap1, edx);
+		GenerateDiadic(op_mov, 0, ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, edx);
+		GenerateMonadic(op_jge, 0, MakeCodeLabel(label));
+	}
 }
 
-void QuplsCodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_ble, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		GenerateDiadic(op_mov, 0, ap1, edx);
+		GenerateLoadConst(ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, edx);
+		GenerateMonadic(op_jle, 0, MakeCodeLabel(label));
 	}
-	else
-		GenerateTriadic(op_ble, 0, ap1, ap2, MakeCodeLabel(label));
+	else if (ap1->mode == am_imm) {
+		GenerateDiadic(op_mov, 0, ap2, edx);
+		GenerateLoadConst(ap1, ebx);
+		GenerateDiadic(op_cmp, 0, edx, ebx);
+		GenerateMonadic(op_jle, 0, MakeCodeLabel(label));
+	}
+	else {
+		GenerateDiadic(op_mov, 0, ap1, eax);
+		GenerateDiadic(op_mov, 0, ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, eax);
+		GenerateMonadic(op_jle, 0, MakeCodeLabel(label));
+	}
 }
 
-void QuplsCodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
-		Operand* ap3 = GetTempRegister();
-		GenerateLoadConst(ap2, ap3);
-		GenerateTriadic(op_bgt, 0, ap1, ap3, MakeCodeLabel(label));
-		ReleaseTempRegister(ap3);
+		GenerateDiadic(op_mov, 0, ap1, edx);
+		GenerateLoadConst(ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, edx);
+		GenerateMonadic(op_jg, 0, MakeCodeLabel(label));
 	}
-	else
-		GenerateTriadic(op_bgt, 0, ap1, ap2, MakeCodeLabel(label));
+	else if (ap1->mode == am_imm) {
+		GenerateDiadic(op_mov, 0, ap2, edx);
+		GenerateLoadConst(ap1, ebx);
+		GenerateDiadic(op_cmp, 0, edx, ebx);
+		GenerateMonadic(op_jg, 0, MakeCodeLabel(label));
+	}
+	else {
+		GenerateDiadic(op_mov, 0, ap1, edx);
+		GenerateDiadic(op_mov, 0, ap2, ebx);
+		GenerateDiadic(op_cmp, 0, ebx, edx);
+		GenerateMonadic(op_jg, 0, MakeCodeLabel(label));
+	}
 }
 
-void QuplsCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
 		Operand* ap3 = GetTempRegister();
@@ -737,7 +816,7 @@ void QuplsCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int label)
 		GenerateTriadic(op_bltu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
 		Operand* ap3 = GetTempRegister();
@@ -749,7 +828,7 @@ void QuplsCodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int label)
 		GenerateTriadic(op_bgeu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
 		Operand* ap3 = GetTempRegister();
@@ -761,7 +840,7 @@ void QuplsCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int label)
 		GenerateTriadic(op_bleu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
 		Operand* ap3 = GetTempRegister();
@@ -773,7 +852,7 @@ void QuplsCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int label)
 		GenerateTriadic(op_bgtu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void QuplsCodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -787,7 +866,7 @@ void QuplsCodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int label)
 	}
 }
 
-void QuplsCodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -801,7 +880,7 @@ void QuplsCodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int label)
 	}
 }
 
-void QuplsCodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -811,7 +890,7 @@ void QuplsCodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int label)
 	ReleaseTempReg(ap3);
 }
 
-void QuplsCodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int label)
+void i386CodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -821,7 +900,7 @@ void QuplsCodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int label)
 	ReleaseTempReg(ap3);
 }
 
-bool QuplsCodeGenerator::GenerateBranch(ENODE* node, int op, int label, int predreg, unsigned int prediction, bool limit)
+bool i386CodeGenerator::GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit)
 {
 	int size, sz;
 	Operand* ap1, * ap2, * ap3, * ap4;
@@ -987,11 +1066,11 @@ static void SaveRegisterSet(Symbol* sym)
 
 	if (!cpu.SupportsPush || true) {
 		mm = sym->tp->btpp->type != bt_void ? 29 : 30;
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(mm * sizeOfWord));
+		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(mm * cpu.sizeOfWord));
 		mm = 0;
 		for (nn = 1 + (sym->tp->btpp->type != bt_void ? 1 : 0); nn < 31; nn++) {
-			cg.GenerateStore(makereg(nn), cg.MakeIndexed(mm, regSP), sizeOfWord);
-			mm += sizeOfWord;
+			cg.GenerateStore(makereg(nn), cg.MakeIndexed(mm, regSP), cpu.sizeOfWord);
+			mm += cpu.sizeOfWord;
 		}
 	}
 	else
@@ -1006,29 +1085,28 @@ static void RestoreRegisterSet(Symbol* sym)
 	if (!cpu.SupportsPop || true) {
 		mm = 0;
 		for (nn = 1 + (sym->tp->btpp->type != bt_void ? 1 : 0); nn < 31; nn++) {
-			cg.GenerateLoad(makereg(nn), cg.MakeIndexed(mm, regSP), sizeOfWord, sizeOfWord);
-			mm += sizeOfWord;
+			cg.GenerateLoad(makereg(nn), cg.MakeIndexed(mm, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+			mm += cpu.sizeOfWord;
 		}
 		mm = sym->tp->btpp->type != bt_void ? 29 : 30;
-		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(mm * sizeOfWord));
+		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(mm * cpu.sizeOfWord));
 	}
 	else // ToDo: check pop is in reverse order to push
 		for (nn = 1 + (sym->tp->btpp->type != bt_void ? 1 : 0); nn < 31; nn++)
 			GenerateMonadic(op_pop, 0, makereg(nn));
 }
 
-
-// Push temporaries on the stack.
-
-void SaveRegisterVars(CSet* rmask)
+void i386CodeGenerator::SaveRegisterVars(CSet* rmask)
 {
 	int cnt;
 	int nn;
 	int64_t mask;
-	char buf[100];
+
+	if (cpu.SupportsEnter)
+		return;
 
 	if (pass == 1) {
-		max_stack_use += rmask->NumMember() * sizeOfWord;
+		max_stack_use += rmask->NumMember() * cpu.sizeOfWord;
 		currentFn->regvarbot = max_stack_use;
 	}
 	if (rmask->NumMember()) {
@@ -1042,21 +1120,21 @@ void SaveRegisterVars(CSet* rmask)
 		}
 		else {
 			cnt = 0;
-			//GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * sizeOfWord));
+			//GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * cpu.sizeOfWord));
 			rmask->resetPtr();
 			for (nn = 0; nn < rmask->NumMember(); nn++) {
 				if (nn == 0)
-					cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), sizeOfWord);
+					cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
 				else
-					cg.GenerateStore(makereg(cpu.saved_regs[nn]), cg.MakeIndexed(sizeOfWord * nn, regSP), sizeOfWord);
+					cg.GenerateStore(makereg(cpu.saved_regs[nn]), cg.MakeIndexed(cpu.sizeOfWord * nn, regSP), cpu.sizeOfWord);
 			}
 			/*
 			if (rmask->NumMember() == 1) {
-				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
 			}
 			else if (rmask->NumMember() == 2) {
-				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), sizeOfWord);
-				cg.GenerateStore(makereg(cpu.saved_regs[1]), cg.MakeIndexed(sizeOfWord,regSP), sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[1]), cg.MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord);
 			}
 			else {
 				sprintf_s(buf, sizeof(buf), "__store_s0s%d", rmask->NumMember() - 1);
@@ -1068,8 +1146,68 @@ void SaveRegisterVars(CSet* rmask)
 				// nn = nregs - 1 - regno
 				// regno = -(nn - nregs + 1);
 				// regno = nregs - 1 - nn
-				cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), sizeOfWord);
-				cnt += sizeOfWord;
+				cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
+			}
+			*/
+		}
+	}
+}
+
+
+#ifdef I386
+// Push temporaries on the stack.
+
+void SaveRegisterVars(CSet* rmask)
+{
+	int cnt;
+	int nn;
+	int64_t mask;
+	char buf[100];
+
+	if (pass == 1) {
+		max_stack_use += rmask->NumMember() * cpu.sizeOfWord;
+		currentFn->regvarbot = max_stack_use;
+	}
+	if (rmask->NumMember()) {
+		if (cpu.SupportsSTM && rmask->NumMember() > 2) {
+			mask = 0;
+			for (nn = nregs; nn >= 0; nn--)
+				if (rmask->isMember(nn))
+					mask = mask | (1LL << (nregs - 1 - nn - 1));
+			//GenerateMonadic(op_reglist, 0, cg.MakeImmediate(mask, 16));
+			GenerateDiadic(op_stm, 0, cg.MakeIndirect(regSP), cg.MakeImmediate(mask, 16));
+		}
+		else {
+			cnt = 0;
+			//GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * cpu.sizeOfWord));
+			rmask->resetPtr();
+			for (nn = 0; nn < rmask->NumMember(); nn++) {
+				if (nn == 0)
+					cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
+				else
+					cg.GenerateStore(makereg(cpu.saved_regs[nn]), cg.MakeIndexed(cpu.sizeOfWord * nn, regSP), cpu.sizeOfWord);
+			}
+			/*
+			if (rmask->NumMember() == 1) {
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
+			}
+			else if (rmask->NumMember() == 2) {
+				cg.GenerateStore(makereg(cpu.saved_regs[0]), cg.MakeIndirect(regSP), cpu.sizeOfWord);
+				cg.GenerateStore(makereg(cpu.saved_regs[1]), cg.MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord);
+			}
+			else {
+				sprintf_s(buf, sizeof(buf), "__store_s0s%d", rmask->NumMember() - 1);
+				cg.GenerateMillicodeCall(cg.MakeStringAsNameConst(buf, codeseg));
+			}
+			*/
+			/*
+			for (nn = rmask->lastMember(); nn >= 0; nn = rmask->prevMember()) {
+				// nn = nregs - 1 - regno
+				// regno = -(nn - nregs + 1);
+				// regno = nregs - 1 - nn
+				cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
 			}
 			*/
 		}
@@ -1085,9 +1223,9 @@ void SaveFPRegisterVars(CSet* rmask)
 		cnt = 0;
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * 8));
 		for (nn = rmask->lastMember(); nn >= 0; nn = rmask->prevMember()) {
-			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), sizeOfWord);
+			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord);
 			//			GenerateDiadic(op_sto, 0, makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP));
-			cnt += sizeOfWord;
+			cnt += cpu.sizeOfWord;
 		}
 	}
 }
@@ -1101,12 +1239,13 @@ void SavePositRegisterVars(CSet* rmask)
 		cnt = 0;
 		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(rmask->NumMember() * 8));
 		for (nn = rmask->lastMember(); nn >= 0; nn = rmask->prevMember()) {
-			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), sizeOfWord);
+			cg.GenerateStore(makereg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord);
 			//			GenerateDiadic(op_psto, 0, makefpreg(nregs - 1 - nn), cg.MakeIndexed(cnt, regSP));
-			cnt += sizeOfWord;
+			cnt += cpu.sizeOfWord;
 		}
 	}
 }
+#endif
 
 // Restore registers used as register variables.
 
@@ -1126,12 +1265,12 @@ static void RestoreRegisterVars()
 			GenerateMonadic(op_ldm, 0, cg.MakeIndirect(regSP));
 		}
 		else {
-			cnt2 = cnt = save_mask->NumMember() * sizeOfWord;
+			cnt2 = cnt = save_mask->NumMember() * cpu.sizeOfWord;
 			cnt = 0;
 			save_mask->resetPtr();
 			for (nn = save_mask->nextMember(); nn >= 0; nn = save_mask->nextMember()) {
-				cg.GenerateLoad(makereg(nn), cg.MakeIndexed(cnt, regSP), sizeOfWord, sizeOfWord);
-				cnt += sizeOfWord;
+				cg.GenerateLoad(makereg(nn), cg.MakeIndexed(cnt, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
 			}
 			GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(cnt2));
 		}
@@ -1144,12 +1283,12 @@ static void RestoreFPRegisterVars()
 	int nn;
 
 	if (fpsave_mask->NumMember()) {
-		cnt2 = cnt = fpsave_mask->NumMember() * sizeOfWord;
+		cnt2 = cnt = fpsave_mask->NumMember() * cpu.sizeOfWord;
 		cnt = 0;
 		fpsave_mask->resetPtr();
 		for (nn = fpsave_mask->nextMember(); nn >= 0; nn = fpsave_mask->nextMember()) {
 			GenerateDiadic(op_fldo, 0, makefpreg(nn), cg.MakeIndexed(cnt, regSP));
-			cnt += sizeOfWord;
+			cnt += cpu.sizeOfWord;
 		}
 		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(cnt2));
 	}
@@ -1161,7 +1300,7 @@ static void RestoreFPRegisterVars()
 // 8 we assume a structure variable and we assume we have the address in a reg.
 // Returns: number of stack words pushed.
 //
-int QuplsCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount)
+int64_t i386CodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount)
 {
 	Operand* ap, * ap1, * ap2, * ap3;
 	int nn = 0;
@@ -1173,17 +1312,17 @@ int QuplsCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 		return (0);
 	}
 	switch (ep->etype) {
-	case bt_quad:	sz = sizeOfFPQ; break;
-	case bt_double:	sz = sizeOfFPD; break;
-	case bt_float:	sz = sizeOfFPD; break;
-	case bt_posit:	sz = sizeOfPosit; break;
-	default:	sz = sizeOfWord; break;
+	case bt_quad:	sz = cpu.sizeOfFPQ; break;
+	case bt_double:	sz = cpu.sizeOfFPD; break;
+	case bt_float:	sz = cpu.sizeOfFPD; break;
+	case bt_posit:	sz = cpu.sizeOfPosit; break;
+	default:	sz = cpu.sizeOfWord; break;
 	}
 	if (ep->tp) {
 		if (ep->tp->IsFloatType())
-			ap = cg.GenerateExpression(ep, am_reg, sizeOfFPQ, 1);
+			ap = cg.GenerateExpression(ep, am_reg, cpu.sizeOfFPQ, 1);
 		else if (ep->tp->IsPositType())
-			ap = cg.GenerateExpression(ep, am_preg, sizeOfPosit, 1);
+			ap = cg.GenerateExpression(ep, am_preg, cpu.sizeOfPosit, 1);
 		else
 			ap = cg.GenerateExpression(ep, am_reg | am_imm, ep->GetNaturalSize(), 0);
 	}
@@ -1225,23 +1364,23 @@ int QuplsCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 			if (ap->mode == am_imm) {
 				GenerateDiadic(cpu.ldi_op, 0, makereg(regno & 0x7fff), ap);
 				if (regno & 0x8000) {
-					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(sizeOfWord));
+					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord));
 					nn = 1;
 				}
 			}
 			else if (ap->mode == am_fpreg) {
 				*isFloat = true;
-				GenerateDiadic(cpu.mov_op, 0, makefpreg(regno & 0x7fff), ap);
+				GenerateDiadic(op_mov, 0, makefpreg(regno & 0x7fff), ap);
 				if (regno & 0x8000) {
 					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(sz));
-					nn = sz / sizeOfWord;
+					nn = sz / cpu.sizeOfWord;
 				}
 			}
 			else {
 				//ap->preg = regno & 0x7fff;
-				GenerateDiadic(cpu.mov_op, 0, makereg(regno & 0x7fff), ap);
+				GenerateDiadic(op_mov, 0, makereg(regno & 0x7fff), ap);
 				if (regno & 0x8000) {
-					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(sizeOfWord));
+					GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord));
 					nn = 1;
 				}
 			}
@@ -1265,7 +1404,7 @@ int QuplsCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 					{
 						*isFloat = true;
 						GenerateMonadic(op_push, 0, ap);
-						nn = sz / sizeOfWord;
+						nn = sz / cpu.sizeOfWord;
 						nn = 1;
 						*push_count = 1;
 					}
@@ -1284,11 +1423,11 @@ int QuplsCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 						ap3 = GetTempRegister();
 						regs[ap3->preg].IsArg = true;
 						GenerateLoadConst(ap, ap3);
-						cg.GenerateStore(ap3, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap3, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						ReleaseTempReg(ap3);
 					}
 					else {
-						cg.GenerateStore(makereg(0), MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(makereg(0), MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 					}
 					nn = 1;
 				}
@@ -1298,38 +1437,38 @@ int QuplsCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 					// allocated by the caller.
 					// What needs to be done is copy the aggregate to the buffer then push
 					// the buffer address.
-					if (ap->tp->IsAggregateType() && ap->tp->size > sizeOfWord) {
+					if (ap->tp->IsAggregateType() && ap->tp->size > cpu.sizeOfWord) {
 						ap2 = GetTempRegister();
 						GenerateDiadic(op_lea, 0, ap2, MakeIndexed(ep->stack_offs, regSP));	// push target
-						cg.GenerateStore(ap2, MakeIndexed(sizeOfWord, regSP), sizeOfWord);
+						cg.GenerateStore(ap2, MakeIndexed(cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 						ReleaseTempRegister(ap2);
-						cg.GenerateStore(ap, MakeIndexed((int64_t)0, regSP), sizeOfWord);		// and source
+						cg.GenerateStore(ap, MakeIndexed((int64_t)0, regSP), cpu.sizeOfWord);		// and source
 						ap3 = GetTempRegister();
 						GenerateLoadConst(MakeImmediate(ap->tp->size), ap3);								// and size
-						cg.GenerateStore(ap3, MakeImmediate(ap->tp->size), sizeOfWord);
+						cg.GenerateStore(ap3, MakeImmediate(ap->tp->size), cpu.sizeOfWord);
 						ReleaseTempRegister(ap3);
-						GenerateMonadic(op_bsr, 0, MakeStringAsNameConst((char*)"__aacpy", codeseg));	// call copy helper
+						GenerateMonadic(op_call, 0, MakeStringAsNameConst((char*)"__aacpy", codeseg));	// call copy helper
 						ap1 = GetTempRegister();
 						GenerateLoadConst(MakeImmediate(ep->stack_offs), ap1);							// and size
-						cg.GenerateStore(ap1, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap1, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						ReleaseTempRegister(ap1);
 					}
 					else if (ap->tp->IsFloatType()) {
 						*isFloat = true;
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
-						nn = 1;// sz / sizeOfWord;
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
+						nn = 1;// sz / cpu.sizeOfWord;
 					}
 					else if (ap->type == bt_posit) {
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						nn = 1;
 					}
 					else if (ap->type == bt_vector) {
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						nn = 4;
 					}
 					else {
 						regs[ap->preg].IsArg = true;
-						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), sizeOfWord);
+						cg.GenerateStore(ap, MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						nn = 1;
 					}
 				}
@@ -1347,7 +1486,7 @@ int QuplsCodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool* is
 // use a push instruction rather than subtracting from the sp and using stores
 // if there are only a small number of arguments (<3).
 //
-int QuplsCodeGenerator::PushArguments(Function* sym, ENODE* plist)
+int64_t i386CodeGenerator::PushArguments(Function* sym, ENODE* plist)
 {
 	TypeArray* ta = nullptr;
 	int i, sum;
@@ -1408,7 +1547,7 @@ int QuplsCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 		if (pl[nn]->etype == bt_none) {	// was there an empty parameter?
 			if (sy != nullptr) {
 				if (sy[nn]) {
-					sum += PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sy[nn] ? sy[nn]->value.i : sum * sizeOfWord, &isFloat, &pc, large_argcount);
+					sum += PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sy[nn] ? sy[nn]->value.i : sum * cpu.sizeOfWord, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
 				else {
@@ -1420,21 +1559,21 @@ int QuplsCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 			if (sy != nullptr) {
 				if (sy[nn]) {
 					regno = ta ? (i < ta->length ? ta->preg[i] : 0) : 0;
-					//					stkoffs = sy[nn] ? sy[nn]->value.i : sum * sizeOfWord;
-					stkoffs = sum * sizeOfWord;
+					//					stkoffs = sy[nn] ? sy[nn]->value.i : sum * cpu.sizeOfWord;
+					stkoffs = sum * cpu.sizeOfWord;
 					sum += PushArgument(pl[nn], regno, stkoffs, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
 				else {
 					//error(ERR_MISSING_PARM);
 					regno = ta ? (i < ta->length ? ta->preg[i] : 0) : 0;
-					stkoffs = sum * sizeOfWord;
+					stkoffs = sum * cpu.sizeOfWord;
 					sum += PushArgument(pl[nn], regno, stkoffs, &isFloat, &pc, large_argcount);
 					push_count += pc;
 				}
 			}
 			else {
-				sum += PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * sizeOfWord, &isFloat, &pc, large_argcount);
+				sum += PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * cpu.sizeOfWord, &isFloat, &pc, large_argcount);
 				push_count += pc;
 			}
 		}
@@ -1444,13 +1583,13 @@ int QuplsCodeGenerator::PushArguments(Function* sym, ENODE* plist)
 	if (sum == 0)
 		ip->fwd->MarkRemove();
 	else
-		ip->fwd->oper3 = MakeImmediate(sum * sizeOfWord);
+		ip->fwd->oper3 = MakeImmediate(sum * cpu.sizeOfWord);
 
 	/*
 if (sum == 0 || !large_argcount)
 	ip->fwd->MarkRemove();
 else
-	ip->fwd->oper3 = MakeImmediate(sum*sizeOfWord);
+	ip->fwd->oper3 = MakeImmediate(sum*cpu.sizeOfWord);
 */
 /*
 if (!sumFloat) {
@@ -1467,7 +1606,7 @@ if (!sumFloat) {
 			if (sy == nullptr && sym)
 				sy = sym->params.GetParameters();
 			if (sy)
-				PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * sizeOfWord, &isFloat);
+				PushArgument(sy[nn]->defval, ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * cpu.sizeOfWord, &isFloat);
 		}
 		else
 			PushArgument(pl[nn], ta ? (i < ta->length ? ta->preg[i] : 0) : 0, sum * 8, &isFloat);
@@ -1484,17 +1623,17 @@ if (!sumFloat) {
 
 // Pop parameters off the stack
 
-void QuplsCodeGenerator::PopArguments(Function* fnc, int howMany, bool isPascal)
+void i386CodeGenerator::PopArguments(Function* fnc, int howMany, bool isPascal)
 {
-	howMany *= sizeOfWord;
+	howMany *= cpu.sizeOfWord;
 	if (howMany != 0) {
 		if (fnc) {
 			if (!fnc->IsPascal)
 				//				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space));
 				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany));
-			else if (howMany - (fnc->NumFixedAutoParms * sizeOfWord) > 0)
-				//				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space - (fnc->NumFixedAutoParms * sizeOfWord)));
-				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany - (fnc->NumFixedAutoParms * sizeOfWord)));
+			else if (howMany - (fnc->NumFixedAutoParms * cpu.sizeOfWord) > 0)
+				//				GenerateAddOnto(makereg(regSP), MakeImmediate(fnc->arg_space - (fnc->NumFixedAutoParms * cpu.sizeOfWord)));
+				GenerateAddOnto(makereg(regSP), MakeImmediate(howMany - (fnc->NumFixedAutoParms * cpu.sizeOfWord)));
 		}
 		else {
 			//			error(ERR_UNKNOWN_FN);
@@ -1505,37 +1644,37 @@ void QuplsCodeGenerator::PopArguments(Function* fnc, int howMany, bool isPascal)
 }
 
 
-void QuplsCodeGenerator::LinkAutonew(ENODE* node)
+void i386CodeGenerator::LinkAutonew(ENODE* node)
 {
 	if (node->isAutonew) {
 		currentFn->hasAutonew = true;
 	}
 }
 
-void QuplsCodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
+void i386CodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
 {
 	char buf[500];
 
 	if (sym && sym->IsLeaf) {
 		sprintf_s(buf, sizeof(buf), "%s_ip", sym->sym->name->c_str());
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_jmp : op_jmp, 0, MakeDirect(node->p[0]));
 		else
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bsr : op_bsr, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_call : op_call, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else if (sym) {
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_jmp : op_jmp, 0, MakeDirect(node->p[0]));
 		else
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bsr : op_bsr, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_call : op_call, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else {
 		if (flags & am_jmp)
-			GenerateMonadic(op_bra, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(op_jmp, 0, MakeDirect(node->p[0]));
 		else
-			GenerateMonadic(op_bsr, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(op_call, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	GenerateMonadic(op_bex, 0, MakeDataLabel(throwlab, regZero));
@@ -1544,21 +1683,21 @@ void QuplsCodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* 
 	LinkAutonew(node);
 }
 
-void QuplsCodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
+void i386CodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
 {
-	ap->MakeLegal(am_ind, sizeOfWord);
+	ap->MakeLegal(am_ind, cpu.sizeOfWord);
 	if (sym && sym->IsLeaf) {
 		if (flags & am_jmp)
 			GenerateMonadic(op_jmp, 0, ap);
 		else
-			GenerateMonadic(op_jsr, 0, ap);
+			GenerateMonadic(op_call, 0, ap);
 		currentFn->doesJAL = true;
 	}
 	else {
 		if (flags & am_jmp)
 			GenerateMonadic(op_jmp, 0, ap);
 		else
-			GenerateMonadic(op_jsr, 0, ap);
+			GenerateMonadic(op_call, 0, ap);
 		currentFn->doesJAL = true;
 	}
 	GenerateMonadic(op_bex, 0, MakeDataLabel(throwlab, regZero));
@@ -1567,13 +1706,11 @@ void QuplsCodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function
 	LinkAutonew(node);
 }
 
-void QuplsCodeGenerator::GenerateUnlink(int64_t amt)
+void i386CodeGenerator::GenerateUnlink(int64_t amt)
 {
 	if (cpu.SupportsLeave) {
 		GenerateMonadic(op_leave, 0, MakeImmediate(amt, 0));
 	}
-	else if (cpu.SupportsUnlink)
-		GenerateZeradic(op_unlk);
 	else
 	{
 		//GenerateDiadic(cpu.mov_op, 0, makereg(regSP), makereg(regFP));
@@ -1583,17 +1720,22 @@ void QuplsCodeGenerator::GenerateUnlink(int64_t amt)
 
 // The compiler makes use of local labels for the switch table. The data table label must also be local.
 
-void QuplsStatementGenerator::GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel)
+void i386StatementGenerator::GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel)
 {
 	Operand* ap2;
 
 	stmt->tabular = true;
 	ap2 = GetTempRegister();
-	if (minv != 0)
-		GenerateTriadic(op_sub, 0, ap, ap, MakeImmediate(minv));
-	GenerateTriadic(op_bgeu, 0, ap, MakeImmediate(maxv - minv + 1), MakeCodeLabel(HasDefcase ? deflbl : breaklab));
+	if (minv != 0) {
+		GenerateDiadic(op_mov, 0, ap, eax);
+		GenerateDiadic(op_sub, 0, MakeImmediate(minv), eax);
+	}
+	else
+		GenerateDiadic(op_mov, 0, ap, eax);
+	GenerateDiadic(op_cmp, 0, MakeImmediate(maxv - minv + 1), eax);
+	GenerateMonadic(op_jae, 0, MakeCodeLabel(HasDefcase ? deflbl : breaklab));
 	ReleaseTempRegister(ap2);
-	GenerateTriadic(op_asl, 0, ap, ap, MakeImmediate(2));
+	GenerateDiadic(op_shl, 0, MakeImmediate(2), eax);
 	//GenerateDiadic(op_ldt, 0, ap, compiler.of.MakeIndexedCodeLabel(tablabel, ap->preg));
 	cg.GenerateLoad(ap, compiler.of.MakeIndexedDataLabel(tablabel, ap->preg), 4, 4);
 	GenerateMonadic(op_jmp, 0, MakeIndirect(ap->preg));
@@ -1601,11 +1743,15 @@ void QuplsStatementGenerator::GenerateTabularSwitch(Statement* stmt, int64_t min
 	GenerateSwitchStatements(stmt);
 }
 
-void QuplsStatementGenerator::GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel)
+void i386StatementGenerator::GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel)
 {
-	if (minv != 0)
-		GenerateTriadic(op_sub, 0, ap, ap, MakeImmediate(minv));
-	GenerateTriadic(op_sll, 0, ap, ap, MakeImmediate(2));
+	if (minv != 0) {
+		GenerateDiadic(op_mov, 0, ap, eax);
+		GenerateDiadic(op_sub, 0, MakeImmediate(minv), eax);
+	}
+	else
+		GenerateDiadic(op_mov, 0, ap, eax);
+	GenerateDiadic(op_shl, 0, MakeImmediate(2), eax);
 	//	GenerateDiadic(cpu.ldo_op, 0, ap, compiler.of.MakeIndexedCodeLabel(tablabel, ap->preg));
 //	GenerateDiadic(op_ldt, 0, ap, compiler.of.MakeIndexedName((char*)stmt->GenerateSwitchTargetName(tablabel).c_str(), ap->preg)); // MakeIndexedCodeLabel(tablabel, ap->preg));
 	cg.GenerateLoad(ap, compiler.of.MakeIndexedDataLabel(tablabel, ap->preg), 4, 4);
@@ -1619,7 +1765,7 @@ void QuplsStatementGenerator::GenerateNakedTabularSwitch(Statement* stmt, int64_
 // Generate a jump to label if the node passed evaluates to
 // a true condition.
 //
-void QuplsCodeGenerator::GenerateTrueJump(ENODE* node, int label, unsigned int prediction)
+void i386CodeGenerator::GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction)
 {
 	Operand* ap1, * ap2, * ap3;
 	int lab0;
@@ -1695,7 +1841,7 @@ void QuplsCodeGenerator::GenerateTrueJump(ENODE* node, int label, unsigned int p
 // Generate code to execute a jump to label if the expression
 // passed is false.
 //
-void QuplsCodeGenerator::GenerateFalseJump(ENODE* node, int label, unsigned int prediction)
+void i386CodeGenerator::GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction)
 {
 	Operand* ap, * ap1, * ap2, * ap3;
 	int siz1;
@@ -1774,7 +1920,7 @@ void QuplsCodeGenerator::GenerateFalseJump(ENODE* node, int label, unsigned int 
 	}
 }
 
-void QuplsCodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask)
+void i386CodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
 {
 	if (ap3->typep == &stdflt) {
 		GenerateTriadic(op_fload, 'd', ap3, ap1, mask);
@@ -1795,30 +1941,30 @@ void QuplsCodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int ssize
 	//		throw C64PException(ERR_UNKNOWN_FLOAT_TYPE, 0);
 }
 
-void QuplsCodeGenerator::GenerateInterruptSave(Function* func)
+void i386CodeGenerator::GenerateInterruptSave(Function* func)
 {
 	int nn, kk;
 	int64_t tsm = func->int_save_mask;
 
 	nn = popcnt(tsm);
 	// Allocate storage for registers on stack
-	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * sizeOfWord));
+	GenerateSubtractFrom(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
 	for (kk = nn = 0; nn < 63; nn++) {
 		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
-			GenerateDiadic(op_storeg, 0, makereg((nn / 4) | rt_group), MakeIndexed(kk * sizeOfWord, regSP));
+			GenerateDiadic(op_storeg, 0, makereg((nn / 4) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
 			kk += 4;
 			tsm = tsm >> 4;
 			nn += 3;
 		}
 		else if (tsm & 1) {
-			GenerateStore(makereg(nn), MakeIndexed(kk * sizeOfWord, regSP), sizeOfWord);
+			GenerateStore(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 			kk++;
 			tsm = tsm >> 1;
 		}
 	}
 	if (DoesContextSave) {
 		for (kk = 0; kk < 16; kk++)
-			GenerateDiadic(op_storeg, 0, makereg(kk | rt_group), MakeIndexed(kk * sizeOfWord * 4, regTS));
+			GenerateDiadic(op_storeg, 0, makereg(kk | rt_group), MakeIndexed(kk * cpu.sizeOfWord * 4, regTS));
 	}
 	if (sp_init) {
 		GenerateLoadConst(MakeImmediate(sp_init), makereg(regSP));
@@ -1831,114 +1977,102 @@ void QuplsCodeGenerator::GenerateInterruptSave(Function* func)
 	*/
 }
 
-void QuplsCodeGenerator::GenerateInterruptLoad(Function* func)
+void i386CodeGenerator::GenerateInterruptLoad(Function* func)
 {
 	int nn, kk;
 	int64_t tsm = func->int_save_mask;
 
 	if (DoesContextSave) {
 		for (kk = 0; kk < 16; kk++)
-			GenerateDiadic(op_loadg, 0, makereg(kk | rt_group), MakeIndexed(kk * sizeOfWord * 4, regTS));
+			GenerateDiadic(op_loadg, 0, makereg(kk | rt_group), MakeIndexed(kk * cpu.sizeOfWord * 4, regTS));
 	}
 
 	nn = popcnt(tsm);
 	for (kk = nn = 0; nn < 63; nn++) {
 		if ((tsm & 15) == 15 && ((nn % 4) == 0)) {
-			GenerateDiadic(op_loadg, 0, makereg((nn >> 2) | rt_group), MakeIndexed(kk * sizeOfWord, regSP));
+			GenerateDiadic(op_loadg, 0, makereg((nn >> 2) | rt_group), MakeIndexed(kk * cpu.sizeOfWord, regSP));
 			kk += 4;
 			nn += 3;
 			tsm = tsm >> 4;
 		}
 		else if (tsm & 1) {
-			GenerateLoad(makereg(nn), MakeIndexed(kk * sizeOfWord, regSP), sizeOfWord, sizeOfWord);
+			GenerateLoad(makereg(nn), MakeIndexed(kk * cpu.sizeOfWord, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
 			kk++;
 			tsm = tsm >> 1;
 		}
 	}
 	// Deallocate stack storage
-	GenerateAddOnto(makereg(regSP), MakeImmediate(nn * sizeOfWord));
+	GenerateAddOnto(makereg(regSP), MakeImmediate(nn * cpu.sizeOfWord));
 }
 
-void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
+void i386CodeGenerator::GenerateLoadConst(Operand* cnst, Operand* ap2)
 {
 	Operand* ap3;
 
-	if (ap1->isPtr) {
-		ap3 = ap1->Clone();
+	if (cnst->isPtr) {
+		ap3 = cnst->Clone();
 		ap3->mode = am_direct;
 		GenerateLoadAddress(ap2, ap3);
 		//if (!compiler.os_code) {
-		//	switch (ap1->segment) {
+		//	switch (cnst->segment) {
 		//	case tlsseg:		GenerateTriadic(op_base, 0, ap2, ap2, MakeImmediate(8));	break;
 		//	case rodataseg:	GenerateTriadic(op_base, 0, ap2, ap2, MakeImmediate(12));	break;
 		//	}
 		//}
 	}
 	else {
-		OCODE* ip;
-		if (ap1->offset == nullptr)
+		OCODE* ip = nullptr;
+		if (cnst->offset == nullptr)
 			;
-		//		if (ap1->offset->esize <= 8)
-		//			ip = GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(ap1->offset->i));
+		//		if (cnst->offset->esize <= 8)
+		//			ip = GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(cnst->offset->i));
 		//		else 
 		{
 			// Try to compress a float into the smallest representation.
-			if (ap1->tp->IsFloatType())
-				ip = GenerateLoadFloatConst(ap1, ap2);
+			if (cnst->tp->IsFloatType())
+				ip = GenerateLoadFloatConst(cnst, ap2);
 			else {
-				if (ap1->offset) {
-					if (!ap1->offset->i128.IsNBit(21))
-						ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0x1fffffLL));
-					else
-						ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0x1fffffLL));
-					if (!ap1->offset->i128.IsNBit(21)) {
-						if (ap1->offset->i128.low & 0x100000LL)
-							GenerateDiadic(op_addm, 0, ap2, MakeImmediate(ap1->offset->i128.low + 0x100000LL));
-						else
-							GenerateDiadic(op_addm, 0, ap2, MakeImmediate(ap1->offset->i128.low));
-					}
-					if (!ap1->offset->i128.IsNBit(44)) {
-						if (ap1->offset->i128.low & 0x40000000000LL)
-							GenerateDiadic(op_addh, 0, ap2, MakeImmediate(ap1->offset->i128.low + 0x40000000000LL));
-						else
-							GenerateDiadic(op_addh, 0, ap2, MakeImmediate(ap1->offset->i128.low));
-					}
+				if (cnst->offset) {
+					GenerateDiadic(op_mov, 0, MakeImmediate(cnst->offset->i128.low), eax);
+					GenerateDiadic(op_mov, 0, eax, ap2);
 					// ToDo handle constant >64 bits
 					/*
-					ip = GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0xffffLL));
-					if (!ap1->offset->i128.IsNBit(16))
-						GenerateMonadic(op_pfx0, 0, MakeImmediate(ap1->offset->i128.low & 0xfffffffffLL));
-					if (!ap1->offset->i128.IsNBit(32))
-						GenerateMonadic(op_pfx1, 0, MakeImmediate(ap1->offset->i128.low >> 32LL));
-					if (!ap1->offset->i128.IsNBit(64))
-						GenerateMonadic(op_pfx2, 0, MakeImmediate(ap1->offset->i128.high & 0xffffffffLL));
-					if (!ap1->offset->i128.IsNBit(96))
-						GenerateMonadic(op_pfx3, 0, MakeImmediate(ap1->offset->i128.high >> 32LL));
+					ip = GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(cnst->offset->i128.low & 0xffffLL));
+					if (!cnst->offset->i128.IsNBit(16))
+						GenerateMonadic(op_pfx0, 0, MakeImmediate(cnst->offset->i128.low & 0xfffffffffLL));
+					if (!cnst->offset->i128.IsNBit(32))
+						GenerateMonadic(op_pfx1, 0, MakeImmediate(cnst->offset->i128.low >> 32LL));
+					if (!cnst->offset->i128.IsNBit(64))
+						GenerateMonadic(op_pfx2, 0, MakeImmediate(cnst->offset->i128.high & 0xffffffffLL));
+					if (!cnst->offset->i128.IsNBit(96))
+						GenerateMonadic(op_pfx3, 0, MakeImmediate(cnst->offset->i128.high >> 32LL));
 					*/
 				}
 				else {
 					error(1000);	// NULL pointer
-					ip = GenerateDiadic(op_ldi, 0, ap2, MakeImmediate(0xdeadbeefLL));
+					ip = GenerateDiadic(op_movl, 0, MakeImmediate(0xdeadbeefLL), eax);
+					GenerateDiadic(op_mov, 0, eax, ap2);
 				}
 			}
 		}
-		if (ip->oper2)
-			if (ip->oper2->offset)
-				ip->oper2->offset->constflag = true;
+		if (ip)
+		if (ip->oper1)
+			if (ip->oper1->offset)
+				ip->oper1->offset->constflag = true;
 		regs[ap2->preg].isConst = true;
 		if (ap2->tp) {
 			//				ap2->tp->type = bt_long;
 			//				ap2->tp->size = 16;
 		}
 	}
-	// ap2 inherits type from ap1
-//	ap2->tp = ap1->tp;
-	regs[ap2->preg].offset = ap1->offset;
+	// ap2 inherits type from cnst
+//	ap2->tp = cnst->tp;
+	regs[ap2->preg].offset = cnst->offset;
 }
 
 // For now, just assume the data pointers have been set at program start-up.
 
-void QuplsCodeGenerator::GenerateLoadDataPointer()
+void i386CodeGenerator::GenerateLoadDataPointer()
 {
 	Operand* ap = GetTempRegister();
 
@@ -1955,7 +2089,7 @@ void QuplsCodeGenerator::GenerateLoadDataPointer()
 }
 
 // Compiler now uses global pointer two addressing for the rodataseg
-void QuplsCodeGenerator::GenerateLoadRodataPointer()
+void i386CodeGenerator::GenerateLoadRodataPointer()
 {
 	Operand* ap = GetTempRegister();
 
@@ -1976,7 +2110,7 @@ void QuplsCodeGenerator::GenerateLoadRodataPointer()
 	ReleaseTempRegister(ap);
 }
 
-void QuplsCodeGenerator::GenerateLoadBssPointer()
+void i386CodeGenerator::GenerateLoadBssPointer()
 {
 	Operand* ap = GetTempRegister();
 
@@ -1992,7 +2126,7 @@ void QuplsCodeGenerator::GenerateLoadBssPointer()
 	ReleaseTempRegister(ap);
 }
 
-void QuplsCodeGenerator::GenerateSmallDataRegDecl()
+void i386CodeGenerator::GenerateSmallDataRegDecl()
 {
 	switch (syntax) {
 	case MOT:
@@ -2019,32 +2153,32 @@ void QuplsCodeGenerator::GenerateSmallDataRegDecl()
 	*/
 }
 
-void QuplsCodeGenerator::GenerateSignExtendByte(Operand* tgt, Operand* src)
+void i386CodeGenerator::GenerateSignExtendByte(Operand* tgt, Operand* src)
 {
 	Generate4adic(op_ext, 0, tgt, src, MakeImmediate(0), MakeImmediate(7));
 }
 
-void QuplsCodeGenerator::GenerateSignExtendWyde(Operand* tgt, Operand* src)
+void i386CodeGenerator::GenerateSignExtendWyde(Operand* tgt, Operand* src)
 {
 	Generate4adic(op_ext, 0, tgt, src, MakeImmediate(0), MakeImmediate(15));
 }
 
-void QuplsCodeGenerator::GenerateSignExtendTetra(Operand* tgt, Operand* src)
+void i386CodeGenerator::GenerateSignExtendTetra(Operand* tgt, Operand* src)
 {
 	Generate4adic(op_ext, 0, tgt, src, MakeImmediate(0), MakeImmediate(31));
 }
 
-void QuplsCodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
+void i386CodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
 {
-	GenerateDiadic(op_rtd, 0, ap1, MakeImmediate(0));
+	GenerateDiadic(op_ret, 0, ap1, MakeImmediate(0));
 }
 
-void QuplsCodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
+void i386CodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
 {
-	GenerateDiadic(op_rtd, 0, MakeImmediate(amt), MakeImmediate(0));
+	GenerateMonadic(op_ret, 0, MakeImmediate(amt));
 }
 
-void QuplsCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
+void i386CodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 {
 	Operand* ap2, * ap4;
 
@@ -2067,7 +2201,7 @@ void QuplsCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 // address bits required. If too many bits are needed turn the load or store
 // into a load of the address into a register, then use the register.
 
-void QuplsCodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2)
+void i386CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2)
 {
 	// If fewer than 22 bits addressing, nothing to worry about.
 	if (address_bits < 22) {
@@ -2116,112 +2250,239 @@ void QuplsCodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* a
 		GenerateDiadic(opcode, 0, ap1, ap2);
 }
 
-void QuplsCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int ssize, int size, Operand* mask)
+void i386CodeGenerator::GenerateLoad(Operand* dst, Operand* src, int64_t ssize, int64_t size, Operand* mask)
 {
+	Operand* ap;
 	std::string* str;
 
-	if (ap3->typep == &stdposit) {
-		switch (ap3->tp->precision) {
+	if (dst->typep == &stdposit) {
+		switch (dst->tp->precision) {
 		case 16:
-			GenerateTriadic(op_pldw, 0, ap3, ap1, mask);
+			GenerateTriadic(op_pldw, 0, dst, src, mask);
 			break;
 		case 32:
-			GenerateTriadic(op_pldt, 0, ap3, ap1, mask);
+			GenerateTriadic(op_pldt, 0, dst, src, mask);
 			break;
 		default:
-			GenerateTriadic(op_pldo, 0, ap3, ap1, mask);
+			GenerateTriadic(op_pldo, 0, dst, src, mask);
 			break;
 		}
 	}
-	else if (ap3->typep == &stdvector) {
-		GenerateTriadic(op_loadv, 0, ap3, ap1, mask);
+	else if (dst->typep == &stdvector) {
+		GenerateTriadic(op_loadv, 0, dst, src, mask);
 	}
-	else if (ap3->typep->IsFloatType())
-		GenerateLoadFloat(ap3, ap1, ssize, size, mask);
-	//else if (ap3->mode == am_fpreg) {
-	//	GenerateTriadic(op_fldo, 0, ap3, ap1);
+	else if (dst->typep->IsFloatType())
+		GenerateLoadFloat(dst, src, ssize, size, mask);
+	//else if (dst->mode == am_fpreg) {
+	//	GenerateTriadic(op_fldo, 0, dst, src);
 	//}
-	else if (ap3->isUnsigned) {
+	else if (dst->isUnsigned) {
 		// If size is zero, probably a pointer to void being processed.
 		switch (size) {
-		case 0: GenerateLoadStore(op_ldbu, ap3, ap1); break;
-		case 1:	GenerateLoadStore(op_ldbu, ap3, ap1); break;
-		case 2:	GenerateLoadStore(op_ldwu, ap3, ap1); break;
-		case 4:	GenerateLoadStore(op_ldtu, ap3, ap1); break;
-		case 8: GenerateLoadStore(op_ldou, ap3, ap1); break;
-		case 16:	GenerateLoadStore(op_ldh, ap3, ap1); break;
+		case 1:	
+			if ((src->mode == am_ind || src->mode == am_indx || src->mode == am_indx2 || src->mode == am_direct
+				) && src->preg >= 0 && src->preg < 32) {
+				ap = GetTempRegister();
+				Operand* ap2 = esi->Clone();
+				unsigned int md = src->mode;
+				ap2->mode = src->mode;
+				src->mode = am_reg;
+				GenerateMove(esi, src);
+				src->mode = md;
+				GenerateDiadic(op_movzxb, 0, ap2, eax);
+				GenerateDiadic(op_movzxb, 0, eax, dst);
+				break;
+			}
+			GenerateDiadic(op_movzxb, 0, src, eax);
+			GenerateDiadic(op_movzxb, 0, eax, dst);
+			break;
+		case 2:	
+			if ((src->mode == am_ind || src->mode == am_indx || src->mode == am_indx2 || src->mode == am_direct
+				) && src->preg >= 0 && src->preg < 32) {
+				ap = GetTempRegister();
+				Operand* ap2 = esi->Clone();
+				unsigned int md = src->mode;
+				ap2->mode = src->mode;
+				src->mode = am_reg;
+				GenerateMove(esi, src);
+				src->mode = md;
+				GenerateDiadic(op_movzxw, 0, ap2, eax);
+				GenerateDiadic(op_movzxw, 0, eax, dst);
+				break;
+			}
+			GenerateDiadic(op_movzxw, 0, src, eax);
+			GenerateDiadic(op_movzxw, 0, eax, dst);
+			break;
+		case 4:
+			ap = GetTempRegister();
+			GenerateDiadic(op_movl, 0, src, eax);
+			GenerateDiadic(op_movl, 0, eax, dst);
+			ReleaseTempRegister(ap);
+			break;
 		}
 	}
 	else {
 		switch (size) {
-		case 0: GenerateLoadStore(op_ldb, ap3, ap1); break;
-		case 1:	GenerateLoadStore(op_ldb, ap3, ap1); break;
-		case 2:	GenerateLoadStore(op_ldw, ap3, ap1); break;
-		case 4:	GenerateLoadStore(op_ldt, ap3, ap1); break;
-		case 8:	GenerateLoadStore(op_ldo, ap3, ap1); break;
-		case 16: GenerateLoadStore(op_ldh, ap3, ap1); break;
+		case 1:
+			if ((src->mode == am_ind || src->mode == am_indx || src->mode == am_indx2 || src->mode == am_direct
+				) && src->preg >= 0 && src->preg < 32) {
+				ap = GetTempRegister();
+				Operand* ap2 = esi->Clone();
+				unsigned int md = src->mode;
+				ap2->mode = src->mode;
+				src->mode = am_reg;
+				GenerateMove(esi, src);
+				src->mode = md;
+				GenerateDiadic(op_movsxb, 0, ap2, eax);
+				GenerateDiadic(op_movsxb, 0, eax, dst);
+				break;
+			}
+			GenerateDiadic(op_movsxb, 0, src, eax);
+			GenerateDiadic(op_movsxb, 0, eax, dst);
+			break;
+		case 2:
+			if ((src->mode == am_ind || src->mode == am_indx || src->mode == am_indx2 || src->mode == am_direct
+				) && src->preg >= 0 && src->preg < 32) {
+				ap = GetTempRegister();
+				Operand* ap2 = esi->Clone();
+				unsigned int md = src->mode;
+				ap2->mode = src->mode;
+				src->mode = am_reg;
+				GenerateMove(esi, src);
+				src->mode = md;
+				GenerateDiadic(op_movsxw, 0, ap2, eax);
+				GenerateDiadic(op_movsxw, 0, eax, dst);
+				break;
+			}
+			GenerateDiadic(op_movsxw, 0, src, eax);
+			GenerateDiadic(op_movsxw, 0, eax, dst);
+			break;
+		case 4:
+			if ((src->mode == am_ind || src->mode == am_indx || src->mode == am_indx2 || src->mode == am_direct
+				) && src->preg >= 0 && src->preg < 32) {
+				ap = GetTempRegister();
+				Operand* ap2 = esi->Clone();
+				unsigned int md = src->mode;
+				ap2->mode = src->mode;
+				src->mode = am_reg;
+				GenerateMove(esi, src);
+				src->mode = md;
+				GenerateDiadic(op_movl, 0, ap2, eax);
+				GenerateDiadic(op_movl, 0, eax, dst);
+				break;
+			}
+			GenerateDiadic(op_movl, 0, src, eax);
+			GenerateDiadic(op_movl, 0, eax, dst);
+			break;
 		}
 	}
-	ap3->memref = true;
-	ap3->memop = ap1->Clone();
+	dst->memref = true;
+	dst->memop = src->Clone();
 }
 
-void QuplsCodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int size, Operand* mask)
+void i386CodeGenerator::GenerateStore(Operand* src, Operand* dst, int64_t size, Operand* mask)
 {
+	Operand* ap;
 	std::string* str;
 
-	//if (ap1->isPtr) {
-	//	GenerateTriadic(op_std, 0, ap1, ap3);
+	//if (dst->isPtr) {
+	//	GenerateTriadic(op_std, 0, dst, src);
 	//}
 	//else
-	if (ap3->tp && ap3->tp->IsPositType()) {
-		switch (ap3->tp->precision) {
+	if (src->tp && src->tp->IsPositType()) {
+		switch (src->tp->precision) {
 		case 16:
-			GenerateTriadic(op_pstw, 0, ap1, ap3, mask);
+			GenerateTriadic(op_pstw, 0, dst, src, mask);
 			break;
 		case 32:
-			GenerateTriadic(op_pstt, 0, ap1, ap3, mask);
+			GenerateTriadic(op_pstt, 0, dst, src, mask);
 			break;
 		default:
-			GenerateTriadic(op_psto, 0, ap1, ap3, mask);
+			GenerateTriadic(op_psto, 0, dst, src, mask);
 			break;
 		}
 	}
-	if (ap3->typep == &stdposit) {
-		GenerateTriadic(op_sto, 0, ap1, ap3, mask);
+	if (src->typep == &stdposit) {
+		GenerateTriadic(op_sto, 0, dst, src, mask);
 	}
-	else if (ap1->typep == &stdvector)
-		GenerateTriadic(op_sv, 0, ap1, ap3, mask);
-	else if (ap1->typep == &stdflt) {
-		GenerateTriadic(op_sto, 0, ap1, ap3, mask);
+	else if (dst->typep == &stdvector)
+		GenerateTriadic(op_sv, 0, dst, src, mask);
+	else if (dst->typep == &stdflt) {
+		GenerateTriadic(op_sto, 0, dst, src, mask);
 	}
-	else if (ap1->typep == &stddouble) {
-		if (ap1->mode == am_fpreg)
+	else if (dst->typep == &stddouble) {
+		if (dst->mode == am_fpreg)
 			printf("ho");
-		GenerateTriadic(op_sto, 0, ap1, ap3, mask);
+		GenerateTriadic(op_sto, 0, dst, src, mask);
 	}
-	else if (ap1->typep == &stdquad) {
-		GenerateTriadic(op_stf, 'q', ap1, ap3, mask);
+	else if (dst->typep == &stdquad) {
+		GenerateTriadic(op_stf, 'q', dst, src, mask);
 	}
-	else if (ap1->typep == &stdtriple) {
-		GenerateTriadic(op_stf, 't', ap1, ap3, mask);
+	else if (dst->typep == &stdtriple) {
+		GenerateTriadic(op_stf, 't', dst, src, mask);
 	}
-	//else if (ap1->mode==am_fpreg)
-	//	GenerateTriadic(op_fsto,0,ap1,ap3, mask);
+	//else if (dst->mode==am_fpreg)
+	//	GenerateTriadic(op_fsto,0,dst,src, mask);
 	else {
 		switch (size) {
-		case 1: GenerateLoadStore(op_stb, ap1, ap3); break;
-		case 2: GenerateLoadStore(op_stw, ap1, ap3); break;
-		case 4: GenerateLoadStore(op_stt, ap1, ap3); break;
-		case 8:	GenerateLoadStore(op_sto, ap1, ap3); break;
-		case 16:	GenerateLoadStore(op_sth, ap1, ap3); break;
+		case 1:
+			ap = GetTempRegister();
+			GenerateDiadic(op_movb, 0, src, eax);
+			if ((dst->mode == am_ind || dst->mode == am_indx || dst->mode == am_indx2 || dst->mode == am_direct
+				) && dst->preg >= 0 && dst->preg < 32) {
+				Operand* ap2 = edi->Clone();
+				unsigned int md = dst->mode;
+				ap2->mode = dst->mode;
+				dst->mode = am_reg;
+				GenerateMove(edi, dst);
+				dst->mode = md;
+				GenerateDiadic(op_movb, 0, eax, ap2);
+				return;
+			}
+			GenerateDiadic(op_movb, 0, eax, dst);
+			ReleaseTempRegister(ap);
+			break;
+		case 2: 
+			ap = GetTempRegister();
+			GenerateDiadic(op_movw, 0, src, eax);
+			if ((dst->mode == am_ind || dst->mode == am_indx || dst->mode == am_indx2 || dst->mode == am_direct
+				) && dst->preg >= 0 && dst->preg < 32) {
+				Operand* ap2 = edi->Clone();
+				unsigned int md = dst->mode;
+				ap2->mode = dst->mode;
+				dst->mode = am_reg;
+				GenerateMove(edi, dst);
+				dst->mode = md;
+				GenerateDiadic(op_movw, 0, eax, ap2);
+				return;
+			}
+			GenerateDiadic(op_movw, 0, eax, dst);
+			ReleaseTempRegister(ap);
+			break;
+		case 4: 
+			ap = GetTempRegister();
+			GenerateDiadic(op_movl, 0, src, eax);
+			if ((dst->mode == am_ind || dst->mode == am_indx || dst->mode == am_indx2 || dst->mode == am_direct
+				) && dst->preg >= 0 && dst->preg < 32) {
+				Operand* ap2 = edi->Clone();
+				unsigned int md = dst->mode;
+				ap2->mode = dst->mode;
+				dst->mode = am_reg;
+				GenerateMove(edi, dst);
+				dst->mode = md;
+				GenerateDiadic(op_movl, 0, eax, ap2);
+				return;
+			}
+			GenerateDiadic(op_movl, 0, eax, dst);
+			ReleaseTempRegister(ap);
+			break;
 		default:
 			;
 		}
 	}
 }
 
-Operand* QuplsCodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
+Operand* i386CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1, * ap2;
 
@@ -2253,7 +2514,7 @@ Operand* QuplsCodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t si
 	return (ap1);
 }
 
-Operand* QuplsCodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
+Operand* i386CodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1, * ap2;
 
@@ -2276,7 +2537,7 @@ Operand* QuplsCodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
 	return (ap1);
 }
 
-Operand* QuplsCodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
+Operand* i386CodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1, * ap2;
 
@@ -2299,7 +2560,7 @@ Operand* QuplsCodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
 	ap1->MakeLegal(flags, size);
 }
 
-Operand* QuplsCodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
+Operand* i386CodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1, * ap2;
 
@@ -2326,7 +2587,7 @@ Operand* QuplsCodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
 	return (ap1);
 }
 
-int QuplsCodeGenerator::GetSegmentIndexReg(e_sg segment)
+int i386CodeGenerator::GetSegmentIndexReg(e_sg segment)
 {
 	switch (segment) {
 	case bssseg: return (regGP);
@@ -2337,4 +2598,388 @@ int QuplsCodeGenerator::GetSegmentIndexReg(e_sg segment)
 	default:	return (regPP);
 	}
 	return (regZero);
+}
+
+// For a leaf routine don't bother to store the link register.
+OCODE* i386CodeGenerator::GenerateReturnBlock(Function* fn)
+{
+	Operand* ap, * ap2;
+	int n;
+	char buf[300];
+	OCODE* ip;
+
+	ip = nullptr;
+	fn->alstk = false;
+	if (!cpu.SupportsEnter)
+		GenerateMonadic(op_hint, 0, MakeImmediate(begin_return_block));
+	if (cpu.SupportsEnter)
+	{
+		if (fn->stkspace < 8388607LL) {
+			GenerateDiadic(op_enter, 0, MakeImmediate(15), MakeImmediate(-fn->tempbot));
+			ip = currentFn->pl.tail;
+			//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
+						//spAdjust = pl.tail;
+			fn->alstk = true;
+		}
+		else {
+			GenerateDiadic(op_enter, 0, MakeImmediate(15), MakeImmediate(8388600LL));
+			ip = currentFn->pl.tail;
+			GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 8388600LL));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
+			fn->alstk = true;
+		}
+	}
+	else if (cpu.SupportsLink) {
+		if (fn->stkspace < 8388607LL - Compiler::GetReturnBlockSize()) {
+			GenerateMonadic(op_link, 0, MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace));
+			//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
+						//spAdjust = pl.tail;
+			fn->alstk = true;
+		}
+		else {
+			GenerateMonadic(op_link, 0, MakeImmediate(8388600LL));
+			GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 8388600LL));
+			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
+			fn->alstk = true;
+		}
+	}
+	else {
+		GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(cpu.ReturnBlockSize() - cpu.sizeOfWord));
+		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord);
+		cg.GenerateMove(makereg(regSP), makereg(regFP));
+		GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
+		fn->alstk = true;
+		fn->has_return_block = true;
+	}
+	// Put this marker here so that storing the link register relative to the
+	// frame pointer counts as a frame pointer reference.
+	if (!cpu.SupportsEnter)
+		GenerateMonadic(op_hint, 0, MakeImmediate(end_return_block));
+	//	GenerateTriadic(op_stdp, 0, makereg(regFP), makereg(regZero), MakeIndirect(regSP));
+	n = 0;
+	if (!currentFn->IsLeaf && fn->doesJAL) {
+		n |= 2;
+		/*
+		if (alstk) {
+			GenerateDiadic(op_sto, 0, makereg(regLR), MakeIndexed(1 * cpu.sizeOfWord + stkspace, regSP));
+		}
+		else
+		*/
+	}
+	/*
+	switch (n) {
+	case 0:	break;
+	case 1:	GenerateDiadic(op_std, 0, makereg(regXLR), MakeIndexed(2 * cpu.sizeOfWord, regSP)); break;
+	case 2:	GenerateDiadic(op_std, 0, makereg(regLR), MakeIndexed(3 * cpu.sizeOfWord, regSP)); break;
+	case 3:	GenerateTriadic(op_stdp, 0, makereg(regXLR), makereg(regLR), MakeIndexed(2 * cpu.sizeOfWord, regSP)); break;
+	}
+	*/
+	retlab = nextlabel++;
+	ap = MakeDataLabel(retlab, regZero);
+	ap->mode = am_imm;
+	//if (!cpu.SupportsLink)
+	//	GenerateDiadic(op_mov, 0, makereg(regFP), makereg(regSP));
+	//if (!alstk) {
+	//	GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(stkspace));
+		//spAdjust = pl.tail;
+//	}
+	// Store the catch handler address at 16[$FP]
+	if (compiler.exceptions) {
+		ap = GetTempRegister();
+		sprintf_s(buf, sizeof(buf), ".%05lld", fn->defCatchLabel);
+		DataLabels[fn->defCatchLabel]++;
+		fn->defCatchLabelPatchPoint = currentFn->pl.tail;
+		GenerateLoadAddress(ap, cg.MakeStringAsNameConst(buf, codeseg));
+		cg.GenerateStore(ap, cg.MakeIndexed((int64_t)32, regFP), cpu.sizeOfWord);
+		ReleaseTempRegister(ap);
+		//		GenerateDiadic(cpu.mov_op, 0, makereg(regAFP), makereg(regFP));
+		GenerateMonadic(op_bex, 0, cg.MakeCodeLabel(currentFn->defCatchLabel));
+	}
+	fn->tryCount = 0;
+	return (ip);
+}
+
+Operand* i386CodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool safe)
+{
+	Operand* ap1, * ap2;
+	int lab0, lab1;
+
+	if (safe)
+		return (cg.GenerateSafeLand(node, flags, op));
+	lab0 = nextlabel++;
+	lab1 = nextlabel++;
+	ap1 = GetTempRegister();
+	ap2 = cg.GenerateExpression(node, flags, cpu.sizeOfWord, 1);
+	ap1 = cg.MakeBoolean(ap2);
+	ReleaseTempReg(ap2);
+	/*
+	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(1));
+	cg.GenerateFalseJump(this, lab0, 0);
+	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(0));
+	GenerateLabel(lab0);
+	*/
+	ap1->MakeLegal(flags, 8);
+	ap1->isBool = true;
+	return (ap1);
+}
+
+/* Generate code for an immediate 'add' operation. Usually one of the immediate
+* mode instructions will be used, unless the value is too large (>30 bits). In
+* which case the value is loaded into a temp register then used.
+*
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* i386CodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	GenerateDiadic(op_mov, 0, src1, eax);
+	GenerateDiadic(op_add, 0, MakeImmediate(src2->offset->i128.low), eax);
+	GenerateDiadic(op_mov, 0, eax, dst);
+	return (dst);
+}
+
+Operand* i386CodeGenerator::GenerateSubtractImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	GenerateDiadic(op_mov, 0, src1, eax);
+	GenerateDiadic(op_sub, 0, MakeImmediate(src2->offset->i128.low), eax);
+	GenerateDiadic(op_mov, 0, eax, dst);
+	return (dst);
+}
+
+/* Generate code for an immediate 'and' operation.
+*
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* i386CodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	GenerateDiadic(op_mov, 0, src1, eax);
+	GenerateDiadic(op_and, 0, MakeImmediate(src2->offset->i128.low), eax);
+	GenerateDiadic(op_mov, 0, eax, dst);
+	return (dst);
+}
+
+/* Generate code for an immediate 'or' operation.
+*
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* i386CodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
+		return (dst);
+
+	GenerateDiadic(op_mov, 0, src1, eax);
+	GenerateDiadic(op_or, 0, MakeImmediate(src2->offset->i128.low), eax);
+	GenerateDiadic(op_mov, 0, eax, dst);
+	return (dst);
+}
+
+/* Generate code for an immediate 'or' operation. Uses the CPU's shifted and
+* operations if the immediate constant is large. Note the CPU does not require
+* the use of temporary registers to extend the operation.
+*
+* Parameters:
+*		dst (input) pointer to the destination operand
+*		src1 (input) pointer to the first source operand
+*		src2 (input) pointer to the immediate operand
+* Return:
+*		a pointer to the destination operand.
+*/
+Operand* i386CodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5, * ap4;
+
+	if (src2->offset == nullptr)
+		return (dst);
+
+	GenerateDiadic(op_mov, 0, src1, eax);
+	GenerateDiadic(op_xor, 0, MakeImmediate(src2->offset->i128.low), eax);
+	GenerateDiadic(op_mov, 0, eax, dst);
+	return (dst);
+}
+
+Operand* i386CodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5, * ap4;
+
+	if (src2->offset == nullptr)
+		return (dst);
+
+	GenerateDiadic(op_mov, 0, src1, eax);
+	GenerateDiadic(op_mov, 0, src2, edx);
+	GenerateDiadic(op_add, 0, edx, eax);
+	GenerateDiadic(op_mov, 0, eax, dst);
+	return (dst);
+}
+
+/* Generate code for a shift operation. A warning message is displayed if the
+* shift is known to be by too many bits.
+*
+* Parameters:
+*		flags (input) the legal address modes to use for the result.
+*		size (input) the size of the result in bytes.
+*		op (input) the shift opcode.
+*
+* Returns:
+*		an operand referencing the shift value.
+*/
+// ToDo: ShiftBitfield
+Operand* i386CodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size, int op)
+{
+	Operand* ap1, * ap2, * ap3;
+	Int128 val;
+
+	ap3 = GetTempRegister();
+	ap1 = cg.GenerateExpression(node->p[0], am_reg, size, 0);
+	ap2 = cg.GenerateExpression(node->p[1], am_reg | am_imm, cpu.sizeOfWord, 1);
+	if (ap2->GetConstValue(&val))
+	{
+		Int128 sz, eight;
+		eight = Int128::Convert(8LL);
+		sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
+		Int128::Mul(&sz, &sz, &eight);
+		if (Int128::IsGT(&val, &sz))
+			error(ERR_SHIFT_TOOMANYBITS);
+	}
+	switch (op) {
+	case op_asl:	op = op_shl; break;
+	case op_lsr:	op = op_shr; break;
+	}
+	if (ap2->mode == am_imm && ap2->offset->i < 32 && ap2->offset->i >= 0) {
+		GenerateDiadic(op_mov, 0, ap1, eax);
+		GenerateDiadic(op, 0, ap2, eax);
+		GenerateDiadic(op_mov, 0, eax, ap3);
+	}
+	else {
+		GenerateDiadic(op_mov, 0, ap2, ecx);
+		GenerateDiadic(op_mov, 0, ap1, eax);
+		GenerateDiadic(op, 0, cl, eax);
+		GenerateDiadic(op_mov, 0, eax, ap3);
+	}
+	// Rotates automatically sign extend
+	/*
+	if ((op == op_rol || op == op_ror) && ap2->isUnsigned && !ap1->tp->IsVectorType())
+		switch (size) {
+		case 1:	ap1 = ap2->GenerateBitfieldClear(8, cpu.sizeOfWord * 8 - 9); break;
+		case 2:	ap1 = ap2->GenerateBitfieldClear(16, cpu.sizeOfWord * 8 - 17); break;
+		case 4:
+			if (cpu.sizeOfWord > 4)
+				ap1 = ap2->GenerateBitfieldClear(32, cpu.sizeOfWord * 8 - 33); break;
+		case 8:
+			if (cpu.sizeOfWord > 8)
+				ap1 = ap2->GenerateBitfieldClear(64, cpu.sizeOfWord * 8 - 65); break;
+		default:;
+		}
+	*/
+	ReleaseTempRegister(ap2);
+	ReleaseTempRegister(ap1);
+	ap3->MakeLegal(flags, size);
+	return (ap3);
+}
+
+/*
+void i386OCODE::OptAdd()
+{
+	OCODE::OptAdd();
+	if (oper1->preg == oper2->preg && oper3->offset->i128.IsNBit(5)) {
+		opcode = op_addq;
+		insn = GetInsn(op_addq);
+		optimized++;
+	}
+}
+*/
+
+i386CPU::i386CPU()
+{
+	int ii;
+	ENODE* node;
+	Symbol* sym;
+	Expression exp;
+	std::string nmEAX, nmEBX, nmECX, nmEDX, nmAL, nmCL, nmESI, nmEDI;
+	std::string nmr[32];
+
+	nmEAX = "eax";
+	sym = compiler.syf.Make(nmEAX, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	eax = makereg(40);
+
+	nmAL = "al";
+	sym = compiler.syf.Make(nmAL, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	al = makereg(48);
+
+	nmEBX = "ebx";
+	sym = compiler.syf.Make(nmEBX, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	ebx = makereg(41);
+
+	nmECX = "ecx";
+	sym = compiler.syf.Make(nmECX, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	ecx = makereg(42);
+
+	nmCL = "cl";
+	sym = compiler.syf.Make(nmCL, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	cl = makereg(50);
+
+	nmEDX = "edx";
+	sym = compiler.syf.Make(nmEDX, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	edx = makereg(43);
+
+	nmESI = "esi";
+	sym = compiler.syf.Make(nmESI, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	esi = makereg(46);
+
+	nmEDI = "edi";
+	sym = compiler.syf.Make(nmEDI, &stdlong, NULL, 0, sc_register);
+	node = exp.MakeGlobalNameNode(sym);
+	edi = makereg(47);
+
+	/*
+	for (ii = 0; ii < 32; ii++) {
+		nmr[ii] = "_r" + ii;
+		sym = compiler.syf.Make(nmr[ii], &stdint, NULL, 0, sc_global);
+		node = exp.MakeGlobalNameNode(sym);
+		iregs[ii] = node->MakeDirect(node);
+		iregs[ii]->mode = am_reg;
+		iregs[ii]->preg = ii;
+	}
+	*/
 }

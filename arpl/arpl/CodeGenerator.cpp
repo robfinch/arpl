@@ -1207,7 +1207,14 @@ void CodeGenerator::GenMemop(int op, Operand *ap1, Operand *ap2, int64_t ssize, 
 	ap3->isPtr = ap1->isPtr;
 	ap3->tp = ap1->tp;
 	GenerateLoad(ap3,ap1,ssize,ssize);
-	GenerateTriadic(op,0,ap3,ap3,ap2);
+	if (op == op_add) {
+		if (ap2->mode == am_imm)
+			GenerateAddImmediate(ap3, ap3, ap2);
+		else
+			GenerateAdd(ap3, ap3, ap2);
+	}
+	else
+		GenerateTriadic(op,0,ap3,ap3,ap2);
 	GenerateStore(ap3,ap1,ssize);
 	ReleaseTempReg(ap3);
 }
@@ -1453,13 +1460,19 @@ Operand* CodeGenerator::GenerateAssignAdd(ENODE* node, int flags, int64_t size, 
 				if (!ap2->offset->i128.IsNBit(21)) {
 					ap3 = GetTempRegister();
 					cg.GenerateLoadConst(ap2, ap3);
-					GenerateTriadic(op, 0, ap1, ap1, ap3);
+					if (op == op_add)
+						GenerateAddImmediate(ap1, ap1, ap2);
+					else
+						GenerateTriadic(op, 0, ap1, ap1, ap3);
 					ReleaseTempRegister(ap3);
 					goto j1;
 				}
 			}
 		}
-		GenerateTriadic(op, 0, ap1, ap1, ap2);
+		if (ap2->mode == am_imm && op == op_add)
+			GenerateAddImmediate(ap1, ap1, ap2);
+		else
+			GenerateTriadic(op, 0, ap1, ap1, ap2);
 j1:
 		if (intreg) {
 			mr = &regs[ap1->preg];
@@ -2532,6 +2545,13 @@ Operand* CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 	ap1->tp = node->tp;
 	return (ap1);
 #endif
+#ifdef I386
+	ap1 = allocOperand();
+	ap1->mode = am_imm;
+	ap1->offset = node;
+	ap1->tp = node->tp;
+	return (ap1);
+#endif
 }
 
 Operand* CodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
@@ -3107,13 +3127,13 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
   case en_mod:    ap1 = node->GenerateDivMod(flags,size,op_rem); goto retpt;
   case en_umod:   ap1 = node->GenerateDivMod(flags,size,op_remu); goto retpt;
   case en_asl:    ap1 = node->GenerateShift(flags,size,op_asl); goto retpt;
-  case en_shl:    ap1 = node->GenerateShift(flags,size,op_asl); goto retpt;
-  case en_shlu:   ap1 = node->GenerateShift(flags,size,op_asl); goto retpt;
-  case en_asr:	ap1 = node->GenerateShift(flags,size,op_asr); goto retpt;
-  case en_shr:	ap1 = node->GenerateShift(flags,size,op_asr); goto retpt;
-  case en_shru:   ap1 = node->GenerateShift(flags,size,op_lsr); goto retpt;
-	case en_rol:   ap1 = node->GenerateShift(flags,size,op_rol); goto retpt;
-	case en_ror:   ap1 = node->GenerateShift(flags,size,op_ror); goto retpt;
+  case en_shl:    ap1 = GenerateShift(node,flags,size,op_asl); goto retpt;
+  case en_shlu:   ap1 = GenerateShift(node,flags,size,op_asl); goto retpt;
+  case en_asr:	ap1 = GenerateShift(node,flags,size,op_asr); goto retpt;
+  case en_shr:	ap1 = GenerateShift(node,flags,size,op_asr); goto retpt;
+  case en_shru:   ap1 = GenerateShift(node,flags,size,op_lsr); goto retpt;
+	case en_rol:   ap1 = GenerateShift(node,flags,size,op_rol); goto retpt;
+	case en_ror:   ap1 = GenerateShift(node,flags,size,op_ror); goto retpt;
 	case en_bitoffset:
 		ap1 = GetTempRegister();
 		ip = currentFn->pl.tail;
@@ -3153,7 +3173,7 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 	case en_asfmul: return GenerateAssignAdd(node,flags,size,op_fmul);
 	case en_asfdiv: return GenerateAssignAdd(node,flags,size,op_fdiv);
 	*/
-  case en_asadd:  ap1 = node->GenerateAssignAdd(flags, size, op_add);	goto retpt;
+  case en_asadd:  ap1 = GenerateAssignAdd(node, flags, size, op_add);	goto retpt;
   case en_assub:  ap1 = node->GenerateAssignAdd(flags,size,op_sub); goto retpt;
   case en_asand:  ap1 = node->GenerateAssignLogic(flags,size,op_and); goto retpt;
   case en_asor:   ap1 = node->GenerateAssignLogic(flags,size,op_or); goto retpt;
@@ -4194,7 +4214,8 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 							GenerateMonadic(op_push, 0, makereg(cpu.argregs[0]));
 						}
 						else {
-							GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
+							GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
+							//GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
 							GenerateStore(makereg(cpu.argregs[0]), MakeIndirect(regSP), cpu.sizeOfWord);
 							GenerateStore(ap, MakeIndexed(cpu.sizeOfWord, regSP), cpu.sizeOfWord);
 							GenerateStore(ap2, MakeIndexed(cpu.sizeOfWord * 2, regSP), cpu.sizeOfWord);
@@ -4203,7 +4224,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 						GenerateCall(MakeStringAsNameConst((char*)"__aacpy", codeseg));
 						GenerateMonadic(op_bex, 0, MakeDataLabel(throwlab, regZero));
 						if (!func->IsPascal)
-							GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
+							GenerateAddOnto(makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
 					}
 					else
 						throw new C64PException(ERR_MISSING_HIDDEN_STRUCTPTR,0);
@@ -4263,7 +4284,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 
 	// Generate the return code only once. Branch to the return code for all returns.
 	if (func->retGenerated) {
-		GenerateMonadic(op_branch, 0, MakeCodeLabel(retlab));
+		GenerateBra(retlab);
 		return;
 	}
 	func->retGenerated = true;
@@ -4464,6 +4485,25 @@ Operand* CodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, Operan
 		}
 	}
 	GenerateTriadic(op_add, 0, dst, src1, ap5 ? ap5 : MakeImmediate(src2->offset->i));
+	if (ap5)
+		ReleaseTempRegister(ap5);
+	return (dst);
+}
+
+Operand* CodeGenerator::GenerateSubtractImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	Operand* ap5;
+
+	// Check if an immediate value will fit into the immediate field. If
+	// not it needs to be loaded into a register.
+	ap5 = nullptr;
+	if (src2->offset) {
+		if (!src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+			ap5 = GetTempRegister();
+			cg.GenerateLoadConst(src2, ap5);
+		}
+	}
+	GenerateTriadic(op_sub, 0, dst, src1, ap5 ? ap5 : MakeImmediate(src2->offset->i));
 	if (ap5)
 		ReleaseTempRegister(ap5);
 	return (dst);
@@ -4731,17 +4771,32 @@ Operand* CodeGenerator::GenerateBinary(ENODE* node, int flags, int64_t size, int
 							//}
 						}
 						else {
-							GenerateTriadic(op, 0, ap3, ap1, ap5 ? ap5 : ap2);
+							if (op==op_add)
+								GenerateAdd(ap3, ap1, ap5 ? ap5 : ap2);
+							/*
+							else if (op == op_sub)
+								GenerateSubtract(ap3, ap1, ap5 ? ap5 : ap2);
+							*/
+							else
+								GenerateSubtractImmediate(ap3, ap1, ap2);
+								//GenerateTriadic(op, 0, ap3, ap1, ap5 ? ap5 : ap2);
 						}
 						break;
 					default:
-						GenerateTriadic(op, 0, ap3, ap1, ap5 ? ap5 : ap2);
+						if (op == op_add)
+							GenerateAdd(ap3, ap1, ap5 ? ap5 : ap2);
+						else
+							GenerateTriadic(op, 0, ap3, ap1, ap5 ? ap5 : ap2);
 					}
 					if (ap5)
 						ReleaseTempRegister(ap5);
 				}
-				else
-					GenerateTriadic(op, 0, ap3, ap1, ap2);
+				else {
+					if (op == op_add)
+						GenerateAdd(ap3, ap1, ap2);
+					else
+						GenerateTriadic(op, 0, ap3, ap1, ap2);
+				}
 			}
 		}
 	}
@@ -4900,17 +4955,20 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 		}
 		else {
 			GenerateMonadic(op_link, 0, MakeImmediate(32760));
-			GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 32760));
+			//GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 32760));
+			GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize() + fn->stkspace - 32760));
 			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
 			fn->alstk = true;
 		}
 	}
 	else {
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
+		GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
+		//GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(Compiler::GetReturnBlockSize()));
 		cg.GenerateStore(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord);
 		cg.GenerateMove(makereg(regFP), makereg(regSP));
 		cg.GenerateStore(makereg(regLR), cg.MakeIndexed(cpu.sizeOfWord * 1, regFP), cpu.sizeOfWord);	// Store link register on stack
-		GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
+		GenerateSubtractImmediate(makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
+		//GenerateTriadic(op_sub, 0, makereg(regSP), makereg(regSP), MakeImmediate(fn->stkspace));
 		fn->alstk = true;
 		fn->has_return_block = true;
 	}
@@ -5024,7 +5082,7 @@ void CodeGenerator::GenerateSignBitExtend(Operand* dst, Operand* bit)
 		if (mask < 0xffffffLL) {
 			if (dst->mode == am_reg) {
 				GenerateTriadic(op_and, 0, dst, dst, MakeImmediate(~mask));	// clear the bits beyond the sign bit
-				GenerateTriadic(op_add, 0, dst, dst, MakeImmediate(mask >> 1));
+				GenerateAddImmediate(dst, dst, MakeImmediate(mask >> 1));
 				GenerateTriadic(op_eor, 0, dst, dst, MakeImmediate(~mask));
 			}
 			else {
@@ -5032,7 +5090,7 @@ void CodeGenerator::GenerateSignBitExtend(Operand* dst, Operand* bit)
 
 				GenerateLoad(ap2, dst, dst->tp->size, dst->tp->size);
 				GenerateTriadic(op_and, 0, dst, dst, MakeImmediate(~mask));	// clear the bits beyond the sign bit
-				GenerateTriadic(op_add, 0, dst, dst, MakeImmediate(mask >> 1));
+				GenerateAddImmediate(dst, dst, MakeImmediate(mask >> 1));
 				GenerateTriadic(op_eor, 0, dst, dst, MakeImmediate(~mask));
 				GenerateStore(dst, ap2, dst->tp->size);
 				ReleaseTempRegister(ap2);
@@ -5049,15 +5107,70 @@ void CodeGenerator::GenerateSignBitExtend(Operand* dst, Operand* bit)
 				ap2 = GetTempRegister();
 				ap3 = GetTempRegister();
 				GenerateLoadConst(MakeImmediate(2LL), ap2);
-				GenerateTriadic(op_asl, 0, ap2, ap2, bit);
+				GenerateTriadic(op_shl, 0, ap2, ap2, bit);
 				GenerateTriadic(op_eor, 0, ap3, ap2, MakeImmediate(-1LL));
 				GenerateLoad(ap, bit, bit->tp->size, bit->tp->size);
 			}
 			ap = GetTempRegister();
-			GenerateTriadic(op_add, 0, dst, dst, ap);
+			GenerateAdd(dst, dst, ap);
 		}
 	}
 	else {
 	}
+}
+
+Operand* CodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
+{
+	GenerateTriadic(op_add, 0, dst, src1, src2);
+	return (dst);
+}
+
+/* Generate code for a shift operation. A warning message is displayed if the
+* shift is known to be by too many bits.
+*
+* Parameters:
+*		flags (input) the legal address modes to use for the result.
+*		size (input) the size of the result in bytes.
+*		op (input) the shift opcode.
+*
+* Returns:
+*		an operand referencing the shift value.
+*/
+// ToDo: ShiftBitfield
+Operand* CodeGenerator::GenerateShift(ENODE*node, int flags, int64_t size, int op)
+{
+	Operand* ap1, * ap2, * ap3;
+	Int128 val;
+
+	ap3 = GetTempRegister();
+	ap1 = cg.GenerateExpression(node->p[0], am_reg, size, 0);
+	ap2 = cg.GenerateExpression(node->p[1], am_reg | am_ui6, cpu.sizeOfWord, 1);
+	if (ap2->GetConstValue(&val))
+	{
+		Int128 sz, eight;
+		eight = Int128::Convert(8LL);
+		sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
+		Int128::Mul(&sz, &sz, &eight);
+		if (Int128::IsGT(&val, &sz))
+			error(ERR_SHIFT_TOOMANYBITS);
+	}
+	GenerateTriadic(op, size == cpu.sizeOfWord ? 0 : (int)size, ap3, ap1, ap2);
+	// Rotates automatically sign extend
+	if ((op == op_rol || op == op_ror) && ap2->isUnsigned && !ap1->tp->IsVectorType())
+		switch (size) {
+		case 1:	ap1 = ap2->GenerateBitfieldClear(8, cpu.sizeOfWord * 8 - 9); break;
+		case 2:	ap1 = ap2->GenerateBitfieldClear(16, cpu.sizeOfWord * 8 - 17); break;
+		case 4:
+			if (cpu.sizeOfWord > 4)
+				ap1 = ap2->GenerateBitfieldClear(32, cpu.sizeOfWord * 8 - 33); break;
+		case 8:
+			if (cpu.sizeOfWord > 8)
+				ap1 = ap2->GenerateBitfieldClear(64, cpu.sizeOfWord * 8 - 65); break;
+		default:;
+		}
+	ReleaseTempRegister(ap2);
+	ReleaseTempRegister(ap1);
+	ap3->MakeLegal(flags, size);
+	return (ap3);
 }
 

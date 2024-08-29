@@ -309,6 +309,35 @@ void CPU::InitRegs()
 	cpu.vargregs[10] = 47;
 
 #endif
+#ifdef I386
+	cpu.NumRegs = 32;
+	cpu.NumArgRegs = 8;
+	cpu.argregs[0] = 1;
+	cpu.argregs[1] = 2;
+	cpu.argregs[2] = 3;
+	cpu.argregs[3] = 4;
+	cpu.argregs[4] = 5;
+	cpu.argregs[5] = 6;
+	cpu.argregs[6] = 7;
+	cpu.argregs[7] = 8;
+	cpu.argregs[8] = 0;
+	cpu.argregs[9] = 0;
+	cpu.argregs[10] = 0;
+
+	cpu.NumvArgRegs = 10;
+	cpu.vargregs[0] = 1;
+	cpu.vargregs[1] = 2;
+	cpu.vargregs[2] = 3;
+	cpu.vargregs[3] = 40;
+	cpu.vargregs[4] = 41;
+	cpu.vargregs[5] = 42;
+	cpu.vargregs[6] = 43;
+	cpu.vargregs[7] = 44;
+	cpu.vargregs[8] = 45;
+	cpu.vargregs[9] = 46;
+	cpu.vargregs[10] = 47;
+
+#endif
 
 #ifdef QUPLS
 	cpu.NumTmpRegs = 9;
@@ -477,6 +506,55 @@ void CPU::InitRegs()
 	cpu.vtmpregs[11] = 15;
 
 #endif
+#ifdef I386
+	cpu.NumTmpRegs = 9;
+	cpu.tmpregs[0] = 9;
+	cpu.tmpregs[1] = 10;
+	cpu.tmpregs[2] = 11;
+	cpu.tmpregs[3] = 12;
+	cpu.tmpregs[4] = 13;
+	cpu.tmpregs[5] = 14;
+	cpu.tmpregs[6] = 15;
+	cpu.tmpregs[7] = 16;
+	cpu.tmpregs[8] = 17;
+
+	cpu.NumTmpCrRegs = 3;
+	cpu.tmpCrRegs[0] = 2;
+	cpu.tmpCrRegs[1] = 3;
+	cpu.tmpCrRegs[2] = 4;
+	cpu.tmpCrRegs[3] = 0;
+	cpu.tmpCrRegs[4] = 0;
+	cpu.tmpCrRegs[5] = 0;
+	cpu.tmpCrRegs[6] = 0;
+	cpu.tmpCrRegs[7] = 0;
+	cpu.tmpCrRegs[8] = 0;
+
+	// These are saved regs.
+	cpu.tmpregs[9] = 18;
+	cpu.tmpregs[10] = 19;
+	cpu.tmpregs[11] = 20;
+	cpu.tmpregs[12] = 21;
+	cpu.tmpregs[13] = 22;
+	cpu.tmpregs[14] = 23;
+	cpu.tmpregs[15] = 24;
+	cpu.tmpregs[16] = 25;
+
+	cpu.NumvTmpRegs = 12;
+	cpu.vtmpregs[0] = 4;
+	cpu.vtmpregs[1] = 5;
+	cpu.vtmpregs[2] = 6;
+	cpu.vtmpregs[3] = 7;
+	cpu.vtmpregs[4] = 8;
+	cpu.vtmpregs[5] = 9;
+	cpu.vtmpregs[6] = 10;
+	cpu.vtmpregs[7] = 11;
+	cpu.vtmpregs[8] = 12;
+	cpu.vtmpregs[9] = 13;
+	cpu.vtmpregs[10] = 14;
+	cpu.vtmpregs[11] = 15;
+
+#endif
+
 #ifdef QUPLS
 	cpu.NumSavedRegs = 8;
 	cpu.saved_regs[0] = 18;
@@ -608,6 +686,61 @@ void CPU::InitRegs()
 	cpu.fsaved_regs[11] = 27 | rt_float;
 #endif
 #ifdef BIGFOOT
+	cpu.NumSavedRegs = 8;
+	cpu.saved_regs[0] = 18;
+	cpu.saved_regs[1] = 19;
+	cpu.saved_regs[2] = 20;
+	cpu.saved_regs[3] = 21;
+	cpu.saved_regs[4] = 22;
+	cpu.saved_regs[5] = 23;
+	cpu.saved_regs[6] = 24;
+	cpu.saved_regs[7] = 25;
+	cpu.saved_regs[8] = 26;
+	cpu.saved_regs[9] = 0;
+	cpu.saved_regs[10] = 0;
+	cpu.saved_regs[11] = 0;
+	cpu.saved_regs[12] = 0;
+	cpu.saved_regs[13] = 0;
+	cpu.saved_regs[14] = 0;
+	cpu.saved_regs[15] = 0;
+
+	cpu.NumvSavedRegs = 16;
+	cpu.vsaved_regs[0] = 16;
+	cpu.vsaved_regs[1] = 17;
+	cpu.vsaved_regs[2] = 18;
+	cpu.vsaved_regs[3] = 19;
+	cpu.vsaved_regs[4] = 20;
+	cpu.vsaved_regs[5] = 21;
+	cpu.vsaved_regs[6] = 22;
+	cpu.vsaved_regs[7] = 23;
+	cpu.vsaved_regs[8] = 24;
+	cpu.vsaved_regs[9] = 25;
+	cpu.vsaved_regs[10] = 26;
+	cpu.vsaved_regs[11] = 27;
+	cpu.vsaved_regs[12] = 28;
+	cpu.vsaved_regs[13] = 29;
+	cpu.vsaved_regs[14] = 30;
+	cpu.vsaved_regs[15] = 31;
+
+	cpu.NumSavedCrRegs = 3;
+	cpu.savedCrRegs[0] = 5;
+	cpu.savedCrRegs[1] = 6;
+	cpu.savedCrRegs[2] = 7;
+	cpu.savedCrRegs[3] = 0;
+	cpu.savedCrRegs[4] = 0;
+	cpu.savedCrRegs[5] = 0;
+	cpu.savedCrRegs[6] = 0;
+	cpu.savedCrRegs[7] = 0;
+	cpu.savedCrRegs[8] = 0;
+	cpu.savedCrRegs[9] = 0;
+	cpu.savedCrRegs[10] = 0;
+	cpu.savedCrRegs[11] = 0;
+	cpu.savedCrRegs[12] = 0;
+	cpu.savedCrRegs[13] = 0;
+	cpu.savedCrRegs[14] = 0;
+	cpu.savedCrRegs[15] = 0;
+#endif
+#ifdef I386
 	cpu.NumSavedRegs = 8;
 	cpu.saved_regs[0] = 18;
 	cpu.saved_regs[1] = 19;

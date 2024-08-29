@@ -149,6 +149,7 @@
     <ClCompile Include="FunctionFactory.cpp" />
     <ClCompile Include="GenerateBitfield.cpp" />
     <ClCompile Include="glo.cpp" />
+    <ClCompile Include="i386.cpp" />
     <ClCompile Include="IdentifyKeyword.cpp" />
     <ClCompile Include="IGraph.cpp" />
     <ClCompile Include="Initializers.cpp" />

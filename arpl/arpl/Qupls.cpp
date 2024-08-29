@@ -1274,7 +1274,7 @@ void QuplsCodeGenerator::SaveRegisterVars(CSet *rmask)
 		}
 	}
 }
-
+#ifdef QUPLS
 void SaveFPRegisterVars(CSet *rmask)
 {
 	int cnt;
@@ -1306,6 +1306,7 @@ void SavePositRegisterVars(CSet* rmask)
 		}
 	}
 }
+#endif
 
 // Restore registers used as register variables.
 
