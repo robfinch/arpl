@@ -55,7 +55,7 @@ BigfootCPU::BigfootCPU() {
 
 void BigfootCodeGenerator::banner()
 {
-	printf("Bigfoot Code Generator v0.02\n");
+	printf("Bigfoot Code Generator v0.03\n");
 };
 
 
@@ -767,13 +767,10 @@ void BigfootCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label
 				GenerateDiadic(op_beqz, 0, ap1, MakeCodeLabel(label));
 			}
 			else {
-				Operand* ap4 = GetTempRegister();
 				Operand* ap3 = GetTempCrRegister();
-				GenerateLoadConst(ap2, ap4);
-				GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
+				GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
 				GenerateDiadic(op_beq, 0, ap3, MakeCodeLabel(label));
 				ReleaseTempRegister(ap3);
-				ReleaseTempRegister(ap4);
 			}
 		}
 	}
@@ -806,13 +803,10 @@ void BigfootCodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label
 				GenerateDiadic(op_bnez, 0, ap1, MakeCodeLabel(label));
 			}
 			else {
-				Operand* ap4 = GetTempRegister();
 				Operand* ap3 = GetTempCrRegister();
-				GenerateLoadConst(ap2, ap4);
-				GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
+				GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
 				GenerateDiadic(op_bne, 0, ap3, MakeCodeLabel(label));
 				ReleaseTempRegister(ap3);
-				ReleaseTempRegister(ap4);
 			}
 		}
 	}
@@ -840,13 +834,10 @@ void BigfootCodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
+			GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
 			GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
@@ -867,13 +858,10 @@ void BigfootCodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label
 		if (regs[ap1->preg].isConst && !Int128::IsGE(&i, &ap2->offset->i128))
 			;
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
+			GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
 			GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
@@ -900,13 +888,10 @@ void BigfootCodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
+			GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
 			GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
@@ -933,13 +918,10 @@ void BigfootCodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
+			GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
 			GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
@@ -966,19 +948,16 @@ void BigfootCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t labe
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
-			GenerateDiadic(op_bltu, 0, ap3, MakeCodeLabel(label));
+			GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
 		Operand* ap3 = GetTempCrRegister();
-		GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
-		GenerateDiadic(op_bltu, 0, ap3, MakeCodeLabel(label));
+		GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+		GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
 		ReleaseTempRegister(ap3);
 	}
 }
@@ -999,19 +978,16 @@ void BigfootCodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t labe
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
-			GenerateDiadic(op_bgeu, 0, ap3, MakeCodeLabel(label));
+			GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
 		Operand* ap3 = GetTempCrRegister();
-		GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
-		GenerateDiadic(op_bgeu, 0, ap3, MakeCodeLabel(label));
+		GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+		GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(label));
 		ReleaseTempRegister(ap3);
 	}
 }
@@ -1032,19 +1008,16 @@ void BigfootCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t labe
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
-			GenerateDiadic(op_bleu, 0, ap3, MakeCodeLabel(label));
+			GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
 		Operand* ap3 = GetTempCrRegister();
-		GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
-		GenerateDiadic(op_bleu, 0, ap3, MakeCodeLabel(label));
+		GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+		GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
 		ReleaseTempRegister(ap3);
 	}
 }
@@ -1065,19 +1038,16 @@ void BigfootCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t labe
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap4 = GetTempRegister();
 			Operand* ap3 = GetTempCrRegister();
-			GenerateLoadConst(ap2, ap4);
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap4);
-			GenerateDiadic(op_bgtu, 0, ap3, MakeCodeLabel(label));
+			GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
-			ReleaseTempRegister(ap4);
 		}
 	}
 	else {
 		Operand* ap3 = GetTempCrRegister();
-		GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
-		GenerateDiadic(op_bgtu, 0, ap3, MakeCodeLabel(label));
+		GenerateTriadic(op_cmpu, 0, ap3, ap1, ap2);
+		GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
 		ReleaseTempRegister(ap3);
 	}
 }
@@ -2228,7 +2198,7 @@ void BigfootCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 				ip = GenerateLoadFloatConst(ap1, ap2);
 			else {
 				if (ap1->offset) {
-					ip = GenerateDiadic(op_loadi, 0, ap2, MakeImmediate(ap1->offset->i128.low));
+					ip = GenerateTriadic(op_add, 0, ap2, makereg(regZero), MakeImmediate(ap1->offset->i128.low));
 				}
 				else {
 					error(1000);	// NULL pointer
@@ -2830,15 +2800,7 @@ Operand* BigfootCodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1,
 		GenerateDiadic(op_addq, 0, dst, MakeImmediate(src2->offset->i128.low));
 		return (dst);
 	}
-	if (src2->offset->i128.IsNBit(30)) {
-		GenerateTriadic(op_add, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
-		return (dst);
-	}
-	// Use a register.
-	ap5 = GetTempRegister();
-	GenerateLoadConst(src2, ap5);
-	GenerateTriadic(op_add, 0, dst, src1, ap5);
-	ReleaseTempRegister(ap5);
+	GenerateTriadic(op_add, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
@@ -2859,16 +2821,7 @@ Operand* BigfootCodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1,
 	if (src2->offset == nullptr)
 		return (dst);
 
-	// Will it fit into one of the immediate mode instructions?
-	if (src2->offset->i128.IsNBit(30)) {
-		GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
-		return (dst);
-	}
-	// Use a register.
-	ap5 = GetTempRegister();
-	GenerateLoadConst(src2, ap5);
-	GenerateTriadic(op_and, 0, dst, src1, ap5);
-	ReleaseTempRegister(ap5);
+	GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
@@ -2890,15 +2843,7 @@ Operand* BigfootCodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, 
 		return (dst);
 
 	// Will it fit into one of the immediate mode instructions?
-	if (src2->offset->i128.IsNBit(30)) {
-		GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
-		return (dst);
-	}
-	// Use a register.
-	ap5 = GetTempRegister();
-	GenerateLoadConst(src2, ap5);
-	GenerateTriadic(op_or, 0, dst, src1, ap5);
-	ReleaseTempRegister(ap5);
+	GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
@@ -2921,16 +2866,7 @@ Operand* BigfootCodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1,
 	if (src2->offset == nullptr)
 		return (dst);
 
-	// Will it fit into one of the immediate mode instructions?
-	if (src2->offset->i128.IsNBit(30)) {
-		GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
-		return (dst);
-	}
-	// Use a register.
-	ap5 = GetTempRegister();
-	GenerateLoadConst(src2, ap5);
-	GenerateTriadic(op_eor, 0, dst, src1, ap5);
-	ReleaseTempRegister(ap5);
+	GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
