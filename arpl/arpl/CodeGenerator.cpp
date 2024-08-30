@@ -5125,6 +5125,18 @@ Operand* CodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
 	return (dst);
 }
 
+Operand* CodeGenerator::GenerateAnd(Operand* dst, Operand* src1, Operand* src2)
+{
+	GenerateTriadic(op_and, 0, dst, src1, src2);
+	return (dst);
+}
+
+Operand* CodeGenerator::GenerateOr(Operand* dst, Operand* src1, Operand* src2)
+{
+	GenerateTriadic(op_or, 0, dst, src1, src2);
+	return (dst);
+}
+
 /* Generate code for a shift operation. A warning message is displayed if the
 * shift is known to be by too many bits.
 *

@@ -1410,7 +1410,9 @@ public:
 	virtual Operand* GenerateAdd(Operand* dst, Operand* src1, Operand* src2);
 	virtual Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
 	virtual Operand* GenerateSubtractImmediate(Operand* dst, Operand* src1, Operand* srci);
+	virtual Operand* GenerateAnd(Operand* dst, Operand* src1, Operand* src2);
 	virtual Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
+	virtual Operand* GenerateOr(Operand* dst, Operand* src1, Operand* src2);
 	virtual Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
 	virtual Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
 	virtual Operand* GenerateShift(ENODE* node, int flags, int64_t size, int op);
@@ -1956,9 +1958,7 @@ public:
 	void GenerateInterruptReturn(Function* func) {
 		GenerateZeradic(op_iret);
 	};
-	void GenerateMove(Operand* dstreg, Operand* srcreg, Operand* mask = nullptr) {
-		GenerateTriadic(op_mov, 0, srcreg, dstreg, mask);
-	};
+	void GenerateMove(Operand* dstreg, Operand* srcreg, Operand* mask = nullptr);
 	void GenerateReturnAndDeallocate(int64_t amt);
 	void GenerateReturnAndDeallocate(Operand* ap1);
 	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
@@ -1971,7 +1971,6 @@ public:
 	void GenerateSmallDataRegDecl(void);
 	void GenerateSignExtendByte(Operand*, Operand*);
 	void GenerateSignExtendWyde(Operand*, Operand*);
-	void GenerateSignExtendTetra(Operand*, Operand*);
 	void GenerateLoadAddress(Operand* ap3, Operand* ap1);
 	void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
 	void GenerateStore(Operand* src, Operand* dst, int64_t size, Operand* mask = nullptr);
@@ -1980,7 +1979,9 @@ public:
 	Operand* GenerateAdd(Operand* dst, Operand* src1, Operand* src2);
 	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateSubtractImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateAnd(Operand* dst, Operand* src1, Operand* src2);
 	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateOr(Operand* dst, Operand* src1, Operand* src2);
 	Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateShift(ENODE* node, int flags, int64_t size, int op);

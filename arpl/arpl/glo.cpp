@@ -27,7 +27,7 @@
 /*      global definitions      */
 
 int syntax;
-char comment_char = ';';
+char comment_char = '#';
 Compiler compiler;
 int pass;
 int maxPn = 15;

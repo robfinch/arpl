@@ -313,8 +313,8 @@ enum e_op {
 	op_zseq, op_zsne, op_zslt, op_zsle, op_zsgt, op_zsge, op_zsltu, op_zsleu, op_zsgtu, op_zsgeu,
 	// i386
 	op_movb, op_movw, op_movl,
-	op_shl, op_shr, op_jae, op_jeq, op_jne, op_jl, op_jge, op_jle, op_jg,
-	op_seteq, op_setne, op_setl,
+	op_shl, op_shr, op_jae, op_jeq, op_jne, op_jl, op_jge, op_jle, op_jg, op_jb, op_jbe, op_ja,
+	op_seteq, op_setne, op_setl, op_setle, op_setg, op_setge, op_setb, op_setbe, op_seta, op_setae,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxo, op_bmap,
 	op_movzxb, op_movzxw, op_movzxt,

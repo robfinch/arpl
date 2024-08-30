@@ -88,6 +88,7 @@ bool Instruction::IsFlowControl()
 		opcode == op_jg ||
 		opcode == op_jle ||
 		opcode == op_jge ||
+		opcode == op_jb ||
 		//opcode == op_ibne ||
 		//opcode == op_dbnz ||
 		opcode == op_bchk ||

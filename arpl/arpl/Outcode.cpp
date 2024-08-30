@@ -47,7 +47,7 @@ struct nlit *numeric_tab = nullptr;
 // Please keep table in alphabetical order.
 // Instruction.cpp has the number of table elements hard-coded in it.
 //
-Instruction opl[396] =
+Instruction opl[406] =
 {   
 { ";", op_remark },
 { ";asm",op_asm,300 },
@@ -202,8 +202,11 @@ Instruction opl[396] =
 { "isnull", op_isnullptr,1,1,false,am_reg,am_reg,0,0 },
 { "itof", op_itof, 2, 1, false, am_reg, am_reg, 0, 0 },
 { "itop", op_itop, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "ja", op_ja,3,0,false,am_direct,0, 0, 0 },
 { "jae", op_jae,3,0,false,am_direct,0, 0, 0 },
 { "jal", op_jal,1,1,false },
+{ "jb", op_jb,3,0,false,am_direct,0, 0, 0 },
+{ "jbe", op_jbe,3,0,false,am_direct,0, 0, 0 },
 { "jeq", op_jeq,3,0,false,am_direct,0, 0, 0 },
 { "jg", op_jg,3,0,false,am_direct,0, 0, 0 },
 { "jge", op_jge,3,0,false,am_direct,0, 0, 0 },
@@ -346,8 +349,15 @@ Instruction opl[396] =
 { "sbx",op_sbx,1,1,false,am_reg,am_reg,am_imm,am_imm },
 { "sd",op_sd,4,0,true,am_reg,am_mem,0,0 },
 { "sei", op_sei,1,0,false,am_reg|am_ui6,0,0,0 },
+{ "seta", op_seta,1,1,false,am_reg,0,0,0 },
+{ "setae", op_setae,1,1,false,am_reg,0,0,0 },
+{ "setb", op_setb,1,1,false,am_reg,0,0,0 },
+{ "setbe", op_setbe,1,1,false,am_reg,0,0,0 },
 { "seteq", op_seteq,1,1,false,am_reg,0,0,0 },
+{ "setg", op_setg,1,1,false,am_reg,0,0,0 },
+{ "setge", op_setge,1,1,false,am_reg,0,0,0 },
 { "setl", op_setl,1,1,false,am_reg,0,0,0 },
+{ "setle", op_setle,1,1,false,am_reg,0,0,0 },
 { "setne", op_setne,1,1,false,am_reg,0,0,0 },
 { "setwb", op_setwb, 1, 0 },
 { "sh",op_sh,4,0,true,am_reg,am_mem,0,0 },
