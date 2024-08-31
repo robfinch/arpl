@@ -715,52 +715,7 @@ void Function::RestoreRegisterArguments()
 
 int Function::RestoreGPRegisterVars()
 {
-	int cnt2 = 0, cnt;
-	int nn;
-	int64_t mask;
-
-	if (save_mask == nullptr)
-		return (0);
-	if (save_mask->NumMember()) {
-		if (cpu.SupportsLDM && save_mask->NumMember() > 2) {
-			mask = 0;
-			for (nn = 0; nn < 64; nn++)
-				if (save_mask->isMember(nn))
-					mask = mask | (1LL << (nn-1));
-			//GenerateMonadic(op_reglist, 0, cg.MakeImmediate(mask, 16));
-			GenerateDiadic(op_ldm, 0, cg.MakeIndirect(regSP), cg.MakeImmediate(mask, 16));
-		}
-		else {
-			cnt2 = cnt = save_mask->NumMember() * cpu.sizeOfWord;
-			cnt = 0;
-			save_mask->resetPtr();
-			for (nn = 0; nn < save_mask->NumMember(); nn++) {
-				if (nn==0)
-					cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-				else
-					cg.GenerateLoad(makereg(cpu.saved_regs[nn]), MakeIndexed(cpu.sizeOfWord*nn, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-			}
-			/*
-			if (save_mask->NumMember() == 1)
-				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-			else if (save_mask->NumMember() == 2) {
-				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-				cg.GenerateLoad(makereg(cpu.saved_regs[1]), MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-			}
-			else {
-				sprintf_s(buf, sizeof(buf), "__load_s0s%d", save_mask->NumMember() - 1);
-				cg.GenerateMillicodeCall(MakeStringAsNameConst(buf, codeseg));
-			}
-			*/
-			/*
-			for (nn = save_mask->nextMember(); nn >= 0; nn = save_mask->nextMember()) {
-				cg.GenerateLoad(makereg(nn), MakeIndexed(cnt, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-				cnt += cpu.sizeOfWord;
-			}
-			*/
-		}
-	}
-	return (cnt2);
+	return (cg.RestoreGPRegisterVars(save_mask));
 }
 
 // Restore fp registers used as register variables.
@@ -1082,7 +1037,7 @@ void Function::Generate()
 
 	// Inline code needs to branch around the default exception handler.
 	if (compiler.exceptions && sym->IsInline)
-		GenerateMonadic(op_branch,0,MakeCodeLabel(lab0));
+		cg.GenerateBra(lab0);
 	// Generate code for the hidden default catch
 	if (compiler.exceptions && !IsNocall)
 		GenerateDefaultCatch();
@@ -1118,7 +1073,7 @@ void Function::GenerateDefaultCatch()
 		if (!hasDefaultCatch)
 			GenerateLabel(defCatchLabel);
 		GenerateDiadic(op_jsr, 0, makereg(regLR+1), MakeStringAsNameConst((char *)"_DEFCAT", codeseg));
-		GenerateMonadic(op_branch, 0, MakeCodeLabel(retlab));										// And execute return code
+		cg.GenerateBra(retlab);										// And execute return code
 		//GenerateDiadic(cpu.ldo_op, 0, ap, MakeIndexed((int64_t)0, regFP));				// Get previous frame pointer
 		//GenerateDiadic(cpu.ldo_op, 0, ap2, MakeIndexed((int64_t)32, ap->preg));		// Get previous handler address
 		//GenerateDiadic(cpu.sto_op, 0, ap2, MakeIndexed((int64_t)16, regFP));				// move it to return address loc

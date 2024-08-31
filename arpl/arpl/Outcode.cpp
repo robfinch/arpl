@@ -47,7 +47,7 @@ struct nlit *numeric_tab = nullptr;
 // Please keep table in alphabetical order.
 // Instruction.cpp has the number of table elements hard-coded in it.
 //
-Instruction opl[406] =
+Instruction opl[410] =
 {   
 { ";", op_remark },
 { ";asm",op_asm,300 },
@@ -120,6 +120,10 @@ Instruction opl[406] =
 { "cmp",op_cmp,1,1,false,am_reg,am_reg|am_imm,am_reg|am_imm,0 },
 { "cmpu",op_cmpu,1,1,false,am_reg,am_reg,am_reg|am_imm,0 },
 { "com", op_com,2,1,false,am_reg,am_reg,0,0 },
+{ "crand",op_crand,1,1,false,amCrReg,amCrReg,amCrReg,0 },
+{ "crdep", op_crdep,1,1,false,amCrReg,am_reg,0,0},
+{ "crext", op_crext,1,1,false,am_reg,amCrReg,0,0},
+{ "cror",op_cror,1,1,false,amCrReg,amCrReg,amCrReg,0 },
 { "csrrd", op_csrrd,1,1,false,am_reg,am_reg,am_imm },
 { "csrrw", op_csrrw,1,1,false,am_reg,am_reg,am_imm },
 { "dbra",op_dbra,3,0,false,am_direct,0,0,0 },
@@ -487,7 +491,7 @@ static char *segstr(int op)
 */
 
 // Output a friendly register moniker
-
+/*
 char *RegMoniker(int32_t regno)
 {
 	static char buf[4][20];
@@ -641,7 +645,7 @@ char *RegMoniker(int32_t regno)
 #endif
 	return &buf[n][0];
 }
-
+*/
 
 /*
  *      generate a register mask for restore and save.

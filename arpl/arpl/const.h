@@ -26,13 +26,13 @@
 //                                                                          
 // ============================================================================
 //
-enum e_cpu { thor, qupls, riscv, bigfoot };
+enum e_cpu { thor, qupls, riscv, bigfoot, i386 };
 //#define THOR	1
 //#define QUPLS	1
 //#define QUPLS40 1
 //#define RISCV 5
-#define I386 386
-//#define BIGFOOT 999
+//#define I386 386
+#define BIGFOOT 999
 
 enum e_bt {
 	bt_none,
@@ -308,9 +308,12 @@ enum e_op {
 	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
 	op_storev, op_subtract,
 	// Bigfoot
+	op_bra,
 	op_loadm, op_storem,
 	op_stib, op_stiw, op_stit, op_stio, op_addq,
 	op_zseq, op_zsne, op_zslt, op_zsle, op_zsgt, op_zsge, op_zsltu, op_zsleu, op_zsgtu, op_zsgeu,
+	op_crext, op_crdep,
+	op_crand, op_cror, op_reg2crg, op_crg2reg, op_cr2cr,
 	// i386
 	op_movb, op_movw, op_movl,
 	op_shl, op_shr, op_jae, op_jeq, op_jne, op_jl, op_jge, op_jle, op_jg, op_jb, op_jbe, op_ja,

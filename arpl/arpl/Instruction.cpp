@@ -38,7 +38,7 @@ void Instruction::SetMap()
 	for (nn = 0; nn <= op_last; nn++) {
 		opmap[nn] = 2;	// op_empty
 		if (p = GetMapping(nn)) {
-			opmap[nn] = p - &opl[0];
+			opmap[nn] = p - &cpu.itbl[0];
 		}
 		else {
 			es->add(nn);
@@ -221,7 +221,7 @@ static int fbmcmp(const void *a, const void *b)
 
 Instruction *Instruction::FindByMnem(std::string& mn)
 {
-	return ((Instruction *)bsearch(mn.c_str(), &opl[1], sizeof(opl) / sizeof(Instruction) - sizeof(Instruction), sizeof(Instruction), fbmcmp));
+	return ((Instruction *)bsearch(mn.c_str(), &cpu.itbl[1], cpu.itbl_cnt - 1, sizeof(Instruction), fbmcmp));
 }
 
 // It would be slow to get a pointer to the instruction information by
@@ -235,7 +235,7 @@ Instruction *Instruction::Get(int op)
 	op &= 0x7fff;
 	if (op >= op_last || op < 0)
 		return (nullptr);	// Should throw an exception here.
-	return (&opl[opmap[op]]);
+	return (&cpu.itbl[opmap[op]]);
 }
 
 // For initializing the mapping table.
@@ -244,9 +244,9 @@ Instruction *Instruction::GetMapping(int op)
 {
 	int i;
 
-	for (i = 0; i < sizeof(opl) / sizeof(Instruction); i++)
-		if (opl[i].opcode == op)
-			return (&opl[i]);
+	for (i = 0; i < cpu.itbl_cnt; i++)
+		if (cpu.itbl[i].opcode == op)
+			return (&cpu.itbl[i]);
 	return (nullptr);
 }
 

@@ -54,19 +54,21 @@ int max_vreg_alloc_ptr;
 int max_vstack_use;
 #define MAX_REG 4			/* max. scratch data	register (D2) */
 #define	MAX_REG_STACK	30
+#define VR_COUNT 2048
+#define VR_MASK VR_COUNT-1
 
 // Only registers 5,6,7 and 8 are used for temporaries
-static short int fpreg_in_use[256];	// 0 to 15
-static short int preg_in_use[256];	// 0 to 15
+static short int fpreg_in_use[VR_COUNT];	// 0 to 15
+static short int preg_in_use[VR_COUNT];	// 0 to 15
 static short int breg_in_use[16];	// 0 to 15
-static short int save_reg_in_use[256];
+static short int save_reg_in_use[VR_COUNT];
 static short int CrRegInUse[16];
-static short int saveCrRegInUse[256];
-static short int save_fpreg_in_use[256];
-static short int save_preg_in_use[256];
-static short int vreg_in_use[256];	// 0 to 15
-static short int save_vreg_in_use[256];
-static short int vmreg_in_use[256];	// 0 to 15
+static short int saveCrRegInUse[VR_COUNT];
+static short int save_fpreg_in_use[VR_COUNT];
+static short int save_preg_in_use[VR_COUNT];
+static short int vreg_in_use[VR_COUNT];	// 0 to 15
+static short int save_vreg_in_use[VR_COUNT];
+static short int vmreg_in_use[VR_COUNT];	// 0 to 15
 
 static int wrapno, save_wrapno;
 static int CrWrapno, saveCrWrapno;
@@ -137,7 +139,7 @@ char tmppregs[] = { 1,2,3,4,5,6,7,8,9,10 };
 char tmpvregs[] = {1,2,3,4,5,6,7,8,9,10};
 char tmpvmregs[] = {1,2,3};
 char tmpbregs[] = {5,6,7};
-char tmpCrRegs[] = { 2,3,4 };
+char tmpCrRegs[] = { 2,3,4,5 };
 char regstack[18];
 char fpregstack[18];
 char pregstack[18];
@@ -147,8 +149,11 @@ int regmask=0;
 int brsp=17;
 int bregmask=0;
 int rap[20];
+int Crrap[20];
 int save_rap[20];
+int save_Crrap[20];
 int CrMask;
+int Crsp = 17;
 
 int NumTempRegs()
 {
@@ -470,11 +475,11 @@ void CPU::InitRegs()
 	cpu.tmpregs[7] = 16;
 	cpu.tmpregs[8] = 17;
 
-	cpu.NumTmpCrRegs = 3;
+	cpu.NumTmpCrRegs = 4;
 	cpu.tmpCrRegs[0] = 2;
 	cpu.tmpCrRegs[1] = 3;
 	cpu.tmpCrRegs[2] = 4;
-	cpu.tmpCrRegs[3] = 0;
+	cpu.tmpCrRegs[3] = 5;
 	cpu.tmpCrRegs[4] = 0;
 	cpu.tmpCrRegs[5] = 0;
 	cpu.tmpCrRegs[6] = 0;
@@ -812,7 +817,7 @@ void initRegStack()
 	//for (rsp=0; rsp < 3; rsp=rsp+1)
 	//	regstack[rsp] = tmpregs[rsp];
 	//rsp = 0;
-	for (i = 0; i <= 255; i++) {
+	for (i = 0; i < VR_COUNT; i++) {
 		compiler.reg_in_use[i] = -1;
 		fpreg_in_use[i] = -1;
 		preg_in_use[i] = -1;
@@ -968,21 +973,26 @@ void SpillRegister(Operand *ap, int number)
   if (reg_alloc[number].f.isPushed=='T')
 	fatal("SpillRegister(): register already spilled");
   reg_alloc[number].f.isPushed = 'T';
-	compiler.reg_in_use[ap->preg] = -1;
+	compiler.reg_in_use[ap->preg&VR_MASK] = -1;
 }
 
 void SpillCrRegister(Operand* ap, int number)
 {
 //	cg.GenerateMove()
-	cg.GenerateStore(ap, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * cpu.sizeOfWord, regFP), cpu.sizeOfWord);
+	Operand* ap1;
+
+	ap1 = GetTempRegister();
+	cg.GenerateCrMove(ap1, ap);
+	cg.GenerateStore(ap1, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * cpu.sizeOfWord, regFP), cpu.sizeOfWord);
+	ReleaseTempRegister(ap1);
 	if (pass == 1)
 		max_stack_use = max(max_stack_use, (ap->deep + 1) * cpu.sizeOfWord);
 	//reg_stack[reg_stack_ptr].Operand = ap;
 	//reg_stack[reg_stack_ptr].f.allocnum = number;
 	if (CrRegAlloc[number].f.isPushed == 'T')
-		fatal("SpillRegister(): register already spilled");
+		fatal("SpillRegister(): cr register already spilled");
 	CrRegAlloc[number].f.isPushed = 'T';
-	compiler.CrRegInUse[ap->preg] = -1;
+	compiler.CrRegInUse[ap->preg&VR_MASK] = -1;
 }
 
 void SpillVectorRegister(Operand* ap, int number)
@@ -995,7 +1005,7 @@ void SpillVectorRegister(Operand* ap, int number)
 	if (vreg_alloc[number].f.isPushed == 'T')
 		fatal("SpillVectorRegister(): register already spilled");
 	vreg_alloc[number].f.isPushed = 'T';
-	vreg_in_use[ap->preg] = -1;
+	vreg_in_use[ap->preg&VR_MASK] = -1;
 }
 
 void SpillFPRegister(Operand *ap, int number)
@@ -1028,17 +1038,22 @@ void LoadRegister(int regno, int number)
 {
 	if (compiler.reg_in_use[regno] >= 0)
 		fatal("LoadRegister():register still in use");
-	compiler.reg_in_use[regno] = number;
-	cg.GenerateLoad(makereg(regno),cg.MakeIndexed(currentFn->GetTempBot()+number*cpu.sizeOfWord,regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+	compiler.reg_in_use[regno&VR_MASK] = number;
+	cg.GenerateLoad(makereg(regno&VR_MASK),cg.MakeIndexed(currentFn->GetTempBot()+number*cpu.sizeOfWord,regFP), cpu.sizeOfWord, cpu.sizeOfWord);
     reg_alloc[number].f.isPushed = 'F';
 }
 
 void LoadCrRegister(int regno, int number)
 {
-	if (compiler.CrRegInUse[regno & 0xfffL] >= 0)
+	Operand* ap1;
+
+	if (compiler.CrRegInUse[regno & 0xffL] >= 0)
 		fatal("LoadRegister():register still in use");
-	compiler.CrRegInUse[regno] = number;
-	cg.GenerateLoad(makereg(regno), cg.MakeIndexed(currentFn->GetTempBot() + number * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+	compiler.CrRegInUse[regno&VR_MASK] = number;
+	ap1 = GetTempRegister();
+	cg.GenerateLoad(ap1, cg.MakeIndexed(currentFn->GetTempBot() + number * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+	cg.GenerateCrMove(makecreg(regno & VR_MASK), ap1);
+	ReleaseTempRegister(ap1);
 	CrRegAlloc[number].f.isPushed = 'F';
 }
 
@@ -1046,9 +1061,9 @@ void LoadCrRegister(int regno, int number)
 
 void LoadVectorRegister(int regno, int number)
 {
-	if (vreg_in_use[regno] >= 0)
+	if (vreg_in_use[regno&VR_MASK] >= 0)
 		fatal("LoadVectorRegister():register still in use");
-	vreg_in_use[regno] = number;
+	vreg_in_use[regno&VR_MASK] = number;
 	GenerateDiadic(op_load, 0, makevreg(regno), cg.MakeIndexed(currentFn->GetTempBot() + number * (cpu.sizeOfWord * 4), regFP));
 	vreg_alloc[number].f.isPushed = 'F';
 }
@@ -1168,10 +1183,10 @@ Operand *GetTempRegister()
   ap->preg = cpu.tmpregs[next_reg];
 	ap->pdeep = ap->deep;
   ap->deep = reg_alloc_ptr;
-	if (IsTempReg(ap->preg))
-		compiler.temp_in_use.add(ap->preg);
-	else if (IsSavedReg(ap->preg))
-		compiler.saved_in_use.add(ap->preg);
+	if (IsTempReg(ap->preg&VR_MASK))
+		compiler.temp_in_use.add(ap->preg&VR_MASK);
+	else if (IsSavedReg(ap->preg&VR_MASK))
+		compiler.saved_in_use.add(ap->preg&VR_MASK);
 	reg_alloc[reg_alloc_ptr].reg = cpu.tmpregs[next_reg];
   reg_alloc[reg_alloc_ptr].Operand = ap;
   reg_alloc[reg_alloc_ptr].f.isPushed = 'F';
@@ -1216,7 +1231,7 @@ Operand* GetTempCrRegister()
 	ap = allocOperand();
 	ap->mode = amCrReg;
 	ap->preg = rt_cr | cpu.tmpCrRegs[nextCrReg];
-	ap->pdeep = ap->deep;
+	ap->pdeep = 0;
 	ap->deep = CrRegAllocPtr;
 	if (IsTempCrReg(ap->preg))
 		compiler.tempCrInUse.add(ap->preg & 7);
@@ -1228,7 +1243,7 @@ Operand* GetTempCrRegister()
 	nextCrReg++;
 	if (nextCrReg >= NumTempCrRegs() + NumSavedCrRegs()) {// regLastTemp) {
 		CrWrapno++;
-		rap[CrWrapno] = CrRegAllocPtr;
+		Crrap[CrWrapno] = CrRegAllocPtr;
 		nextCrReg = 0;// regFirstTemp;		/* wrap around */
 	}
 	if (CrRegAllocPtr++ == MAX_REG_STACK)
@@ -1506,11 +1521,20 @@ void ReleaseTempRegister(Operand *ap)
 	// Kludgy here. The register is being release so at the moment it
 	// is in use until it's released. The in_use flag will cause
 	// validate not to work. Need to keep the value of in_use for later.
-	nn = compiler.reg_in_use[ap->preg];
-	if (ap->typep != &stdvector && ap->mode != am_fpreg)
-		compiler.reg_in_use[ap->preg] = -1;
-	validate(ap);
-	compiler.reg_in_use[ap->preg] = nn;
+	if (ap->mode == amCrReg) {
+		nn = compiler.CrRegInUse[ap->preg & 0xff];
+		if (ap->typep != &stdvector && ap->mode != am_fpreg)
+			compiler.CrRegInUse[ap->preg & 0xff] = -1;
+		validate(ap);
+		compiler.CrRegInUse[ap->preg & 0xff] = nn;
+	}
+	else {
+		nn = compiler.reg_in_use[ap->preg];
+		if (ap->typep != &stdvector && ap->mode != am_fpreg)
+			compiler.reg_in_use[ap->preg&VR_MASK] = -1;
+		validate(ap);
+		compiler.reg_in_use[ap->preg&VR_MASK] = nn;
+	}
 
 	if (ap->typep==&stdvector) {
 		switch (ap->mode) {
@@ -1608,7 +1632,7 @@ void ReleaseTempRegister(Operand *ap)
 		return;
 	case amCrReg:
 		if (IsTempCrReg(ap->preg)) {
-			if (compiler.CrRegInUse[ap->preg] == -1)
+			if (compiler.CrRegInUse[ap->preg & 7] == -1)
 				return;
 			if (nextCrReg == 0) {
 				nextCrReg = cpu.NumTmpCrRegs - 1;// regLastTemp;
@@ -1616,8 +1640,8 @@ void ReleaseTempRegister(Operand *ap)
 			}
 			else
 				nextCrReg--;
-			number = compiler.CrRegInUse[ap->preg];
-			compiler.CrRegInUse[ap->preg] = -1;
+			number = compiler.CrRegInUse[ap->preg & 7];
+			compiler.CrRegInUse[ap->preg & 7] = -1;
 			break;
 		}
 		return;
@@ -1628,7 +1652,7 @@ void ReleaseTempRegister(Operand *ap)
 	case am_reg:
 common:
 		if (IsTempReg(ap->preg)) {
-			if (compiler.reg_in_use[ap->preg]==-1)
+			if (compiler.reg_in_use[ap->preg&VR_MASK]==-1)
 				return;
 			if (next_reg == 0) {
 				next_reg = cpu.NumTmpRegs - 1;// regLastTemp;
@@ -1636,14 +1660,14 @@ common:
 			}
 			else
 				next_reg--;
-			number = compiler.reg_in_use[ap->preg];
-			compiler.reg_in_use[ap->preg] = -1;
+			number = compiler.reg_in_use[ap->preg&VR_MASK];
+			compiler.reg_in_use[ap->preg&VR_MASK] = -1;
 			break;
 		}
 		return;
     case am_indx2:
 		if (IsTempReg(ap->sreg)) {
-			if (compiler.reg_in_use[ap->sreg]==-1)
+			if (compiler.reg_in_use[ap->sreg&VR_MASK]==-1)
 				goto common;
 			if (next_reg == 0) {
 				next_reg = cpu.NumTmpRegs - 1;// regLastTemp;
@@ -1651,8 +1675,8 @@ common:
 			}
 			else
 				next_reg--;
-			number = compiler.reg_in_use[ap->sreg];
-			compiler.reg_in_use[ap->sreg] = -1;
+			number = compiler.reg_in_use[ap->sreg&VR_MASK];
+			compiler.reg_in_use[ap->sreg&VR_MASK] = -1;
 			//break;
 		}
 		goto common;
@@ -1664,9 +1688,11 @@ common:
 	//	printf("number %d ap->deep %d\r\n", number, ap->deep);
 	//	//fatal("ReleaseTempRegister()/1");
 	//}
-	if (reg_alloc_ptr-- == 0)
+	if (reg_alloc_ptr-- == 0 && ap->mode == am_reg)
 		fatal("ReleaseTempRegister(): no registers are allocated");
-  //  if (reg_alloc_ptr != number)
+	if (CrRegAllocPtr-- == 0 && ap->mode == amCrReg)
+		fatal("ReleaseTempRegister(): no cr registers are allocated");
+	//  if (reg_alloc_ptr != number)
 		//fatal("ReleaseTempRegister()/3");
 	//if (reg_alloc[number].f.isPushed=='T')
 	//	fatal("ReleaseTempRegister(): register on stack");
@@ -1707,6 +1733,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	saveCrRegAllocPtr = CrRegAllocPtr;
 	memcpy(saveCrRegAlloc, CrRegAlloc, sizeof(saveCrRegAlloc));
 	memcpy(saveCrRegInUse, compiler.CrRegInUse, sizeof(saveCrRegInUse));
+	memcpy(save_Crrap, Crrap, sizeof(Crrap));
 
 	save_fpreg_alloc_ptr = fpreg_alloc_ptr;
 	memcpy(save_fpreg_alloc, fpreg_alloc, sizeof(save_fpreg_alloc));
@@ -1731,7 +1758,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 			stacked_regs[sp].f.allocnum = i;
 			sp++;
 			// mark the register void
-			compiler.reg_in_use[reg_alloc[i].reg] = -1;
+			compiler.reg_in_use[reg_alloc[i].reg&VR_MASK] = -1;
     }
 	}
 	for (sp = i = 0; i < CrRegAllocPtr; i++) {
@@ -1749,7 +1776,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 			stackedCrRegs[sp].f.allocnum = i;
 			sp++;
 			// mark the register void
-			compiler.CrRegInUse[CrRegAlloc[i].reg] = -1;
+			compiler.CrRegInUse[CrRegAlloc[i].reg&VR_MASK] = -1;
 		}
 	}
 	for (*fsp = i = 0; i < fpreg_alloc_ptr; i++) {
@@ -1847,6 +1874,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	CrRegAllocPtr = 0;
 	memset(compiler.CrRegInUse, -1, sizeof(compiler.CrRegInUse));
 	ZeroMemory(CrRegAlloc, sizeof(CrRegAlloc));
+	ZeroMemory(Crrap, sizeof(Crrap));
 	// Float
 	fpreg_alloc_ptr = 0;
 	memset(fpreg_in_use, -1, sizeof(fpreg_in_use));
@@ -1864,9 +1892,10 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 void TempRevalidate(int sp, int fsp, int psp, int vsp)
 {
 	int nn;
-	int64_t mask;
-	int64_t fpmask;
-	int64_t vmask;
+	CSet mask;
+	CSet fpmask;
+	CSet vmask;
+	CSet CrMask;
 
 	/*
 	for (nn = psp - 1; nn >= 0; nn--) {
@@ -1885,34 +1914,34 @@ void TempRevalidate(int sp, int fsp, int psp, int vsp)
 	memcpy(fpreg_alloc, save_fpreg_alloc, sizeof(fpreg_alloc));
 	memcpy(fpreg_in_use, save_fpreg_in_use, sizeof(fpreg_in_use));
 	*/
-	mask = 0;
+	mask.clear();
 	for (nn = sp-1; nn >= 0; nn--) {
-		if (!(mask & (1LL << stacked_regs[nn].Operand->preg)))
-			LoadRegister(stacked_regs[nn].Operand->preg, stacked_regs[nn].f.allocnum);
-		mask = mask | (1LL << stacked_regs[nn].Operand->preg);
+		if (!(mask.isMember(stacked_regs[nn].Operand->preg &VR_MASK)))
+			LoadRegister(stacked_regs[nn].Operand->preg&VR_MASK, stacked_regs[nn].f.allocnum);
+		mask.add(stacked_regs[nn].Operand->preg&VR_MASK);
 		//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode*/am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
 	}
-	CrMask = 0;
+	CrMask.clear();
 	for (nn = sp - 1; nn >= 0; nn--) {
-		if (!(mask & (1LL << stackedCrRegs[nn].Operand->preg)))
-			LoadCrRegister(stackedCrRegs[nn].Operand->preg, stackedCrRegs[nn].f.allocnum);
-		CrMask = CrMask | (1LL << stackedCrRegs[nn].Operand->preg);
+		if (!(CrMask.isMember(stackedCrRegs[nn].Operand->preg&VR_MASK)))
+			LoadCrRegister(stackedCrRegs[nn].Operand->preg&7, stackedCrRegs[nn].f.allocnum);
+		CrMask.add(stackedCrRegs[nn].Operand->preg&VR_MASK);
 		//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode*/am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
 	}
-	fpmask = 0;
+	fpmask.clear();
 	for (nn = fsp - 1; nn >= 0; nn--) {
 		if (stacked_fpregs[nn].Operand) {
-			if (!(fpmask & (1LL << (stacked_fpregs[nn].Operand->preg & 0x3f))))
+			if (!(fpmask.isMember(stacked_fpregs[nn].Operand->preg & VR_MASK)))
 				LoadFPRegister(stacked_fpregs[nn].Operand->preg, stacked_fpregs[nn].f.allocnum);
-			fpmask = fpmask | (1LL << (stacked_regs[nn].Operand->preg & 0x3f));
+			fpmask.add(stacked_regs[nn].Operand->preg & VR_MASK);
 		}
 	}
-	vmask = 0;
+	vmask.clear();
 	for (nn = vsp - 1; nn >= 0; nn--) {
 		if (stacked_vregs[nn].Operand) {
-			if (!(vmask & (1LL << (stacked_vregs[nn].Operand->preg & 0x3f))))
+			if (!(vmask.isMember(stacked_vregs[nn].Operand->preg & VR_MASK)))
 				LoadVectorRegister(stacked_vregs[nn].Operand->preg, stacked_vregs[nn].f.allocnum);
-			vmask = vmask | (1LL << (stacked_vregs[nn].Operand->preg & 0x3f));
+			vmask.add(stacked_vregs[nn].Operand->preg & VR_MASK);
 		}
 	}
 	wrapno = save_wrapno;
@@ -1921,9 +1950,11 @@ void TempRevalidate(int sp, int fsp, int psp, int vsp)
 	memcpy(compiler.reg_in_use, save_reg_in_use, sizeof(compiler.reg_in_use));
 	memcpy(rap, save_rap, sizeof(rap));
 	// Condition
+	CrWrapno = saveCrWrapno;
 	CrRegAllocPtr = saveCrRegAllocPtr;
 	memcpy(CrRegAlloc, saveCrRegAlloc, sizeof(CrRegAlloc));
 	memcpy(CrRegInUse, saveCrRegInUse, sizeof(CrRegInUse));
+	memcpy(Crrap, save_Crrap, sizeof(Crrap));
 	// Float
 	fpreg_alloc_ptr = save_fpreg_alloc_ptr;
 	memcpy(fpreg_alloc, save_fpreg_alloc, sizeof(fpreg_alloc));

@@ -6,14 +6,15 @@
 
 class txtoStream : public std::ofstream
 {
-	char buf[5000];
+	char buf2[5000];
 public:
 	int level;
 	std::string name;
 public:
 //  txtoStream(std::streambuf* buf, bool addit=false) : std::ostream(buf, addit) {};
-  txtoStream() : std::ofstream() {};
+	txtoStream() : std::ofstream() { memset(buf2, 0, sizeof(buf2)); };
 	void write(char *buf) { if (level) {
+		
 		if (buf)
 	   std::ostream::write(buf, strlen(buf));
        flush(); }};
@@ -37,13 +38,14 @@ public:
 	void printf(char *fmt, int n, int m);
 	void printf(const char *fmt, __int64 n);
 	void putch(char ch) { 
+		
 	    if (level) {
-	     buf[0] = ch;
-	     buf[1] = '\0';
-	     buf[2] = '\0';
-	     buf[3] = '\0';
-       std::ofstream::write(buf, 1);
-       }};
+	     buf2[0] = ch;
+	     buf2[1] = '\0';
+	     buf2[2] = '\0';
+	     buf2[3] = '\0';
+       std::ofstream::write(buf2, 1);
+       } };
 	void puts(const char *);
 	void writeAsHex(const void *, int64_t);
 };

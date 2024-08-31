@@ -69,7 +69,6 @@ extern char* gen_label(int lab, char*, char*, char, int);
 extern char* put_labels(txtoStream&, char*);
 extern char* opstr(int op);
 
-extern char *RegMoniker(int regno);
 extern void push_token();
 extern void pop_token();
 extern char *GetStrConst();

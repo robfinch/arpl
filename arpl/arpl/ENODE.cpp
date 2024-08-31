@@ -2813,7 +2813,7 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 		p[0]->PutConstant(ofs, 0, 0);
 		break;
 	case en_regvar:
-		ofs.write(RegMoniker(rg));
+		ofs.write(cpu.RegMoniker(rg));
 		break;
 	default:
 		if (nodetype != en_assign && nodetype != en_unknown)

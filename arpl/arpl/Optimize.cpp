@@ -705,7 +705,7 @@ static void Opt0_logic(ENODE** node)
 		ooptimized = true;
 	}
 	else if (ep->p[2]==nullptr) {
-		if (ep->p[0]->IsLogic()) {
+		if (ep->p[0]->IsLogic() && cpu.SupportsTrinary) {
 			nt = ep->p[0]->nodetype;
 			switch (ep->nodetype) {
 			case en_and:
@@ -746,7 +746,7 @@ static void Opt0_logic(ENODE** node)
 				break;
 			}
 		}
-		else if (ep->p[1]->IsLogic()) {
+		else if (ep->p[1]->IsLogic() && cpu.SupportsTrinary) {
 			nt = ep->p[1]->nodetype;
 			switch (ep->nodetype) {
 			case en_and:

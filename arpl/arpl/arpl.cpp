@@ -159,6 +159,7 @@ int main(int argc, char **argv)
 	cpu.SupportsEnter = false;
 	cpu.SupportsLeave = false;
 	cpu.SupportsIndexed = true;
+	cpu.SupportsTrinary = true;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;
@@ -200,6 +201,7 @@ int main(int argc, char **argv)
 	cpu.SupportsEnter = false;
 	cpu.SupportsLeave = false;
 	cpu.SupportsIndexed = true;
+	cpu.SupportsTrinary = true;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;
@@ -240,6 +242,7 @@ int main(int argc, char **argv)
 	cpu.SupportsEnter = false;
 	cpu.SupportsLeave = false;
 	cpu.SupportsIndexed = true;
+	cpu.SupportsTrinary = false;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;
@@ -283,6 +286,7 @@ int main(int argc, char **argv)
 	cpu.SupportsEnter = false;
 	cpu.SupportsLeave = false;
 	cpu.SupportsIndexed = true;
+	cpu.SupportsTrinary = false;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;
@@ -311,19 +315,20 @@ int main(int argc, char **argv)
 	cpu.code_align = 6;					// power of two
 	cpu.SupportsBand = false;
 	cpu.SupportsBor = false;
-	cpu.SupportsBBC = true;
-	cpu.SupportsBBS = true;
+	cpu.SupportsBBC = false;
+	cpu.SupportsBBS = false;
 	cpu.SupportsPop = false;
 	cpu.SupportsPush = false;
 	cpu.SupportsLink = false;
 	cpu.SupportsUnlink = false;
 	cpu.SupportsBitfield = false;
-	cpu.SupportsLDM = false;
-	cpu.SupportsSTM = false;
+	cpu.SupportsLDM = true;
+	cpu.SupportsSTM = true;
 	cpu.SupportsPtrdif = false;
 	cpu.SupportsEnter = false;
 	cpu.SupportsLeave = false;
 	cpu.SupportsIndexed = true;
+	cpu.SupportsTrinary = false;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;
@@ -365,6 +370,7 @@ int main(int argc, char **argv)
 	cpu.SupportsEnter = false;
 	cpu.SupportsLeave = false;
 	cpu.SupportsIndexed = true;
+	cpu.SupportsTrinary = false;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;
@@ -541,7 +547,7 @@ int	options(char *s)
   else if (s[1]=='S')
     mixedSource = TRUE;
 	else if (s[0] == '+' && s[1] == 'b') {
-		printf("ARPL v1.0 64-bit Compiler (C) 2024 Robert Finch\n");
+		printf("ARPL v1.02 64-bit Compiler (C) 2024 Robert Finch\n");
 		cg.banner();
 	}
 	return 0;

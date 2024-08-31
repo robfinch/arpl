@@ -27,8 +27,9 @@
 
 #ifdef I386
 extern i386CPU cpu;
-#else
-extern CPU cpu;
+#endif
+#ifdef BIGFOOT
+extern BigfootCPU cpu;
 #endif
 extern int lstackptr;
 extern char* lptr;

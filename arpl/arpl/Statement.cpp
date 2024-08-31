@@ -2165,7 +2165,7 @@ j1:
 				error(ERR_NOT_IN_LOOP);
 			//(char*)GenerateSwitchTargetName(tablabel).c_str()
 			if (opt==3)
-				GenerateMonadic(op_branch, 0, cg.MakeStringAsNameConst((char*)GenerateSwitchTargetName(breaklab).c_str(),codeseg));
+				GenerateMonadic(op_bra, 0, cg.MakeStringAsNameConst((char*)GenerateSwitchTargetName(breaklab).c_str(),codeseg));
 			else
 				cg.GenerateBra(breaklab);
 			break;

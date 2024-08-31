@@ -225,12 +225,17 @@ void Operand::MakeLegalReg(int flags, int64_t size)
 	case am_creg:
 		GenerateTriadic(op_aslx, 0, ap2, makereg(regZero), cg.MakeImmediate((int64_t)1));
 		break;
+	case amCrReg:
+		GenerateDiadic(op_crext, 0, ap2, this);
+		break;
 	default:
 		cg.GenerateLoad(ap2, this, size, size);
 		break;
 	}
 	if (ap2->preg & rt_vector)
 		mode = am_vreg;
+	else if (ap2->preg & rt_cr)
+		mode = amCrReg;
 	else
 		mode = am_reg;
 	switch (size) {
@@ -273,6 +278,7 @@ void Operand::MakeLegalCrReg(int flags, int64_t size)
 	else
 		ap2->tp = &stdint;
 	switch (mode) {
+	case am_direct:
 	case am_ind:
 	case am_indx:
 		ap2->isUnsigned = this->isUnsigned;
@@ -282,23 +288,23 @@ void Operand::MakeLegalCrReg(int flags, int64_t size)
 		}
 		ap3 = GetTempRegister();
 		cg.GenerateLoad(ap3, this, size, size);
-		GenerateTriadic(op_sne, 0, ap2, ap3, makereg(regZero));
+		cg.GenerateCrMove(ap2, ap3);
 		ReleaseTempRegister(ap3);
 		break;
 	case am_indx2:
 		ap3 = GetTempRegister();
 		cg.GenerateLoad(ap3, this, size, size);
-		GenerateTriadic(op_sne, 0, ap2, ap3, makereg(regZero));
+		cg.GenerateCrMove(ap2, ap3);
 		ReleaseTempRegister(ap3);
 		break;
 	case am_imm:
 		ap3 = GetTempRegister();
 		cg.GenerateLoadConst(this, ap3);
-		GenerateTriadic(op_sne, 0, ap2, ap3, makereg(regZero));
+		cg.GenerateCrMove(ap2, ap3);
 		ReleaseTempRegister(ap3);
 		break;
 	case am_reg:
-		GenerateTriadic(op_sne, 0, ap2, this, makereg(regZero));
+		GenerateTriadic(op_zsne, 0, ap2, this, makereg(regZero));
 		break;
 	case am_vreg:
 		cg.GenerateMove(ap2, this);
@@ -308,6 +314,9 @@ void Operand::MakeLegalCrReg(int flags, int64_t size)
 		break;
 	case am_fpreg:
 		GenerateTriadic(op_fsne, 0, ap2, this, makereg(regZero));
+		break;
+	case amCrReg:
+		cg.GenerateCrMove(ap2, this);
 		break;
 	case am_creg:
 		GenerateTriadic(op_aslx, 0, ap2, makereg(regZero), cg.MakeImmediate((int64_t)1));
@@ -576,14 +585,18 @@ void Operand::MakeLegal(int flags, int64_t size)
 		ap2 = GetTempRegister();
 		if (this->mode == am_reg)
 			GenerateDiadic(cpu.mov_op, 0, ap2, this);
+		else if (this->mode == amCrReg)
+			cg.GenerateCrMove(ap2, this);
 		else if (this->mode == am_imm)
 			cg.GenerateLoadConst(this, ap2);
 		else
 			cg.GenerateLoad(ap2, this, size, size);
-		if (isUnsigned)
-			GenerateTriadic(op_and, 0, ap2, ap2, cg.MakeImmediate(255));
-		else {
-			GenerateDiadic(op_sext8, 0, ap2, ap2);
+		if (this->mode != amCrReg) {
+			if (isUnsigned)
+				cg.GenerateAndImmediate(ap2, ap2, cg.MakeImmediate(255));
+			else {
+				cg.GenerateSignExtendByte(ap2, ap2);
+			}
 		}
 		mode = ap2->mode;
 		preg = ap2->preg;
@@ -757,9 +770,7 @@ void Operand::store(txtoStream& ofs)
 	switch (mode)
 	{
 	case am_imm:
-#ifdef I386
-		ofs.puts("$");
-#endif
+		ofs.puts(imm_char);
 		if (!cpu.Addsi)
 			ofs.write("");	// was "#"
 		// Fall through
@@ -776,17 +787,17 @@ void Operand::store(txtoStream& ofs)
 		break;
 	case am_reg:
 		if (typep == &stdvector)
-			ofs.write(RegMoniker(preg | rt_vector));
+			ofs.write(cpu.RegMoniker(preg | rt_vector));
 		else if (typep == &stdvectormask)
 			ofs.printf("vm%d", (int)preg);
 		else {
-			ofs.write(RegMoniker(preg));
+			ofs.write(cpu.RegMoniker(preg));
 			//if (renamed)
 			//	ofs.printf(".%d", (int)pregs);
 		}
 		break;
 	case am_vreg:
-		ofs.write(RegMoniker(preg|rt_vector));
+		ofs.write(cpu.RegMoniker(preg|rt_vector));
 		break;
 	case am_vmreg:
 		ofs.printf("vm%d", (int)preg);
@@ -795,12 +806,12 @@ void Operand::store(txtoStream& ofs)
 	case am_preg:
 	case am_fpreg:
 	case amCrReg:
-		ofs.printf("%s", RegMoniker(preg));
+		ofs.printf("%s", cpu.RegMoniker(preg));
 		break;
 	case am_ind:
 		//if (preg == 0)
 		//	printf("hello");
-		ofs.printf("[%s]", RegMoniker(preg));
+		ofs.printf("[%s]", cpu.RegMoniker(preg));
 		break;
 	case am_indx:
 		// It's not known the function is a leaf routine until code
@@ -844,7 +855,7 @@ void Operand::store(txtoStream& ofs)
 				ofs.printf("+%d", (int)offset2->i);
 		}
 		else
-			ofs.printf("[%s]", RegMoniker(preg));
+			ofs.printf("[%s]", cpu.RegMoniker(preg));
 		break;
 
 	case am_indx2:
@@ -852,23 +863,23 @@ void Operand::store(txtoStream& ofs)
 			offset->PutConstant(ofs,0,0);
 		if (scale == 1) {
 			if (sreg==regZero)
-				ofs.printf("[%s]", RegMoniker(preg));
+				ofs.printf("[%s]", cpu.RegMoniker(preg));
 			else if (preg==regZero)
-				ofs.printf("[%s]", RegMoniker(sreg));
+				ofs.printf("[%s]", cpu.RegMoniker(sreg));
 			else
-				ofs.printf((char *)"[%s+%s]", RegMoniker(preg), RegMoniker(sreg));
+				ofs.printf((char *)"[%s+%s]", cpu.RegMoniker(preg), cpu.RegMoniker(sreg));
 		}
 		else if (scale == 0) {
 			if (sreg == regZero)
-				ofs.printf("[%s]", RegMoniker(preg));
+				ofs.printf("[%s]", cpu.RegMoniker(preg));
 			else if (preg == regZero)
-				ofs.printf("[%s]", RegMoniker(sreg));
+				ofs.printf("[%s]", cpu.RegMoniker(sreg));
 			else
-				ofs.printf((char*)"[%s+%s*]", RegMoniker(preg), RegMoniker(sreg));
+				ofs.printf((char*)"[%s+%s*]", cpu.RegMoniker(preg), cpu.RegMoniker(sreg));
 		}
 		else {
 			printf("DIAG - illegal address mode.\n");
-			ofs.printf((char*)"[%s+%s*%d]", RegMoniker(preg), RegMoniker(sreg), scale);
+			ofs.printf((char*)"[%s+%s*%d]", cpu.RegMoniker(preg), cpu.RegMoniker(sreg), scale);
 		}
 		break;
 		
@@ -880,23 +891,23 @@ void Operand::store(txtoStream& ofs)
 		}
 		if (scale == 1) {
 			if (sreg == regZero)
-				ofs.printf("[%s]", RegMoniker(preg));
+				ofs.printf("[%s]", cpu.RegMoniker(preg));
 			else if (preg == regZero)
-				ofs.printf("[%s]", RegMoniker(sreg));
+				ofs.printf("[%s]", cpu.RegMoniker(sreg));
 			else
-				ofs.printf((char*)"[%s+%s]", RegMoniker(preg), RegMoniker(sreg));
+				ofs.printf((char*)"[%s+%s]", cpu.RegMoniker(preg), cpu.RegMoniker(sreg));
 		}
 		else if (scale == 0) {
 			if (sreg == regZero)
-				ofs.printf("[%s]", RegMoniker(preg));
+				ofs.printf("[%s]", cpu.RegMoniker(preg));
 			else if (preg == regZero)
-				ofs.printf("[%s]", RegMoniker(sreg));
+				ofs.printf("[%s]", cpu.RegMoniker(sreg));
 			else
-				ofs.printf((char*)"[%s+%s*]", RegMoniker(preg), RegMoniker(sreg));
+				ofs.printf((char*)"[%s+%s*]", cpu.RegMoniker(preg), cpu.RegMoniker(sreg));
 		}
 		else {
 			printf("DIAG - illegal address mode.\n");
-			ofs.printf((char*)"[%s+%s*%d]", RegMoniker(preg), RegMoniker(sreg), scale);
+			ofs.printf((char*)"[%s+%s*%d]", cpu.RegMoniker(preg), cpu.RegMoniker(sreg), scale);
 		}
 		ofs.puts("]");
 		break;

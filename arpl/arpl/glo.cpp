@@ -28,6 +28,7 @@
 
 int syntax;
 char comment_char = '#';
+const char* imm_char = "$";
 Compiler compiler;
 int pass;
 int maxPn = 15;

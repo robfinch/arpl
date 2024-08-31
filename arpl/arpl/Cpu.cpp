@@ -138,3 +138,122 @@ int CPU::GetTypeSize(e_bt typ)
 {
 	return (GetTypePrecision(typ) / 8);
 }
+
+char* CPU::RegMoniker(int32_t regno)
+{
+	static char buf[4][20];
+	static int n;
+	int rg;
+	bool invert = false;
+	bool vector = false;
+	bool group = false;
+	bool is_float = false;
+	bool is_cr = false;
+
+	if (regno & rt_group) {
+		group = true;
+		regno &= 0xff;
+	}
+	if (regno & rt_invert) {
+		invert = true;
+		regno &= 0xbf;
+	}
+	if (regno & rt_vector) {
+		vector = true;
+		regno &= 0x3f;
+	}
+	if (regno & rt_float) {
+		is_float = true;
+		regno &= 0x3f;
+	}
+	if (regno & rt_cr) {
+		is_cr = true;
+		regno &= 0xfffL;
+	}
+	n = (n + 1) & 3;
+	if (vector) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~v%d", regno);
+		else
+			sprintf_s(&buf[n][0], 20, "v%d", regno);
+		return (&buf[n][0]);
+	}
+	if (group) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~g%d", regno);
+		else
+			sprintf_s(&buf[n][0], 20, "g%d", regno);
+		return (&buf[n][0]);
+	}
+	if (is_float) {
+		if (rg = IsFtmpReg(regno))
+			sprintf_s(&buf[n][0], 20, "~ft%d", rg - 1);
+		else if (rg = IsFargReg(regno))
+			sprintf_s(&buf[n][0], 20, "~ft%d", rg - 1);
+		else if (rg = IsFsavedReg(regno))
+			sprintf_s(&buf[n][0], 20, "~fs%d", rg - 1);
+		return (invert ? &buf[n][0] : &buf[n][1]);
+	}
+	if (is_cr) {
+		if (regno == 0xfffL)
+			sprintf_s(&buf[n][0], 20, "crg");
+		else
+			sprintf_s(&buf[n][0], 20, "cr%d", regno & 7);
+	}
+	else if (rg = IsTempReg(regno)) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~t%d", rg - 1);// tmpregs[rg - 1]);
+		else
+			sprintf_s(&buf[n][0], 20, "t%d", rg - 1);// tmpregs[rg - 1]);
+	}
+	else if (rg = IsArgReg(regno)) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~a%d", rg - 1);// tmpregs[rg - 1]);
+		else
+			sprintf_s(&buf[n][0], 20, "a%d", rg - 1);// tmpregs[rg - 1]);
+	}
+	else if (rg = IsSavedReg(regno)) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~s%d", rg - 1);
+		else
+			sprintf_s(&buf[n][0], 20, "s%d", rg - 1);
+	}
+	else
+		if (regno == regFP)
+			sprintf_s(&buf[n][0], 20, "fp");
+	//		else if (regno == regAFP)
+	//			sprintf_s(&buf[n][0], 20, "$afp");
+		else if (regno == regGP)
+			sprintf_s(&buf[n][0], 20, "gp");
+		else if (regno == regGP1)
+			sprintf_s(&buf[n][0], 20, "gp1");
+	//	else if (regno==regPC)
+//		sprintf_s(&buf[n][0], 20, "$pc");
+		else if (regno == regSP)
+			sprintf_s(&buf[n][0], 20, "sp");
+		else if (regno == regLR)
+			sprintf_s(&buf[n][0], 20, "lr0");
+		else if (regno == regLR + 1)
+			sprintf_s(&buf[n][0], 20, "lr1");
+		else if (regno == regLR + 2)
+			sprintf_s(&buf[n][0], 20, "lr2");
+		else if (regno == regLR + 3)
+			sprintf_s(&buf[n][0], 20, "lr3");
+		else if (regno == 0) {
+			if (invert)
+				sprintf_s(&buf[n][0], 20, "~r%d", regno);
+			else
+				sprintf_s(&buf[n][0], 20, "r%d", regno);
+		}
+		else if (regno == 2)
+			sprintf_s(&buf[n][0], 20, "r%d", regno);
+		else {
+			if ((regno & 0x70) == 0x040)
+				sprintf_s(&buf[n][0], 20, "$p%d", regno & 0x1f);
+			else if ((regno & 0x70) == 0x070)
+				sprintf_s(&buf[n][0], 20, "$cr%d", regno & 0x3);
+			else
+				sprintf_s(&buf[n][0], 20, "r%d", regno);
+		}
+	return &buf[n][0];
+}

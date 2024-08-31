@@ -25,6 +25,8 @@
 //
 #include "stdafx.h"
 
+#define VREG	1
+
 extern TYP              stdfunc;
 
 extern void DumpCSETable();
@@ -41,9 +43,427 @@ extern void GenLoad(Operand* ap1, Operand* ap3, int ssize, int size);
 static Operand* eax, * ebx, * ecx, * edx, * al, *cl, * esi, * edi;
 static Operand* iregs[32];
 
+// Please keep table in alphabetical order.
+// Instruction.cpp has the number of table elements hard-coded in it.
+//
+static Instruction i386InsnTbl[] =
+{
+{ ";", op_remark },
+{ ";asm",op_asm,300 },
+{ ";empty",op_empty },
+{ ";fname", op_fnname },
+{ ";string", op_string },
+{ "abs", op_abs,2,1,false,am_reg,am_reg,0,0 },
+{ "add",op_add,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "addh",op_addh,1,1,false,am_reg,am_imm,0, 0 },
+{ "addm",op_addm,1,1,false,am_reg,am_imm,0, 0 },
+{ "addmo",op_addmo,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "addq",op_addq,1,1,false,am_reg, am_imm,0, 0 },
+{ "adds",op_adds,1,1,false,am_reg,am_imm,am_imm, 0 },
+{ "addu", op_addu,1,1 },
+{ "and",op_and,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "andcm",op_andcm,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "and_or",op_and_or,1,1,false,am_reg,am_reg,am_reg,am_reg },
+{ "asl", op_asl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "aslx", op_aslx,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "asr",op_asr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "bal", op_bal,4,2,false,am_reg,0,0,0 },
+{ "band", op_band,2,0,false,am_reg,am_reg,0,0 },
+{ "base", op_base,1,0,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "bbc", op_bbc,3,0,false,am_reg,am_ui6,0,0 },
+{ "bbs", op_bbs,3,0,false,am_reg,am_ui6,0,0 },
+{ "bchk", op_bchk,3,0 },
+{ "beq", op_beq,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "beqi", op_beqi,3,0,false,am_reg,am_imm,am_direct,0 },
+{ "beqz", op_beqz,3,0,false,am_reg,am_direct,0,0 },
+{ "bex", op_bex,0,0,false,0,0,0,0 },
+{ "bf", op_bf,3,0,false,am_reg,am_direct,0,0 },
+{ "bfclr", op_bfclr,2,1,false,am_reg,am_reg | am_ui6,am_reg | am_ui6,0 },
+{ "bfext", op_bfext,2,1,false,am_reg },
+{ "bfextu", op_bfextu,2,1,false,am_reg, },
+{ "bfins", op_bfins,2,1,false,am_reg },
+{ "bfset", op_bfset,2,1,false,am_reg,am_reg | am_ui6,am_reg | am_ui6,0 },
+{ "bge", op_bge,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgeu", op_bgeu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgt", op_bgt,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgtu", op_bgtu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bhi",op_bhi,2,0, false, am_reg, am_reg | am_imm, am_direct,0 },
+{ "bhs",op_bhs,2,0, false, am_reg, am_reg | am_imm, am_direct,0 },
+{ "bit",op_bit,1,1,false,am_creg,am_reg,am_reg | am_imm,0 },
+{ "ble", op_ble, 3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bleu", op_bleu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "blo",op_blo,2,0,false,am_reg,am_direct,0,0 },
+{ "bls",op_bls,2,0,false,am_reg,am_direct,0,0 },
+{ "blt", op_blt,3,0,false,am_reg,am_direct,0,0 },
+{ "bltu", op_bltu,3,0,false,am_reg,am_direct,0,0 },
+{ "bmap", op_bmap,1,0,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "bmi", op_bmi,2,0,false,am_reg,am_direct,0,0 },
+{ "bnand", op_bnand,2,0,false,am_reg,am_reg,0,0 },
+{ "bne", op_bne,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bnei", op_bnei,3,0,false,am_reg,am_imm,am_direct,0 },
+{ "bnez", op_bnez,3,0,false,am_reg,am_direct,0,0 },
+{ "bnor", op_bnor,2,0,false,am_reg,am_reg,0,0 },
+{ "bor", op_bor,3,0 },
+{ "br",op_br,3,0,false,0,0,0,0 },
+{ "branch",op_branch,3,0,false,am_direct,0,0,0 },
+{ "brk", op_brk,1,0 },
+{ "bsr", op_bsr,3,0,false,am_direct,0,0,0 },
+{ "bt", op_bt,3,0,false,am_reg,am_direct,0,0 },
+{ "bun", op_bun,2,0 },
+{ "bytndx", op_bytendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "cache",op_cache,1,0 },
+{ "call", op_call,4,1,false,0,0,0,0 },
+{ "chk", op_chk,1,0 },
+{ "clr",op_clr,1,1,false,am_reg,am_reg,am_reg | am_imm, am_imm },
+{ "cmovenz", op_cmovenz,1,1,false,am_reg,am_reg,am_reg,am_reg },
+{ "cmp",op_cmp,1,1,false,am_reg,am_reg | am_imm,am_reg | am_imm,0 },
+{ "cmpu",op_cmpu,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "com", op_com,2,1,false,am_reg,am_reg,0,0 },
+{ "crand",op_crand,1,1,false,amCrReg,amCrReg,amCrReg,0 },
+{ "crdep", op_crdep,1,1,false,amCrReg,am_reg,0,0},
+{ "crext", op_crext,1,1,false,am_reg,amCrReg,0,0},
+{ "cror",op_cror,1,1,false,amCrReg,amCrReg,amCrReg,0 },
+{ "csrrd", op_csrrd,1,1,false,am_reg,am_reg,am_imm },
+{ "csrrw", op_csrrw,1,1,false,am_reg,am_reg,am_imm },
+{ "dbra",op_dbra,3,0,false,am_direct,0,0,0 },
+{ "dc",op_dc },
+{ "dec", op_dec,4,0,true,am_i5 },
+{ "defcat", op_defcat,12,1,false,am_reg,am_reg,0 ,0 },
+{ "dep",op_dep,1,1,false,am_reg,am_reg,am_reg | am_imm,am_reg | am_imm },
+{ "di", op_di,1,1,false,am_reg | am_ui6,0,0,0 },
+{ "div", op_div,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "divu",op_divu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "dw", op_dw },
+{ "enter",op_enter,10,1,true,am_imm,0,0,0 },
+{ "enter_far",op_enter_far,12,1,true,am_imm,0,0,0 },
+{ "eor",op_eor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "eq",op_eq, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "exi56", op_exi56,1,0,false,am_imm,0,0,0 },
+{ "exim", op_exim,1,0,false,am_imm,0,0,0 },
+{ "ext", op_ext,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
+{ "extr", op_extr,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
+{ "extu", op_extu,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
+{ "fadd", op_fadd, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "fadd.d", op_fdadd,6,1,false,am_reg,am_reg,am_reg,0 },
+{ "fadd.s", op_fsadd,6,1,false,am_reg,am_reg,am_reg,0 },
+{ "fbeq", op_fbeq,3,0,false,am_reg,am_reg,0,0 },
+{ "fbge", op_fbge,3,0,false,am_reg,am_reg,0,0 },
+{ "fbgt", op_fbgt,3,0,false,am_reg,am_reg,0,0 },
+{ "fble", op_fble,3,0,false,am_reg,am_reg,0,0 },
+{ "fblt", op_fblt,3,0,false,am_reg,am_reg,0,0 },
+{ "fbne", op_fbne,3,0,false,am_reg,am_reg,0,0 },
+{ "fbor", op_fbor,3,0,false,am_reg,am_reg,0,0 },
+{ "fbun", op_fbun,3,0,false,am_reg,am_reg,0,0 },
+{ "fcmp", op_fcmp, 1,1,false,am_reg,am_reg | am_imm,am_reg | am_imm,0 },
+{ "fcvt.q.d", op_fcvtqdd,2,1,false,am_reg,am_reg,0,0 },
+{ "fcvtdq", op_fcvtdq,2,1,false,am_reg,am_reg,0,0 },
+{ "fcvtsq", op_fcvtsq,2,1,false,am_reg,am_reg,0,0 },
+{ "fcvttq", op_fcvttq,2,1,false,am_reg,am_reg,0,0 },
+{ "fdiv", op_fdiv, 160, 1, false, am_reg, am_reg | am_imm,am_reg | am_imm, 0 },
+{ "fdiv.s", op_fsdiv,80,1,false },
+{ "fi2d", op_i2d,2,1,false },
+{ "fix2flt", op_fix2flt },
+{ "fld", op_fld, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "fload", op_fload, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "flq", op_flq, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "flt2fix",op_flt2fix },
+{ "flw", op_flw, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "fmov", op_fmov,1,1 },
+{ "fmov.d", op_fdmov,1,1 },
+{ "fmul", op_fdmul,10,1,false,am_reg,am_reg,am_reg,0 },
+{ "fmul", op_fmul, 10, 1, false, am_reg | am_vreg, am_reg | am_vreg, am_reg | am_vreg, 0 },
+{ "fmul.s", op_fsmul,10,1,false },
+{ "fneg", op_fneg,2,1,false,am_reg,am_reg,0,0 },
+{ "fs2d", op_fs2d,2,1,false,am_reg,am_reg,0,0 },
+{ "fseq", op_fseq, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fsle", op_fsle, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fslt", op_fslt, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fsne", op_fsne, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fstore", op_fsto, 4, 0, true, am_reg, am_mem, 0, 0 },
+{ "fsub", op_fdsub,6,1,false,am_reg,am_reg,am_reg,0 },
+{ "fsub", op_fsub, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "fsub.s", op_fssub,6,1,false },
+{ "ftadd", op_ftadd },
+{ "ftdiv", op_ftdiv },
+{ "ftmul", op_ftmul },
+{ "ftoi", op_ftoi, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "ftsub", op_ftsub },
+{ "gcsub",op_gcsub,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "ge",op_ge, 1, 1, false, am_reg,am_reg, am_reg | am_imm,0 },
+{ "geu", op_geu, 1, 1, false, am_reg, am_reg,am_reg | am_imm,0 },
+{ "gt",op_gt, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "gtu",op_gtu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "hint", op_hint,0 },
+{ "hint2",op_hint2,0 },
+{ "hret", op_hret,1,0,0,0,0,0 },
+{ "ibeq", op_ibeq,3,1,false,am_reg,am_reg,am_direct,0 },
+{ "ible", op_ible,3,1,false,am_reg,am_reg,am_direct,0 },
+{ "iblt", op_iblt,3,1,false,am_reg,am_reg,am_direct,0 },
+{ "ibne", op_ibne,3,1 ,false,am_reg,am_reg,0,0 },
+{ "inc", op_inc,4,0,true,am_i5,am_mem,0,0 },
+{ "iret", op_iret,2,0,false,0,0,0,0 },
+{ "isnull", op_isnullptr,1,1,false,am_reg,am_reg,0,0 },
+{ "itof", op_itof, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "itop", op_itop, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "ja", op_ja,3,0,false,am_direct,0, 0, 0 },
+{ "jae", op_jae,3,0,false,am_direct,0, 0, 0 },
+{ "jal", op_jal,1,1,false },
+{ "jb", op_jb,3,0,false,am_direct,0, 0, 0 },
+{ "jbe", op_jbe,3,0,false,am_direct,0, 0, 0 },
+{ "jeq", op_jeq,3,0,false,am_direct,0, 0, 0 },
+{ "jg", op_jg,3,0,false,am_direct,0, 0, 0 },
+{ "jge", op_jge,3,0,false,am_direct,0, 0, 0 },
+{ "jl", op_jl,3,0,false,am_direct,0, 0, 0 },
+{ "jle", op_jle,3,0,false,am_direct,0, 0, 0 },
+{ "jmp",op_jmp,1,0,false,am_mem,0,0,0 },
+{ "jne", op_jne,3,0,false,am_direct,0, 0, 0 },
+{ "jsr", op_jsr,1,1,false },
+{ "l",op_l,1,1,false,am_reg,am_imm,0,0 },
+{ "la",op_la,1,1,false,am_reg,am_mem,0,0 },
+{ "lb", op_lb,4,1,true,am_reg,am_mem,0,0 },
+{ "lbu", op_lbu,4,1,true,am_reg,am_mem,0,0 },
+{ "ld", op_ld,4,1,true,am_reg,am_mem,0,0 },
+{ "lda",op_lda,1,1,false,am_reg,am_mem,0,0 },
+{ "ldb", op_ldb,4,1,true,am_reg,am_mem,0,0 },
+{ "ldbu", op_ldbu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldd", op_ldd,4,1,true,am_reg,am_mem,0,0 },
+{ "lddr", op_lddr,4,1,true,am_reg,am_mem,0,0 },
+{ "ldfd", op_ldfd,4,1,true, am_reg, am_mem,0,0 },
+{ "ldft", op_ldft,4,1,true, am_reg, am_mem,0,0 },
+{ "ldh", op_ldh,4,1,true,am_reg,am_mem,0,0 },
+{ "ldhs", op_ldhs,4,1,true,am_reg,am_mem,0,0 },
+//{ "ldi",op_loadi,1,1,false,am_reg,am_imm,0,0 },
+{ "ldm", op_ldm,20,1,true,am_mem,0,0,0 },
+{ "ldo", op_ldo,4,1,true,am_reg,am_mem,0,0 },
+{ "ldos", op_ldos,4,1,true,am_reg,am_mem,0,0 },
+{ "ldou", op_ldou,4,1,true,am_reg,am_mem,0,0 },
+{ "ldp", op_ldp,4,1,true,am_reg,am_mem,0,0 },
+{ "ldpu", op_ldpu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldt", op_ldt,4,1,true,am_reg,am_mem,0,0 },
+{ "ldtu", op_ldtu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldw", op_ldw,4,1,true,am_reg,am_mem,0,0 },
+{ "ldwu", op_ldwu,4,1,true,am_reg,am_mem,0,0 },
+{ "le",op_le, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "lea",op_lea,1,1,false,am_reg,am_mem,0,0 },
+{ "leave",op_leave,10,2,true, 0, 0, 0, 0 },
+{ "leave_far",op_leave_far,12,2,true, 0, 0, 0, 0 },
+{ "leu",op_leu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "lh", op_lh,4,1,true,am_reg,am_mem,0,0 },
+{ "lhu", op_lhu,4,1,true,am_reg,am_mem,0,0 },
+{ "link",op_link,4,1,true,am_imm,0,0,0 },
+{ "lm", op_lm },
+{ "load", op_load,4,1,true,am_reg,am_mem,0,0 },
+{ "loadg", op_loadg,4,1,true,am_reg,am_mem,0,0 },
+{ "loadi",op_loadi,1,1,false,am_reg,am_imm,0,0 },
+{ "loadm", op_loadm,32,1,true,am_imm,am_mem,0,0 },
+{ "loadv", op_loadv,4,1, true, am_vreg, am_mem,0,0 },
+{ "loadz", op_loadz,4,1,true,am_reg,am_mem,0,0 },
+{ "loop", op_loop,1,0 },
+{ "lslor", op_lslor,2,1,false,am_reg,am_reg,am_reg | am_ui6,am_reg | am_ui6 },
+{ "lsr", op_lsr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "lt",op_lt, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "ltu", op_ltu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "lui",op_lui,1,1,false,am_reg,am_imm,0,0 },
+{ "lvbu", op_lvbu,4,1,true ,am_reg,am_mem,0,0 },
+{ "lvcu", op_lvcu,4,1,true ,am_reg,am_mem,0,0 },
+{ "lvhu", op_lvhu,4,1,true ,am_reg,am_mem,0,0 },
+{ "lw", op_lw,4,1,true,am_reg,am_mem,0,0 },
+{ "lwu", op_lwu,4,1,true,am_reg,am_mem,0,0 },
+{ "lws", op_ldds,4,1,true },
+{ "mfbase", op_mfbase,1,0,false,am_reg,am_reg | am_ui6,0,0 },
+{ "mffp",op_mffp },
+{ "mflk", op_mflk,1,0,false,am_reg,am_reg,0,0 },
+{ "mod", op_mod,68,1, false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "modu", op_modu,68,1,false,am_reg,am_reg,am_reg,0 },
+{ "mov", op_mov,1,1,false,am_reg,am_reg,0,0 },
+{ "movb", op_movb,1,1,false,am_reg,am_reg,0,0 },
+{ "move",op_move,1,1,false,am_reg,am_reg,0,0 },
+{ "movl", op_movl,1,1,false,am_reg,am_reg,0,0 },
+{ "movs", op_movs },
+{ "movsxb", op_movsxb,1,1,false,am_reg,am_reg,0,0 },
+{ "movsxt", op_movsxt,1,1,false,am_reg,am_reg,0,0 },
+{ "movsxw", op_movsxw,1,1,false,am_reg,am_reg,0,0 },
+{ "movw", op_movw,1,1,false,am_reg,am_reg,0,0 },
+{ "movzxb", op_movzxb,1,1,false,am_reg,am_reg,0,0 },
+{ "movzxt", op_movzxt,1,1,false,am_reg,am_reg,0,0 },
+{ "movzxw", op_movzxw,1,1,false,am_reg,am_reg,0,0 },
+{ "mret", op_mret,1,0,0,0,0,0 },
+{ "mtbase", op_mtbase,1,0,false,am_reg,am_reg | am_ui6,0,0 },
+{ "mtfp", op_mtfp },
+{ "mtlc", op_mtlc,1,0,false,am_reg,0,0,0 },
+{ "mtlk", op_mtlk,1,0,false,am_reg,am_reg,0,0 },
+{ "mul",op_mul,18,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "mulf",op_mulf,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "mulu", op_mulu, 10, 1, false, am_reg, am_reg, am_reg | am_imm, 0 },
+{ "mv", op_mv,1,1,false,am_reg,am_reg,0,0 },
+{ "nand",op_nand,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "ne",op_ne,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "neg",op_neg, 1, 1, false,am_reg,am_reg,0,0 },
+{ "nop", op_nop,0,0,false },
+{ "nor",op_nor,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "not", op_not,2,1,false,am_reg,am_reg,0,0 },
+{ "not",op_not,2,1, false,am_reg, am_reg,0,0 },
+{ "nr", op_nr },
+{ "or",op_or,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "orh",op_orh,1,1,false,am_reg,am_imm,0, 0 },
+{ "orm",op_orm,1,1,false,am_reg,am_imm,0, 0 },
+{ "ors",op_ors,1,1,false,am_reg,am_imm,am_imm, 0 },
+{ "orcm",op_orcm,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "orf",op_orf,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "or_and",op_or_and,1,1,false,am_reg,am_reg,am_reg,am_reg },
+{ "padd", op_padd, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "pdiv", op_pdiv, 10, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "pea", op_pea },
+{ "pea",op_pea },
+{ "pfi", op_pfi, 1, 1, false, 0, 0, 0, 0 },
+{ "pfx0", op_pfx0, 1, 0, false, am_imm, 0, 0, 0 },
+{ "pfx1", op_pfx1, 1, 0, false, am_imm, 0, 0, 0 },
+{ "pfx2", op_pfx2, 1, 0, false, am_imm, 0, 0, 0 },
+{ "pfx3", op_pfx3, 1, 0, false, am_imm, 0, 0, 0 },
+{ "phi", op_phi },
+{ "pldo", op_pldo,4,1,true,am_reg,am_mem,0,0 },
+{ "pldt", op_pldt,4,1,true,am_reg,am_mem,0,0 },
+{ "pldw", op_pldw,4,1,true,am_reg,am_mem,0,0 },
+{ "pmul", op_pmul, 8, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "pop", op_pop,4,2,true,am_reg,am_reg,0,0 },
+{ "popf", op_popf,4,2,true,am_reg,am_reg,0,0 },
+{ "psto", op_psto,4,1,true,am_reg,am_mem,0,0 },
+{ "pstt", op_pstt,4,1,true,am_reg,am_mem,0,0 },
+{ "pstw", op_pstw,4,1,true,am_reg,am_mem,0,0 },
+{ "psub", op_psub, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "ptrdif",op_ptrdif,1,1,false,am_reg,am_reg,am_reg,am_imm },
+{ "push",op_push,4,1,true,am_reg | am_imm,am_reg,0,0 },
+{ "pushf",op_pushf,4,0,true,am_reg,0,0,0 },
+{ "redor", op_redor,2,1,false,am_reg,am_reg,am_reg,0 },
+{ "regs", op_reglist,1,1,false,am_imm,0,0,0 },
+{ "rem", op_rem,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "remu",op_remu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "ret", op_ret,1,0,false,am_imm,0,0,0 },
+{ "retd", op_retd,1,0,false,am_reg,am_reg,am_reg,am_reg | am_imm },
+{ "rol", op_rol,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "ror", op_ror,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "rte", op_rte,2,0 },
+{ "rti", op_rti,2,0 },
+{ "rtl", op_rtl,1,0,false,am_imm,0,0,0 },
+{ "rts", op_rts,1,0,false,am_imm,0,0,0 },
+{ "rtx", op_rtx,1,0,0,0,0,0 },
+{ "sand",op_sand,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "sb",op_sb,4,0,true,am_reg,am_mem,0,0 },
+{ "sbx",op_sbx,1,1,false,am_reg,am_reg,am_imm,am_imm },
+{ "sd",op_sd,4,0,true,am_reg,am_mem,0,0 },
+{ "sei", op_sei,1,0,false,am_reg | am_ui6,0,0,0 },
+{ "seta", op_seta,1,1,false,am_reg,0,0,0 },
+{ "setae", op_setae,1,1,false,am_reg,0,0,0 },
+{ "setb", op_setb,1,1,false,am_reg,0,0,0 },
+{ "setbe", op_setbe,1,1,false,am_reg,0,0,0 },
+{ "seteq", op_seteq,1,1,false,am_reg,0,0,0 },
+{ "setg", op_setg,1,1,false,am_reg,0,0,0 },
+{ "setge", op_setge,1,1,false,am_reg,0,0,0 },
+{ "setl", op_setl,1,1,false,am_reg,0,0,0 },
+{ "setle", op_setle,1,1,false,am_reg,0,0,0 },
+{ "setne", op_setne,1,1,false,am_reg,0,0,0 },
+{ "setwb", op_setwb, 1, 0 },
+{ "sh",op_sh,4,0,true,am_reg,am_mem,0,0 },
+{ "shl", op_shl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shlu", op_stplu,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shr", op_shr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shru", op_stpru,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "sll", op_sll,2,1,false,am_reg,am_reg,am_reg,0 },
+{ "sllh", op_sllh,2,1,false,am_reg,am_reg,am_reg,0 },
+{ "sllp", op_sllp,2,1,false,am_reg,am_reg,am_reg,am_reg | am_ui6 },
+{ "sm",op_sm },
+{ "sor",op_sor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "spt", op_spt,4,0,true ,am_reg,am_mem,0,0 },
+{ "sptr", op_sptr,4,0,true,am_reg,am_mem,0,0 },
+{ "sra", op_sra,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "sret", op_sret,1,0,0,0,0,0 },
+{ "srl", op_srl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "stb",op_stb,4,0,true,am_reg,am_mem,0,0 },
+{ "std", op_std,4,0,true,am_reg,am_mem,0,0 },
+{ "stdcr", op_stdc,4,0,true, am_reg, am_mem,0,0 },
+{ "stfd", op_stfd,4,0,true, am_reg, am_mem,0,0 },
+{ "stft", op_stft,4,0,true, am_reg, am_mem,0,0 },
+{ "sth", op_sth,4,0,true,am_reg,am_mem,0,0 },
+{ "sths",op_sths,4,0,true,am_reg,am_mem,0,0 },
+{ "sti", op_sti,1,0 },
+{ "stib",op_stib,4,0,true,am_imm,am_mem,0,0 },
+{ "stit",op_stit,4,0,true,am_imm,am_mem,0,0 },
+{ "stiw",op_stiw,4,0,true,am_imm,am_mem,0,0 },
+{ "stio",op_stio,4,0,true,am_imm,am_mem,0,0 },
+{ "stm", op_stm,20,1,true,am_mem,0,0,0 },
+{ "sto",op_sto,4,0,true,am_reg,am_mem,0,0 },
+{ "stop", op_stop },
+{ "store",op_store,4,0,true,am_reg,am_mem,0,0 },
+{ "storeg",op_storeg,4,0,true,am_reg,am_mem,0,0 },
+{ "storem", op_storem,32,0,true,am_imm,am_mem,0,0 },
+{ "storev", op_storev,4,1, true, am_vreg, am_mem,0,0 },
+{ "stos",op_stos,4,0,true,am_reg,am_mem,0,0 },
+{ "stp",op_stp,4,0,true,am_reg,am_mem,0,0 },
+{ "stt",op_stt,4,0,true,am_reg,am_mem,0,0 },
+{ "stw",op_stw,4,0,true,am_reg,am_mem,0,0 },
+{ "sub",op_sub,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "subtract",op_subtract,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "subu", op_subu,1,1 },
+{ "sv", op_sv,256,0 },
+{ "sw",op_sw,4,0,true,am_reg,am_mem,0,0 },
+{ "swap",op_stdap,1,1,false },
+{ "swp", op_stdp, 8, false },
+{ "sws", op_stds,4,0 },
+{ "sxb",op_sxb,1,1,false,am_reg,am_reg,0,0 },
+{ "sxc",op_sxc,1,1,false,am_reg,am_reg,0,0 },
+{ "sxh",op_sxh,1,1,false,am_reg,am_reg,0,0 },
+{ "sxo",op_sxo,1,1,false,am_reg,am_reg,0,0 },
+{ "sxp",op_sxp,1,1,false,am_reg,am_reg,0,0 },
+{ "sxt",op_sxt,1,1,false,am_reg,am_reg,0,0 },
+{ "sxw",op_sxw,1,1,false,am_reg,am_reg,0,0 },
+{ "sync",op_sync,1,0,false,am_imm,0,0,0 },
+{ "tgt", op_calltgt,1 },
+{ "tst",op_tst,1,1 },
+{ "unlink",op_unlk,4,2,true },
+{ "uret", op_uret,1,0,0,0,0,0 },
+{ "vadd", op_vadd,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vadds", op_vadds,1,1,false,am_vreg,am_vreg | am_reg,am_reg,am_vmreg },
+{ "vdiv", op_vdiv,100,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vdivs", op_vdivs,100 },
+{ "veins",op_veins,10 },
+{ "ver", op_verbatium,0,1,false, 0,0,0,0 },
+{ "vex", op_vex,10 },
+{ "vfadd", op_vfadd,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vfadds", op_vfadds,10,1,false, am_vreg, am_vreg, am_reg,0 },
+{ "vfmul", op_vfmul,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vfmuls", op_vfmuls,10,1,false, am_vreg, am_vreg, am_reg,0 },
+{ "vmask", op_vmask,1,1,false, am_reg,am_reg,am_reg,am_reg },
+{ "vmul", op_vmul,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vmuls", op_vmuls,10 },
+{ "vseq", op_vseq,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsge", op_vsge,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsgt", op_vsgt,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsle", op_vsle,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vslt", op_vslt,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsne", op_vsne,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsub", op_vsub,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsubs", op_vsubs,10 },
+{ "wydendx", op_wydendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "xnor",op_xnor,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "xor",op_xor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "zseq", op_zseq,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsge",op_zsge,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgeu",op_zsgeu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgt",op_zsgt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgtu",op_zsgtu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsle",op_zsle,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsleu",op_zsleu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zslt", op_zslt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsltu", op_zsltu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsne",op_zsne,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zxb",op_zxb,1,1,false,am_reg,am_reg,0,0 },
+{ "zxt",op_zxt,1,1,false,am_reg,am_reg,0,0 },
+{ "zxw",op_zxo,1,1,false,am_reg,am_reg,0,0 }
+};
+
 void i386CodeGenerator::banner()
 {
-	printf("i386 Code Generator v0.02\n");
+	printf("i386 Code Generator v0.03\n");
 };
 
 void i386CodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
@@ -513,10 +933,9 @@ Operand* i386CodeGenerator::GenerateFge(ENODE* node)
 Operand* i386CodeGenerator::GenExpr(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3, * ap4;
-	int lab0, lab1;
+	int64_t lab0, lab1;
 	int64_t size = cpu.sizeOfWord;
 	int op;
-	OCODE* ip;
 
 	lab0 = nextlabel++;
 	lab1 = nextlabel++;
@@ -618,7 +1037,7 @@ Operand* i386CodeGenerator::GenExpr(ENODE* node)
 		GenerateFalseJump(node, lab0, 0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(cpu.ldi_op | op_dot, 0, ap1, MakeImmediate(1));
-		GenerateMonadic(op_jmp, 0, MakeDataLabel(lab1, regZero));
+		GenerateMonadic(op_bra, 0, MakeDataLabel(lab1, regZero));
 		GenerateLabel(lab0);
 		GenerateDiadic(cpu.ldi_op | op_dot, 0, ap1, MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -672,7 +1091,7 @@ Operand* i386CodeGenerator::GenExpr(ENODE* node)
 		GenerateFalseJump(node,lab0,0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(op_ld,0,ap1,MakeImmediate(1));
-		GenerateMonadic(op_bra,0,MakeDataLabel(lab1));
+		GenerateMonadic(op_branch,0,MakeDataLabel(lab1));
 		GenerateLabel(lab0);
 		GenerateDiadic(op_ld,0,ap1,MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -2093,8 +2512,12 @@ void i386CodeGenerator::GenerateLoadConst(Operand* cnst, Operand* ap2)
 				ip = GenerateLoadFloatConst(cnst, ap2);
 			else {
 				if (cnst->offset) {
-					GenerateDiadic(op_mov, 0, MakeImmediate(cnst->offset->i128.low), eax);
-					GenerateDiadic(op_mov, 0, eax, ap2);
+					if (ap2->preg > 29 && ap2->mode==am_reg)
+						GenerateDiadic(op_mov, 0, MakeImmediate(cnst->offset->i128.low), ap2);
+					else {
+						GenerateDiadic(op_mov, 0, MakeImmediate(cnst->offset->i128.low), eax);
+						GenerateDiadic(op_mov, 0, eax, ap2);
+					}
 					// ToDo handle constant >64 bits
 					/*
 					ip = GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(cnst->offset->i128.low & 0xffffLL));
@@ -2215,18 +2638,34 @@ void i386CodeGenerator::GenerateSmallDataRegDecl()
 
 void i386CodeGenerator::GenerateSignExtendByte(Operand* tgt, Operand* src)
 {
+	int sr;
+
 	tgt->MakeLegal(am_reg, cpu.sizeOfWord);
 	src->MakeLegal(am_reg, cpu.sizeOfWord);
+	sr = src->preg;
+	if (src->preg < 30) {
+		GenerateLoad(ebx, RegAsDirect(src->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+		src->preg = 41;
+	}
 	GenerateDiadic(op_movsxb, 0, src, eax);
 	GenerateDiadic(op_mov, 0, eax, tgt);
+	src->preg = sr;
 }
 
 void i386CodeGenerator::GenerateSignExtendWyde(Operand* tgt, Operand* src)
 {
+	int sr;
+
 	tgt->MakeLegal(am_reg, cpu.sizeOfWord);
 	src->MakeLegal(am_reg, cpu.sizeOfWord);
+	sr = src->preg;
+	if (src->preg < 30) {
+		GenerateLoad(ebx, RegAsDirect(src->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+		src->preg = 41;
+	}
 	GenerateDiadic(op_movsxw, 0, src, eax);
 	GenerateDiadic(op_mov, 0, eax, tgt);
+	src->preg = sr;
 }
 
 void i386CodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
@@ -2239,55 +2678,64 @@ void i386CodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
 	GenerateMonadic(op_ret, 0, MakeImmediate(amt));
 }
 
+// Must calculate the effective address manually as pseudo registers are in use.
+// Only the esi register is modified.
+
 void i386CodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 {
-	Operand* ap2, * ap4;
+	Operand* ap2;
 
-	if (ap1->mode == am_ind && ap1->preg < 32 && ap1->preg >= 0) {
+	if (ap1->mode == am_direct) {
+		GenerateDiadic(op_lea, 0, ap1, ap3);
+	}
+	else if (ap1->mode == am_ind && ap1->preg < 32 && ap1->preg >= 0) {
 		int rg = ap1->preg;
 
-		ap4 = iregs[rg]->Clone();
-		ap4->mode = am_direct;
-		GenerateDiadic(op_mov, 0, ap4, esi);
-		ap4->mode = ap1->mode;
-		ap4->offset = ap1->offset;
-		ap4->preg = 46;
-		GenerateDiadic(op_lea, 0, ap4, eax);
-		GenerateDiadic(op_mov, 0, eax, ap3);
+		// Get the psuedo register value into ESI
+		ap2 = iregs[rg]->Clone();
+		ap2->mode = am_direct;
+		GenerateDiadic(op_mov, 0, ap2, esi);
+		// For simple indirect addressing we know the value is in the ESI register as
+		// we put it there. Save an instruction or two.
+		GenerateDiadic(op_movl, 0, esi, ap3);
 		return;
 	}
 	else if (ap1->mode==am_indx && ap1->preg < 32 && ap1->preg >= 0) {
 		int rg = ap1->preg;
 
-		ap4 = iregs[rg]->Clone();
-		ap4->mode = am_direct;
-		GenerateDiadic(op_mov, 0, ap4, esi);
-		ap4->mode = ap1->mode;
-		ap4->offset = ap1->offset;
-		ap4->preg = 46;
-		GenerateDiadic(op_lea, 0, ap4, eax);
-		GenerateDiadic(op_mov, 0, eax, ap3);
+		// Get the psuedo register value into ESI
+		ap2 = iregs[rg]->Clone();
+		ap2->mode = am_direct;
+		GenerateDiadic(op_mov, 0, ap2, esi);
+		// NMow add in the offset portion of the address
+		ap2->offset = ap1->offset;
+		// Compute the address into the EAX register
+		GenerateDiadic(op_add, 0, ap2, esi);
+		// And move it to the destination.
+		GenerateDiadic(op_movl, 0, esi, ap3);
 		return;
 	}
 	else if (ap1->mode == am_indx2 && ((ap1->preg < 32 && ap1->preg >= 0) || (ap1->sreg < 32 && ap1->sreg >= 0))) {
 		int prg = ap1->preg;
 		int srg = ap1->sreg;
 
-		ap4 = iregs[prg]->Clone();
-		ap2 = iregs[srg]->Clone();
-		ap4->mode = am_direct;
+		ap2 = iregs[prg]->Clone();
 		ap2->mode = am_direct;
-		ap4->offset = ap1->offset;
-		ap2->offset = nullptr;
-		GenerateDiadic(op_mov, 0, ap4, ebx);
+		// Get the indirect register's value into ESI.
 		GenerateDiadic(op_mov, 0, ap2, esi);
-		ap4->mode = ap1->mode;
-		ap4->preg = 41;
-		ap4->sreg = 46;
-		GenerateDiadic(op_lea, 0, ap4, eax);
-		GenerateDiadic(op_mov, 0, eax, ap3);
+		// Add the offset portion of the address to ESI.
+		ap2 = iregs[prg]->Clone();
+		ap2->mode = am_imm;
+		ap2->offset = ap1->offset;
+		GenerateDiadic(op_add, 0, ap2, esi);
+		// Add the index register value to ESI.
+		ap2 = iregs[srg]->Clone();
+		ap2->mode = am_direct;
+		GenerateDiadic(op_add, 0, ap2, esi);
+		GenerateDiadic(op_movl, 0, esi, ap3);
 	}
-	GenerateDiadic(op_mov, 0, eax, ap3);
+	// A non-address
+	//GenerateDiadic(op_mov, 0, eax, ap3);
 }
 
 // Generate load or store operation taking into consideration the number of
@@ -2547,6 +2995,7 @@ void i386CodeGenerator::GenerateStore(Operand* src, Operand* dst, int64_t size, 
 				GenerateMove(edi, dst);
 				dst->mode = md;
 				GenerateDiadic(op_movw, 0, eax, ap2);
+				ReleaseTempRegister(ap);
 				return;
 			}
 			GenerateDiadic(op_movw, 0, eax, dst);
@@ -2564,6 +3013,7 @@ void i386CodeGenerator::GenerateStore(Operand* src, Operand* dst, int64_t size, 
 				GenerateMove(edi, dst);
 				dst->mode = md;
 				GenerateDiadic(op_movl, 0, eax, ap2);
+				ReleaseTempRegister(ap);
 				return;
 			}
 			GenerateDiadic(op_movl, 0, eax, dst);
@@ -3107,7 +3557,104 @@ i386CPU::i386CPU()
 		//iregs[ii]->mode = am_reg;
 //		iregs[ii]->preg = ii;
 	}
+
+	itbl = i386InsnTbl;
+	itbl_cnt = sizeof(i386InsnTbl) / sizeof(Instruction);
 }
+
+// Output a friendly register moniker
+
+char* i386CPU::RegMoniker(int32_t regno)
+{
+	static char buf[4][20];
+	static int n;
+	int rg;
+	bool invert = false;
+	bool vector = false;
+	bool group = false;
+	bool is_float = false;
+	bool is_cr = false;
+
+	if (regno & rt_group) {
+		group = true;
+		regno &= 0xff;
+	}
+	if (regno & rt_invert) {
+		invert = true;
+		regno &= 0xbf;
+	}
+	if (regno & rt_vector) {
+		vector = true;
+		regno &= 0x3f;
+	}
+	if (regno & rt_float) {
+		is_float = true;
+		regno &= 0x3f;
+	}
+	if (regno & rt_cr) {
+		is_cr = true;
+		regno &= 0xfffL;
+	}
+	n = (n + 1) & 3;
+	if (vector) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~v%d", regno);
+		else
+			sprintf_s(&buf[n][0], 20, "v%d", regno);
+		return (&buf[n][0]);
+	}
+	if (group) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~g%d", regno);
+		else
+			sprintf_s(&buf[n][0], 20, "g%d", regno);
+		return (&buf[n][0]);
+	}
+	if (is_float) {
+		if (rg = IsFtmpReg(regno))
+			sprintf_s(&buf[n][0], 20, "~ft%d", rg - 1);
+		else if (rg = IsFargReg(regno))
+			sprintf_s(&buf[n][0], 20, "~ft%d", rg - 1);
+		else if (rg = IsFsavedReg(regno))
+			sprintf_s(&buf[n][0], 20, "~fs%d", rg - 1);
+		return (invert ? &buf[n][0] : &buf[n][1]);
+	}
+	if (is_cr) {
+		if (regno == 0xfffL)
+			sprintf_s(&buf[n][0], 20, "crg");
+		else
+			sprintf_s(&buf[n][0], 20, "cr%d", regno & 7);
+	}
+	else
+		if (regno == regFP)
+			sprintf_s(&buf[n][0], 20, "%%ebp");
+	//		else if (regno == regAFP)
+	//			sprintf_s(&buf[n][0], 20, "$afp");
+		else if (regno == regGP)
+			sprintf_s(&buf[n][0], 20, "_r30");
+		else if (regno == regGP1)
+			sprintf_s(&buf[n][0], 20, "gp1");
+	//	else if (regno==regPC)
+//		sprintf_s(&buf[n][0], 20, "$pc");
+		else if (regno == regSP)
+			sprintf_s(&buf[n][0], 20, "%%esp");
+		else {
+			switch (regno) {
+			case 40:	sprintf_s(&buf[n][0], 20, "%%eax"); break;
+			case 41:	sprintf_s(&buf[n][0], 20, "%%ebx"); break;
+			case 42:	sprintf_s(&buf[n][0], 20, "%%ecx"); break;
+			case 43:	sprintf_s(&buf[n][0], 20, "%%edx"); break;
+			case 46:	sprintf_s(&buf[n][0], 20, "%%esi"); break;
+			case 47:	sprintf_s(&buf[n][0], 20, "%%edi"); break;
+			case 48:	sprintf_s(&buf[n][0], 20, "%%al"); break;
+			case 50:	sprintf_s(&buf[n][0], 20, "%%cl"); break;
+			default:
+				sprintf_s(&buf[n][0], 20, "_r%d", regno);
+			}
+		}
+	return &buf[n][0];
+}
+
 
 void i386CodeGenerator::GenerateMove(Operand* dstreg, Operand* srcreg, Operand* mask) 
 {
@@ -3118,3 +3665,189 @@ void i386CodeGenerator::GenerateMove(Operand* dstreg, Operand* srcreg, Operand* 
 	}
 	GenerateDiadic(op_mov, 0, srcreg, dstreg);
 };
+
+Operand* i386CodeGenerator::RegAsDirect(int regno)
+{
+	return (iregs[regno & 31]);
+}
+
+// ----------------------------------------------------------------------------
+// Generate code to evaluate an index node (^+) and return the addressing mode
+// of the result. This routine takes no flags since it always returns either
+// am_ind or am_indx.
+//
+// No reason to ReleaseTempReg() because the registers used are transported
+// forward.
+// 
+// If we have nested indexes we really want the value from the inner index
+// array to use. Hence it is loaded.
+// ----------------------------------------------------------------------------
+Operand* i386CodeGenerator::GenerateIndex(ENODE* node, bool neg)
+{
+	Operand* ap1, * ap2;
+	static int ndxlvl = 0;
+
+	ndxlvl++;
+	//	if ((p[0]->nodetype == en_type || p[0]->nodetype == en_regvar)
+	//		&& (p[1]->nodetype == en_type || p[1]->nodetype == en_regvar))
+		/* Both nodes are registers? */
+	if (node->p[0]->nodetype == en_regvar && node->p[1]->nodetype == en_regvar) {
+		ap1 = node->GenerateRegRegIndex();
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
+
+	GenerateHint(8);
+	//	GenerateHint(begin_index);
+	ap1 = cg.GenerateExpression(node->p[0], am_reg | am_imm, cpu.sizeOfInt, 1);
+	if (ap1->mode == am_imm) {
+		ap1 = node->GenerateImmExprIndex(ap1, neg);
+		if (ndxlvl > 1) {
+			if (ap1->mode == am_reg && ap1->preg < 30) {
+				GenerateLoad(esi, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+			}
+			GenerateLoad(esi, RegAsDirect(ap1->preg), node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
+
+	ap2 = cg.GenerateExpression(node->p[1], am_all, cpu.sizeOfWord, 1);   /* get right op */
+	//	GenerateHint(end_index);
+	GenerateHint(9);
+
+	// Do we have reg+imm? If so make am_indx
+	if (ap2->mode == am_imm) {
+		ap1 = node->GenerateRegImmIndex(ap1, ap2, neg);
+		if (ndxlvl > 1) {
+			GenerateLoad(esi, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+			GenerateLoad(esi, ap1, node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
+
+	if (ap2->mode == am_ind && ap1->mode == am_reg) {
+		if (cpu.SupportsIndexed && ndxlvl == 1) {
+			ap2->mode = am_indx2;
+			if (ap1->preg < 30) {
+				GenerateLoad(esi, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+				ap2->sreg = 46;	// ESI
+				ap2->deep2 = ap1->deep;
+			}
+			else {
+				ap2->sreg = ap1->preg;
+				ap2->deep2 = ap1->deep;
+			}
+			if (ap2->preg < 30) {
+				GenerateLoad(ebx, RegAsDirect(ap2->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+				ap2->preg = 41;	// BX
+			}
+		}
+		else {
+			//GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
+			if (ap2->preg < 30 && ap1->preg < 30) {
+				GenerateLoad(ebx, RegAsDirect(ap2->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+				GenerateLoad(esi, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+				cg.GenerateAdd(ebx, esi, ebx);
+				ap2->preg = 41;	// EBX
+			}
+			else if (ap1->preg < 30) {
+				GenerateLoad(esi, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+				cg.GenerateAdd(ap2, esi, ap2);
+			}
+			else if (ap2->preg < 30) {
+				GenerateLoad(ebx, RegAsDirect(ap2->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+				cg.GenerateAdd(ebx, ap1, ebx);
+				ap2->preg = 41;	// EBX
+			}
+			else
+				cg.GenerateAdd(ap2, ap1, ap2);
+			ap2->mode = am_indx;
+			ap2->deep2 = ap1->deep;
+			ap2->offset = makeinode(en_icon, 0);
+			if (ndxlvl > 1) {
+				GenerateLoad(makereg(ap2->preg), ap2, node->esize, node->esize);
+				ap2->mode = am_reg;
+			}
+		}
+		ap2->scale = 1;
+		ndxlvl--;
+		return (ap2);
+	}
+
+	// Direct plus index register equals register indirect addressing.
+	if (ap2->mode == am_direct && ap1->mode == am_reg) {
+		if (ap1->preg < 30) {
+			GenerateLoad(ebx, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+			ap1->preg = 41;
+		}
+		ap2->mode = am_indx;
+		ap2->preg = ap1->preg;
+		ap2->deep = ap1->deep;
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap2->preg), ap2, node->esize, node->esize);
+			ap2->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap2);
+	}
+
+	// ap1->mode must be am_reg
+	ap2->MakeLegal(am_reg, ap2->tp ? ap2->tp->size : cpu.sizeOfWord);
+	if (cpu.SupportsIndexed && ndxlvl == 1) {
+		if (ap1->preg < 30) {
+			GenerateLoad(ebx, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+			ap1->preg = 41;
+		}
+		if (ap2->preg < 30) {
+			GenerateLoad(esi, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+			ap2->preg = 46;
+		}
+		ap1->mode = am_indx2;            /* make indexed */
+		ap1->sreg = ap2->preg;
+		ap1->deep2 = ap2->deep;
+		ap1->offset = makeinode(en_icon, 0);
+		ap1->scale = node->scale;
+	}
+	else {
+		if (ap1->preg < 30) {
+			GenerateLoad(ebx, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+			ap1->preg = 41;
+		}
+		if (ap2->preg < 30) {
+			GenerateLoad(esi, RegAsDirect(ap1->preg), cpu.sizeOfWord, cpu.sizeOfWord);
+			ap2->preg = 46;
+		}
+		ap1->mode = am_indx2;            /* make indexed */
+		ap1->sreg = ap2->preg;
+		ap1->deep2 = ap2->deep;
+		ap1->offset = makeinode(en_icon, 0);
+		//ap1->scale = 1;
+		/*
+		ap4 = GetTempRegister();
+		ap3 = GetTempRegister();
+		ap2->MakeLegal(am_reg, this->esize);
+		GenerateTriadic(op_mulu, 0, ap3, ap2, MakeImmediate(this->esize));
+		GenerateTriadic(op_add, 0, ap4, ap1, ap3);
+		ReleaseTempRegister(ap3);
+		*/
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		//		ap1->mode = am_indx;            /* make indexed */
+		//		ap1->deep2 = ap2->deep;
+		//		ap1->offset = makeinode(en_icon, 0);
+		ndxlvl--;
+		return (ap1);                     /* return indexed */
+	}
+	ndxlvl--;
+	return (ap1);                     /* return indexed */
+}

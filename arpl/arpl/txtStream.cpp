@@ -8,8 +8,8 @@ void txtoStream::printf(char *fmt, char *str)
     return;
 	if (fmt == nullptr || str == nullptr)
 		return;
-  snprintf(buf, sizeof(buf), fmt, str);
-	write(buf);
+  snprintf(buf2, sizeof(buf2), fmt, str);
+	write(buf2);
 }
 
 void txtoStream::printf(char *fmt, char *str, int n)
@@ -18,8 +18,8 @@ void txtoStream::printf(char *fmt, char *str, int n)
     return;
 	if (fmt == nullptr || str == nullptr)
 		return;
-	snprintf(buf, sizeof(buf), fmt, str, n);
- write(buf);
+	snprintf(buf2, sizeof(buf2), fmt, str, n);
+ write(buf2);
 }
 
 void txtoStream::printf(char *fmt, char *str, char *str2)
@@ -28,8 +28,8 @@ void txtoStream::printf(char *fmt, char *str, char *str2)
     return;
 	if (fmt == nullptr || str == nullptr || str2 == nullptr)
 		return;
-	snprintf(buf, sizeof(buf), fmt, str, str2);
- write(buf);
+	snprintf(buf2, sizeof(buf2), fmt, str, str2);
+ write(buf2);
 }
 
 void txtoStream::printf(char *fmt, char *str, char *str2, int n)
@@ -38,8 +38,8 @@ void txtoStream::printf(char *fmt, char *str, char *str2, int n)
     return;
 	if (fmt == nullptr || str == nullptr ||  str2 == nullptr)
 		return;
-	snprintf(buf, sizeof(buf), fmt, str, str2, n);
-	write(buf);
+	snprintf(buf2, sizeof(buf2), fmt, str, str2, n);
+	write(buf2);
 }
 
 void txtoStream::printf(char *fmt, int n)
@@ -48,10 +48,8 @@ void txtoStream::printf(char *fmt, int n)
     return;
 	if (fmt == nullptr)
 		return;
-	if (fmt == nullptr)
-		return;
-	snprintf(buf, sizeof(buf), fmt, n);
-	write(buf);
+	snprintf(buf2, sizeof(buf2), fmt, n);
+	write(buf2);
 }
 
 void txtoStream::printf(const char *fmt, int64_t n)
@@ -60,8 +58,8 @@ void txtoStream::printf(const char *fmt, int64_t n)
     return;
 	if (fmt == nullptr)
 		return;
-	snprintf(buf, sizeof(buf), fmt, n);
-	write(buf);
+	snprintf(buf2, sizeof(buf2), fmt, n);
+	write(buf2);
 }
 
 void txtoStream::printf(char *fmt, int n, int m)
@@ -70,8 +68,8 @@ void txtoStream::printf(char *fmt, int n, int m)
     return;
 	if (fmt == nullptr)
 		return;
-	snprintf(buf, sizeof(buf), fmt, n, m);
-	write(buf);
+	snprintf(buf2, sizeof(buf2), fmt, n, m);
+	write(buf2);
 }
 
 void txtoStream::printf(char *fmt, int n, char *str)
@@ -80,8 +78,8 @@ void txtoStream::printf(char *fmt, int n, char *str)
     return;
 	if (fmt == nullptr || str == nullptr)
 		return;
-	snprintf(buf, sizeof(buf), fmt, n, str);
-	write(buf);
+	snprintf(buf2, sizeof(buf2), fmt, n, str);
+	write(buf2);
 }
 
 void txtoStream::puts(const char *str)

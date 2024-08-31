@@ -1178,6 +1178,16 @@ public:
 	Operand *Clone();
 	static bool IsSameType(Operand *ap1, Operand *ap2);
 	static bool IsEqual(Operand *ap1, Operand *ap2);
+	bool IsReg() { return (mode == am_reg); };
+	bool IsCr() { return (mode == amCrReg); };
+	bool IsMem() {
+		return (
+			mode == am_direct ||
+			mode == am_ind ||
+			mode == am_indx ||
+			mode == am_indx2
+			);
+	};
 	char fpsize();
 
 	Operand* GenerateBitfieldClear(int startpos, int width);
@@ -1368,7 +1378,7 @@ public:
 		GenerateTriadic(op_bltu, 0, ap1, ap2, MakeCodeLabel(lab));
 	};
 	virtual void GenerateBra(int64_t lab) {
-		GenerateMonadic(op_branch, 0, MakeCodeLabel(lab));
+		GenerateMonadic(op_bra, 0, MakeCodeLabel(lab));
 	};
 	virtual Operand* MakeBoolean(Operand* oper) { return (oper); };
 	void GenerateHint(int num);
@@ -1391,6 +1401,9 @@ public:
 		GenerateDiadic(op_lea, 0, ap1, ap2);
 	};
 	virtual void GenerateMove(Operand* dstreg, Operand* srcreg, Operand* mask=nullptr) {
+		GenerateTriadic(op_move, 0, dstreg, srcreg, mask);
+	};
+	virtual void GenerateCrMove(Operand* dstreg, Operand* srcreg, Operand* mask = nullptr) {
 		GenerateTriadic(op_move, 0, dstreg, srcreg, mask);
 	};
 	virtual void GenerateFcvtdq(Operand* dst, Operand* src) {
@@ -1534,10 +1547,12 @@ public:
 	virtual void GenerateZeroExtendWyde(Operand*, Operand*);
 	virtual void GenerateZeroExtendTetra(Operand*, Operand*);
 	virtual int GetSegmentIndexReg(e_sg seg);
+	virtual Operand* GenerateIndex(ENODE* node, bool neg);
 
 	virtual OCODE* GenerateReturnBlock(Function* fn);
 	virtual void SaveRegisterVars(CSet* mask) {};
-};
+	virtual int RestoreGPRegisterVars(CSet* mask);
+	};
 
 class ThorCodeGenerator : public CodeGenerator
 {
@@ -1788,6 +1803,7 @@ class BigfootCodeGenerator : public CodeGenerator
 public:
 	void banner();
 	Operand* MakeBoolean(Operand* oper);
+	Operand* BoolToInt(Operand* oper);
 	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
 	void GenerateLea(Operand* ap1, Operand* ap2);
 	void GenerateBranchTrue(Operand* ap, int64_t label);
@@ -1795,6 +1811,7 @@ public:
 	void GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction);
 	void GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction);
 	bool GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit);
+	void GenerateBra(int64_t);
 	void GenerateBeq(Operand*, Operand*, int64_t);
 	void GenerateBne(Operand*, Operand*, int64_t);
 	void GenerateBlt(Operand*, Operand*, int64_t);
@@ -1884,10 +1901,14 @@ public:
 	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
 	int GetSegmentIndexReg(e_sg seg);
 	void SaveRegisterVars(CSet* mask);
+	virtual int RestoreGPRegisterVars(CSet* save_mask);
+	void GenerateCrMove(Operand* dstreg, Operand* srcreg, Operand* mask = nullptr);
 };
 
 class i386CodeGenerator : public CodeGenerator
 {
+private:
+	Operand* RegAsDirect(int regno);
 public:
 	void banner();
 	Operand* MakeBoolean(Operand* oper);
@@ -1991,6 +2012,7 @@ public:
 	Operand* GenPositcon(ENODE* node, int flags, int64_t size);
 	Operand* GenLabelcon(ENODE* node, int flags, int64_t size);
 	Operand* GenNacon(ENODE* node, int flags, int64_t size);
+	Operand* GenerateIndex(ENODE* node, bool neg);
 	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
 	int GetSegmentIndexReg(e_sg seg);
 	void SaveRegisterVars(CSet* mask);
@@ -2811,8 +2833,8 @@ public:
 	bool exceptions;
 	short int autoInline;
 	short int table_density;		// switch table density threshold as a percentage.
-	short int reg_in_use[256];
-	short int CrRegInUse[256];
+	short int reg_in_use[2048];
+	short int CrRegInUse[2048];
 	CSet temp_in_use;
 	CSet saved_in_use;
 	CSet savedCrInUse;
@@ -2913,6 +2935,7 @@ public:
 	bool SupportsEnter;
 	bool SupportsLeave;
 	bool SupportsIndexed;
+	bool SupportsTrinary;
 	void SetRealRegisters();
 	void SetVirtualRegisters();
 	bool Addsi;
@@ -2945,6 +2968,8 @@ public:
 	int sizeOfDecimal;
 	int sizeOfPosit;
 	int RIimmSize;			// size in bits of immediate field for RI instructions
+	Instruction* itbl;
+	int itbl_cnt;
 	CPU();
 	void InitRegs();
 	int GetTypePrecision(e_bt typ);
@@ -2952,6 +2977,7 @@ public:
 	virtual int ReturnBlockSize() {
 		return (4 * sizeOfWord);
 	};
+	virtual char* RegMoniker(int32_t regno);
 };
 
 class QuplsCPU : public CPU
@@ -2971,6 +2997,7 @@ public:
 	int ReturnBlockSize() {
 		return (4 * sizeOfWord);
 	};
+	virtual char* RegMoniker(int32_t regno);
 };
 
 class i386CPU : public CPU
@@ -2980,6 +3007,7 @@ public:
 	int ReturnBlockSize() {
 		return (4 * sizeOfWord);
 	};
+	char* RegMoniker(int32_t regno);
 };
 
 class BigfootOCODE : public OCODE

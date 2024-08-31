@@ -39,6 +39,354 @@ Operand *GetTempRegister();
 Operand* GetTempCrRegister();
 extern void GenLoad(Operand *ap1, Operand *ap3, int ssize, int size);
 
+// Please keep table in alphabetical order.
+// Instruction.cpp has the number of table elements hard-coded in it.
+//
+static Instruction BigfootInsnTbl[] =
+{
+{ ";", op_remark },
+{ ";asm",op_asm,300 },
+{ ";empty",op_empty },
+{ ";fname", op_fnname },
+{ ";string", op_string },
+{ "abs", op_abs,2,1,false,am_reg,am_reg,0,0 },
+{ "add",op_add,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "addq",op_addq,1,1,false,am_reg, am_imm,0, 0 },
+{ "adds",op_adds,1,1,false,am_reg,am_imm,am_imm, 0 },
+{ "addu", op_addu,1,1 },
+{ "and",op_and,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "andcm",op_andcm,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "asl", op_asl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "aslx", op_aslx,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "asr",op_asr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "bal", op_bal,4,2,false,am_reg,0,0,0 },
+{ "band", op_band,2,0,false,am_reg,am_reg,0,0 },
+{ "base", op_base,1,0,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "bchk", op_bchk,3,0 },
+{ "beq", op_beq,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "beqi", op_beqi,3,0,false,am_reg,am_imm,am_direct,0 },
+{ "bex", op_bex,0,0,false,0,0,0,0 },
+{ "bf", op_bf,3,0,false,am_reg,am_direct,0,0 },
+{ "bfclr", op_bfclr,2,1,false,am_reg,am_reg | am_ui6,am_reg | am_ui6,0 },
+{ "bfext", op_bfext,2,1,false,am_reg },
+{ "bfextu", op_bfextu,2,1,false,am_reg, },
+{ "bfins", op_bfins,2,1,false,am_reg },
+{ "bfset", op_bfset,2,1,false,am_reg,am_reg | am_ui6,am_reg | am_ui6,0 },
+{ "bge", op_bge,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgeu", op_bgeu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgt", op_bgt,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgtu", op_bgtu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bit",op_bit,1,1,false,am_creg,am_reg,am_reg | am_imm,0 },
+{ "ble", op_ble, 3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bleu", op_bleu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "blt", op_blt,3,0,false,am_reg,am_direct,0,0 },
+{ "bltu", op_bltu,3,0,false,am_reg,am_direct,0,0 },
+{ "bmap", op_bmap,1,0,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "bmi", op_bmi,2,0,false,am_reg,am_direct,0,0 },
+{ "bne", op_bne,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "br",op_br,3,0,false,0,0,0,0 },
+{ "bra",op_bra,3,0,false,0,0,0,0 },
+{ "branch",op_branch,3,0,false,am_direct,0,0,0 },
+{ "brk", op_brk,1,0 },
+{ "bsr", op_bsr,3,0,false,am_direct,0,0,0 },
+{ "bt", op_bt,3,0,false,am_reg,am_direct,0,0 },
+{ "bun", op_bun,2,0 },
+{ "bytndx", op_bytendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "cache",op_cache,1,0 },
+{ "call", op_call,4,1,false,0,0,0,0 },
+{ "chk", op_chk,1,0 },
+{ "clr",op_clr,1,1,false,am_reg,am_reg,am_reg | am_imm, am_imm },
+{ "cmovenz", op_cmovenz,1,1,false,am_reg,am_reg,am_reg,am_reg },
+{ "cmp",op_cmp,1,1,false,am_reg,am_reg | am_imm,am_reg | am_imm,0 },
+{ "cmpu",op_cmpu,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "com", op_com,2,1,false,am_reg,am_reg,0,0 },
+{ "cr2cr", op_cr2cr,1,0,false,amCrReg,amCrReg,0,0},
+{ "crand",op_crand,1,0,false,amCrReg,amCrReg,amCrReg,0 },
+{ "crdep", op_crdep,1,0,false,amCrReg,am_reg,0,0},
+{ "crext", op_crext,1,0,false,am_reg,amCrReg,0,0},
+{ "crg2reg", op_crg2reg,1,0,false,am_reg,amCrReg,0,0},
+{ "cror",op_cror,1,0,false,amCrReg,amCrReg,amCrReg,0 },
+{ "csrrd", op_csrrd,1,1,false,am_reg,am_reg,am_imm },
+{ "csrrw", op_csrrw,1,1,false,am_reg,am_reg,am_imm },
+{ "dec", op_dec,4,0,true,am_i5 },
+{ "defcat", op_defcat,12,1,false,am_reg,am_reg,0 ,0 },
+{ "dep",op_dep,1,1,false,am_reg,am_reg,am_reg | am_imm,am_reg | am_imm },
+{ "di", op_di,1,1,false,am_reg | am_ui6,0,0,0 },
+{ "div", op_div,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "divu",op_divu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "dw", op_dw },
+{ "eor",op_eor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "eq",op_eq, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "ext", op_ext,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
+{ "extu", op_extu,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
+{ "fadd", op_fadd, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "fadd.d", op_fdadd,6,1,false,am_reg,am_reg,am_reg,0 },
+{ "fadd.s", op_fsadd,6,1,false,am_reg,am_reg,am_reg,0 },
+{ "fbeq", op_fbeq,3,0,false,am_reg,am_reg,0,0 },
+{ "fbge", op_fbge,3,0,false,am_reg,am_reg,0,0 },
+{ "fbgt", op_fbgt,3,0,false,am_reg,am_reg,0,0 },
+{ "fble", op_fble,3,0,false,am_reg,am_reg,0,0 },
+{ "fblt", op_fblt,3,0,false,am_reg,am_reg,0,0 },
+{ "fbne", op_fbne,3,0,false,am_reg,am_reg,0,0 },
+{ "fbor", op_fbor,3,0,false,am_reg,am_reg,0,0 },
+{ "fbun", op_fbun,3,0,false,am_reg,am_reg,0,0 },
+{ "fcmp", op_fcmp, 1,1,false,am_reg,am_reg | am_imm,am_reg | am_imm,0 },
+{ "fcvt.q.d", op_fcvtqdd,2,1,false,am_reg,am_reg,0,0 },
+{ "fcvtdq", op_fcvtdq,2,1,false,am_reg,am_reg,0,0 },
+{ "fcvtsq", op_fcvtsq,2,1,false,am_reg,am_reg,0,0 },
+{ "fcvttq", op_fcvttq,2,1,false,am_reg,am_reg,0,0 },
+{ "fdiv", op_fdiv, 160, 1, false, am_reg, am_reg | am_imm,am_reg | am_imm, 0 },
+{ "fdiv.s", op_fsdiv,80,1,false },
+{ "fi2d", op_i2d,2,1,false },
+{ "fix2flt", op_fix2flt },
+{ "fld", op_fld, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "fload", op_fload, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "flq", op_flq, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "flt2fix",op_flt2fix },
+{ "flw", op_flw, 4, 1, true, am_reg, am_mem, 0, 0 },
+{ "fmov", op_fmov,1,1 },
+{ "fmov.d", op_fdmov,1,1 },
+{ "fmul", op_fdmul,10,1,false,am_reg,am_reg,am_reg,0 },
+{ "fmul", op_fmul, 10, 1, false, am_reg | am_vreg, am_reg | am_vreg, am_reg | am_vreg, 0 },
+{ "fmul.s", op_fsmul,10,1,false },
+{ "fneg", op_fneg,2,1,false,am_reg,am_reg,0,0 },
+{ "fs2d", op_fs2d,2,1,false,am_reg,am_reg,0,0 },
+{ "fseq", op_fseq, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fsle", op_fsle, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fslt", op_fslt, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fsne", op_fsne, 1, 1, false, am_creg, am_reg, am_reg, 0 },
+{ "fstore", op_fsto, 4, 0, true, am_reg, am_mem, 0, 0 },
+{ "fsub", op_fdsub,6,1,false,am_reg,am_reg,am_reg,0 },
+{ "fsub", op_fsub, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "fsub.s", op_fssub,6,1,false },
+{ "ftadd", op_ftadd },
+{ "ftdiv", op_ftdiv },
+{ "ftmul", op_ftmul },
+{ "ftoi", op_ftoi, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "ftsub", op_ftsub },
+{ "gcsub",op_gcsub,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "ge",op_ge, 1, 1, false, am_reg,am_reg, am_reg | am_imm,0 },
+{ "geu", op_geu, 1, 1, false, am_reg, am_reg,am_reg | am_imm,0 },
+{ "gt",op_gt, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "gtu",op_gtu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "hint", op_hint,0 },
+{ "hint2",op_hint2,0 },
+{ "inc", op_inc,4,0,true,am_i5,am_mem,0,0 },
+{ "iret", op_iret,2,0,false,0,0,0,0 },
+{ "isnull", op_isnullptr,1,1,false,am_reg,am_reg,0,0 },
+{ "itof", op_itof, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "itop", op_itop, 2, 1, false, am_reg, am_reg, 0, 0 },
+{ "jmp",op_jmp,1,0,false,am_mem,0,0,0 },
+{ "jsr", op_jsr,1,1,false },
+{ "l",op_l,1,1,false,am_reg,am_imm,0,0 },
+{ "la",op_la,1,1,false,am_reg,am_mem,0,0 },
+{ "lb", op_lb,4,1,true,am_reg,am_mem,0,0 },
+{ "lbu", op_lbu,4,1,true,am_reg,am_mem,0,0 },
+{ "ld", op_ld,4,1,true,am_reg,am_mem,0,0 },
+{ "lda",op_lda,1,1,false,am_reg,am_mem,0,0 },
+{ "ldb", op_ldb,4,1,true,am_reg,am_mem,0,0 },
+{ "ldbu", op_ldbu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldd", op_ldd,4,1,true,am_reg,am_mem,0,0 },
+{ "lddr", op_lddr,4,1,true,am_reg,am_mem,0,0 },
+{ "ldfd", op_ldfd,4,1,true, am_reg, am_mem,0,0 },
+{ "ldft", op_ldft,4,1,true, am_reg, am_mem,0,0 },
+{ "ldh", op_ldh,4,1,true,am_reg,am_mem,0,0 },
+{ "ldhs", op_ldhs,4,1,true,am_reg,am_mem,0,0 },
+//{ "ldi",op_loadi,1,1,false,am_reg,am_imm,0,0 },
+{ "ldm", op_ldm,20,1,true,am_mem,0,0,0 },
+{ "ldo", op_ldo,4,1,true,am_reg,am_mem,0,0 },
+{ "ldos", op_ldos,4,1,true,am_reg,am_mem,0,0 },
+{ "ldou", op_ldou,4,1,true,am_reg,am_mem,0,0 },
+{ "ldp", op_ldp,4,1,true,am_reg,am_mem,0,0 },
+{ "ldpu", op_ldpu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldt", op_ldt,4,1,true,am_reg,am_mem,0,0 },
+{ "ldtu", op_ldtu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldw", op_ldw,4,1,true,am_reg,am_mem,0,0 },
+{ "ldwu", op_ldwu,4,1,true,am_reg,am_mem,0,0 },
+{ "le",op_le, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "lea",op_lea,1,1,false,am_reg,am_mem,0,0 },
+{ "leu",op_leu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "lh", op_lh,4,1,true,am_reg,am_mem,0,0 },
+{ "lhu", op_lhu,4,1,true,am_reg,am_mem,0,0 },
+{ "lm", op_lm },
+{ "load", op_load,4,1,true,am_reg,am_mem,0,0 },
+{ "loadm", op_loadm,32,1,true,am_imm,am_mem,0,0 },
+{ "lsr", op_lsr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "lt",op_lt, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "ltu", op_ltu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "lui",op_lui,1,1,false,am_reg,am_imm,0,0 },
+{ "lvbu", op_lvbu,4,1,true ,am_reg,am_mem,0,0 },
+{ "lvcu", op_lvcu,4,1,true ,am_reg,am_mem,0,0 },
+{ "lvhu", op_lvhu,4,1,true ,am_reg,am_mem,0,0 },
+{ "lw", op_lw,4,1,true,am_reg,am_mem,0,0 },
+{ "lwu", op_lwu,4,1,true,am_reg,am_mem,0,0 },
+{ "lws", op_ldds,4,1,true },
+{ "mfbase", op_mfbase,1,0,false,am_reg,am_reg | am_ui6,0,0 },
+{ "mffp",op_mffp },
+{ "mflk", op_mflk,1,0,false,am_reg,am_reg,0,0 },
+{ "mod", op_mod,68,1, false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "modu", op_modu,68,1,false,am_reg,am_reg,am_reg,0 },
+{ "mov", op_mov,1,1,false,am_reg,am_reg,0,0 },
+{ "movb", op_movb,1,1,false,am_reg,am_reg,0,0 },
+{ "move",op_move,1,1,false,am_reg,am_reg,0,0 },
+{ "movs", op_movs },
+{ "movsxb", op_movsxb,1,1,false,am_reg,am_reg,0,0 },
+{ "movsxt", op_movsxt,1,1,false,am_reg,am_reg,0,0 },
+{ "movsxw", op_movsxw,1,1,false,am_reg,am_reg,0,0 },
+{ "movw", op_movw,1,1,false,am_reg,am_reg,0,0 },
+{ "movzxb", op_movzxb,1,1,false,am_reg,am_reg,0,0 },
+{ "movzxt", op_movzxt,1,1,false,am_reg,am_reg,0,0 },
+{ "movzxw", op_movzxw,1,1,false,am_reg,am_reg,0,0 },
+{ "mtbase", op_mtbase,1,0,false,am_reg,am_reg | am_ui6,0,0 },
+{ "mul",op_mul,18,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "mulf",op_mulf,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "mulu", op_mulu, 10, 1, false, am_reg, am_reg, am_reg | am_imm, 0 },
+{ "mv", op_mv,1,1,false,am_reg,am_reg,0,0 },
+{ "nand",op_nand,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "ne",op_ne,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "neg",op_neg, 1, 1, false,am_reg,am_reg,0,0 },
+{ "nop", op_nop,0,0,false },
+{ "nor",op_nor,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "not", op_not,2,1,false,am_reg,am_reg,0,0 },
+{ "not",op_not,2,1, false,am_reg, am_reg,0,0 },
+{ "or",op_or,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "padd", op_padd, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "pdiv", op_pdiv, 10, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "pea", op_pea },
+{ "pea",op_pea },
+{ "pfi", op_pfi, 1, 1, false, 0, 0, 0, 0 },
+{ "pfx0", op_pfx0, 1, 0, false, am_imm, 0, 0, 0 },
+{ "pfx1", op_pfx1, 1, 0, false, am_imm, 0, 0, 0 },
+{ "pfx2", op_pfx2, 1, 0, false, am_imm, 0, 0, 0 },
+{ "pfx3", op_pfx3, 1, 0, false, am_imm, 0, 0, 0 },
+{ "phi", op_phi },
+{ "pldo", op_pldo,4,1,true,am_reg,am_mem,0,0 },
+{ "pldt", op_pldt,4,1,true,am_reg,am_mem,0,0 },
+{ "pldw", op_pldw,4,1,true,am_reg,am_mem,0,0 },
+{ "pmul", op_pmul, 8, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "pop", op_pop,4,2,true,am_reg,am_reg,0,0 },
+{ "popf", op_popf,4,2,true,am_reg,am_reg,0,0 },
+{ "psto", op_psto,4,1,true,am_reg,am_mem,0,0 },
+{ "pstt", op_pstt,4,1,true,am_reg,am_mem,0,0 },
+{ "pstw", op_pstw,4,1,true,am_reg,am_mem,0,0 },
+{ "psub", op_psub, 6, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "ptrdif",op_ptrdif,1,1,false,am_reg,am_reg,am_reg,am_imm },
+{ "push",op_push,4,1,true,am_reg | am_imm,am_reg,0,0 },
+{ "pushf",op_pushf,4,0,true,am_reg,0,0,0 },
+{ "redor", op_redor,2,1,false,am_reg,am_reg,am_reg,0 },
+{ "reg2crg", op_reg2crg,1,0,false,amCrReg,am_reg,0,0 },
+{ "regs", op_reglist,1,1,false,am_imm,0,0,0 },
+{ "rem", op_rem,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "remu",op_remu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "ret", op_ret,1,0,false,am_imm,0,0,0 },
+{ "retd", op_retd,1,0,false,am_reg,am_reg,am_reg,am_reg | am_imm },
+{ "rol", op_rol,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "ror", op_ror,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "rte", op_rte,2,0 },
+{ "rti", op_rti,2,0 },
+{ "rtl", op_rtl,1,0,false,am_imm,0,0,0 },
+{ "rts", op_rts,1,0,false,am_imm,0,0,0 },
+{ "rtx", op_rtx,1,0,0,0,0,0 },
+{ "sand",op_sand,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "sb",op_sb,4,0,true,am_reg,am_mem,0,0 },
+{ "sbx",op_sbx,1,1,false,am_reg,am_reg,am_imm,am_imm },
+{ "sd",op_sd,4,0,true,am_reg,am_mem,0,0 },
+{ "sei", op_sei,1,0,false,am_reg | am_ui6,0,0,0 },
+{ "sh",op_sh,4,0,true,am_reg,am_mem,0,0 },
+{ "shl", op_shl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shlu", op_stplu,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shr", op_shr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "shru", op_stpru,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "sll", op_sll,2,1,false,am_reg,am_reg,am_reg,0 },
+{ "sllh", op_sllh,2,1,false,am_reg,am_reg,am_reg,0 },
+{ "sllp", op_sllp,2,1,false,am_reg,am_reg,am_reg,am_reg | am_ui6 },
+{ "sm",op_sm },
+{ "sor",op_sor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "spt", op_spt,4,0,true ,am_reg,am_mem,0,0 },
+{ "sptr", op_sptr,4,0,true,am_reg,am_mem,0,0 },
+{ "sra", op_sra,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "sret", op_sret,1,0,0,0,0,0 },
+{ "srl", op_srl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "stb",op_stb,4,0,true,am_reg,am_mem,0,0 },
+{ "std", op_std,4,0,true,am_reg,am_mem,0,0 },
+{ "stdcr", op_stdc,4,0,true, am_reg, am_mem,0,0 },
+{ "stfd", op_stfd,4,0,true, am_reg, am_mem,0,0 },
+{ "stft", op_stft,4,0,true, am_reg, am_mem,0,0 },
+{ "sth", op_sth,4,0,true,am_reg,am_mem,0,0 },
+{ "sths",op_sths,4,0,true,am_reg,am_mem,0,0 },
+{ "sti", op_sti,1,0 },
+{ "stib",op_stib,4,0,true,am_imm,am_mem,0,0 },
+{ "stio",op_stio,4,0,true,am_imm,am_mem,0,0 },
+{ "stit",op_stit,4,0,true,am_imm,am_mem,0,0 },
+{ "stiw",op_stiw,4,0,true,am_imm,am_mem,0,0 },
+{ "stm", op_stm,20,1,true,am_mem,0,0,0 },
+{ "sto",op_sto,4,0,true,am_reg,am_mem,0,0 },
+{ "stop", op_stop },
+{ "store",op_store,4,0,true,am_reg,am_mem,0,0 },
+{ "storem", op_storem,32,0,true,am_imm,am_mem,0,0 },
+{ "storev", op_storev,4,1, true, am_vreg, am_mem,0,0 },
+{ "stos",op_stos,4,0,true,am_reg,am_mem,0,0 },
+{ "stp",op_stp,4,0,true,am_reg,am_mem,0,0 },
+{ "stt",op_stt,4,0,true,am_reg,am_mem,0,0 },
+{ "stw",op_stw,4,0,true,am_reg,am_mem,0,0 },
+{ "sub",op_sub,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "subtract",op_subtract,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "subu", op_subu,1,1 },
+{ "sv", op_sv,256,0 },
+{ "sw",op_sw,4,0,true,am_reg,am_mem,0,0 },
+{ "swap",op_stdap,1,1,false },
+{ "swp", op_stdp, 8, false },
+{ "sws", op_stds,4,0 },
+{ "sxb",op_sxb,1,1,false,am_reg,am_reg,0,0 },
+{ "sxc",op_sxc,1,1,false,am_reg,am_reg,0,0 },
+{ "sxh",op_sxh,1,1,false,am_reg,am_reg,0,0 },
+{ "sxo",op_sxo,1,1,false,am_reg,am_reg,0,0 },
+{ "sxp",op_sxp,1,1,false,am_reg,am_reg,0,0 },
+{ "sxt",op_sxt,1,1,false,am_reg,am_reg,0,0 },
+{ "sxw",op_sxw,1,1,false,am_reg,am_reg,0,0 },
+{ "sync",op_sync,1,0,false,am_imm,0,0,0 },
+{ "tgt", op_calltgt,1 },
+{ "tst",op_tst,1,1 },
+{ "vadd", op_vadd,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vadds", op_vadds,1,1,false,am_vreg,am_vreg | am_reg,am_reg,am_vmreg },
+{ "vdiv", op_vdiv,100,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vdivs", op_vdivs,100 },
+{ "veins",op_veins,10 },
+{ "ver", op_verbatium,0,1,false, 0,0,0,0 },
+{ "vex", op_vex,10 },
+{ "vfadd", op_vfadd,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vfadds", op_vfadds,10,1,false, am_vreg, am_vreg, am_reg,0 },
+{ "vfmul", op_vfmul,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vfmuls", op_vfmuls,10,1,false, am_vreg, am_vreg, am_reg,0 },
+{ "vmask", op_vmask,1,1,false, am_reg,am_reg,am_reg,am_reg },
+{ "vmul", op_vmul,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vmuls", op_vmuls,10 },
+{ "vseq", op_vseq,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsge", op_vsge,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsgt", op_vsgt,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsle", op_vsle,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vslt", op_vslt,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsne", op_vsne,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsub", op_vsub,10,1,false, am_vreg,am_vreg,am_vreg,0 },
+{ "vsubs", op_vsubs,10 },
+{ "wydendx", op_wydendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "xnor",op_xnor,1,1,false,am_reg,am_reg,am_reg,0 },
+{ "xor",op_xor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "zseq", op_zseq,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsge",op_zsge,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgeu",op_zsgeu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgt",op_zsgt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsgtu",op_zsgtu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsle",op_zsle,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsleu",op_zsleu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zslt", op_zslt,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsltu", op_zsltu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zsne",op_zsne,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
+{ "zxb",op_zxb,1,1,false,am_reg,am_reg,0,0 },
+{ "zxt",op_zxt,1,1,false,am_reg,am_reg,0,0 },
+{ "zxw",op_zxo,1,1,false,am_reg,am_reg,0,0 }
+};
+
 BigfootCPU::BigfootCPU() {
 	sizeOfWord = 8;
 	sizeOfPtr = 8;
@@ -51,11 +399,118 @@ BigfootCPU::BigfootCPU() {
 	sizeOfDecimal = 16;
 	sizeOfPosit = 8;
 	RIimmSize = 24;
+	itbl = BigfootInsnTbl;
+	itbl_cnt = sizeof(BigfootInsnTbl) / sizeof(Instruction);
+}
+
+char* BigfootCPU::RegMoniker(int32_t regno)
+{
+	static char buf[4][20];
+	static int n;
+	int rg;
+	bool invert = false;
+	bool vector = false;
+	bool group = false;
+	bool is_float = false;
+	bool is_cr = false;
+
+	if (regno & rt_group) {
+		group = true;
+		regno &= 0xff;
+	}
+	if (regno & rt_invert) {
+		invert = true;
+		regno &= 0xbf;
+	}
+	if (regno & rt_vector) {
+		vector = true;
+		regno &= 0x3f;
+	}
+	if (regno & rt_float) {
+		is_float = true;
+		regno &= 0x3f;
+	}
+	if (regno & rt_cr) {
+		is_cr = true;
+		regno &= 0xfffL;
+	}
+	n = (n + 1) & 3;
+	if (vector) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~v%d", regno);
+		else
+			sprintf_s(&buf[n][0], 20, "v%d", regno);
+		return (&buf[n][0]);
+	}
+	if (group) {
+		if (invert)
+			sprintf_s(&buf[n][0], 20, "~g%d", regno);
+		else
+			sprintf_s(&buf[n][0], 20, "g%d", regno);
+		return (&buf[n][0]);
+	}
+	if (is_float) {
+		if (rg = IsFtmpReg(regno))
+			sprintf_s(&buf[n][0], 20, "~ft%d", rg - 1);
+		else if (rg = IsFargReg(regno))
+			sprintf_s(&buf[n][0], 20, "~ft%d", rg - 1);
+		else if (rg = IsFsavedReg(regno))
+			sprintf_s(&buf[n][0], 20, "~fs%d", rg - 1);
+		return (invert ? &buf[n][0] : &buf[n][1]);
+	}
+	if (is_cr) {
+		if (regno == 0xfffL)
+			sprintf_s(&buf[n][0], 20, "%%crg");
+		else
+			sprintf_s(&buf[n][0], 20, "%%cr%d", regno & 7);
+	}
+	else if (rg = IsTempReg(regno)) {
+		sprintf_s(&buf[n][0], 20, "%%t%d", rg - 1);// tmpregs[rg - 1]);
+	}
+	else if (rg = IsArgReg(regno)) {
+		sprintf_s(&buf[n][0], 20, "%%a%d", rg - 1);// tmpregs[rg - 1]);
+	}
+	else if (rg = IsSavedReg(regno)) {
+		sprintf_s(&buf[n][0], 20, "%%s%d", rg - 1);
+	}
+	else
+		if (regno == regFP)
+			sprintf_s(&buf[n][0], 20, "%%fp");
+	//		else if (regno == regAFP)
+	//			sprintf_s(&buf[n][0], 20, "$afp");
+		else if (regno == regGP)
+			sprintf_s(&buf[n][0], 20, "%%gp");
+		else if (regno == regGP1)
+			sprintf_s(&buf[n][0], 20, "%%gp1");
+	//	else if (regno==regPC)
+//		sprintf_s(&buf[n][0], 20, "$pc");
+		else if (regno == regSP)
+			sprintf_s(&buf[n][0], 20, "%%sp");
+		else if (regno == regLR)
+			sprintf_s(&buf[n][0], 20, "lr0");
+		else if (regno == regLR + 1)
+			sprintf_s(&buf[n][0], 20, "lr1");
+		else if (regno == regLR + 2)
+			sprintf_s(&buf[n][0], 20, "lr2");
+		else if (regno == regLR + 3)
+			sprintf_s(&buf[n][0], 20, "lr3");
+		else if (regno == 0) {
+			sprintf_s(&buf[n][0], 20, "%%r%d", regno);
+		}
+		else if (regno == 2)
+			sprintf_s(&buf[n][0], 20, "%%r%d", regno);
+		else {
+			if ((regno & 0x70) == 0x040)
+				sprintf_s(&buf[n][0], 20, "$p%d", regno & 0x1f);
+			else
+				sprintf_s(&buf[n][0], 20, "%%r%d", regno);
+		}
+	return &buf[n][0];
 }
 
 void BigfootCodeGenerator::banner()
 {
-	printf("Bigfoot Code Generator v0.03\n");
+	printf("Bigfoot Code Generator v0.05\n");
 };
 
 
@@ -66,10 +521,22 @@ void BigfootCodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
 
 	umask = 0x8000000000000000LL | ~(mask >> 1);
 	ap2 = GetTempRegister();
-	GenerateDiadic(op_loadi, 0, ap2, cg.MakeImmediate((int64_t)umask));
+	GenerateAddImmediate(ap2, makereg(regZero), cg.MakeImmediate((int64_t)umask));
 	GenerateTriadic(op_add, 0, ap3, ap3, ap2);
 	GenerateTriadic(op_xor, 0, ap3, ap3, ap2);
 	ReleaseTempRegister(ap2);
+}
+
+Operand* BigfootCodeGenerator::BoolToInt(Operand* ap)
+{
+	Operand* ap1;
+
+	ap1 = GetTempRegister();
+	if (ap->mode == amCrReg)
+		GenerateTriadic(op_crext, 0, ap1, ap, MakeImmediate(2));
+	else
+		GenerateDiadic(op_mov, 0, ap1, ap);
+	return (ap1);
 }
 
 // Convert a value to a Boolean.
@@ -78,11 +545,17 @@ Operand* BigfootCodeGenerator::MakeBoolean(Operand* ap)
 	Operand* ap1,* ap2;
 	OCODE* ip;
 
-	ap2 = GetTempRegister();
+	if (ap->mode == amCrReg && ap->isBool)
+		return(ap);
+
+	//ap2 = GetTempRegister();
 	ap1 = GetTempCrRegister();
 	ip = currentFn->pl.tail;
-	if (ip->opcode & 0x8000)
-		return (ap1);
+	ap->MakeLegal(am_reg,cpu.sizeOfWord);
+	GenerateTriadic(op_zsne, 0, ap1, ap, makereg(regZero));
+	ap1->isBool = true;
+	return (ap1);
+	/*
 	GenerateTriadic(op_cmp, 0, ap1, ap, MakeImmediate(0));
 	GenerateDiadic(op_mov, 0, ap2, ap1);
 	GenerateTriadic(op_lsr , 0, ap2, ap2, MakeImmediate((ap1->preg & 7)*8));
@@ -90,6 +563,7 @@ Operand* BigfootCodeGenerator::MakeBoolean(Operand* ap)
 	ReleaseTempReg(ap1);
 	ap2->isBool = true;
 	return (ap2);
+	*/
 }
 
 void BigfootCodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
@@ -111,29 +585,19 @@ void BigfootCodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
 
 Operand* BigfootCodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
 {
-	Operand* ap1, * ap2, * ap4, * ap5;
+	Operand* ap1, * ap2, * ap6;
 	int lab0;
 
 	lab0 = nextlabel++;
 
-	ap1 = GenerateExpression(node->p[0], am_reg|am_creg, node->p[0]->GetNaturalSize(), 0);
-	ap2 = GenerateExpression(node->p[1], am_reg|am_creg, node->p[1]->GetNaturalSize(), 1);
-
-	if (!ap1->isBool)
-		ap4 = MakeBoolean(ap1);
-	else
-		ap4 = ap1;
-
-	if (!ap2->isBool)
-		ap5 = MakeBoolean(ap2);
-	else
-		ap5 = ap2;
-
-	GenerateTriadic(op_and, 0, ap4, ap4, ap5);
-	ReleaseTempReg(ap2);
-	//ap2->MakeLegal(flags, cpu.sizeOfWord);
-	ap1->isBool = true;
-	return (ap1);
+	ap6 = GetTempRegister();
+	ap1 = GenerateExpression(node->p[0], am_reg, node->p[0]->GetNaturalSize(), 0);
+	ap2 = GenerateExpression(node->p[1], am_reg|am_imm, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op, 0, ap6, ap1, ap2);
+	ap6->isBool = true;
+	ReleaseTempRegister(ap2);
+	ReleaseTempRegister(ap1);
+	return (ap6);
 }
 
 
@@ -271,18 +735,12 @@ Operand* BigfootCodeGenerator::GenerateEq(ENODE *node)
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempCrRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_seq)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_seq)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode == am_imm) {
-		ap4 = GetTempRegister();
-		GenerateDiadic(op_loadi, 0, ap4, ap2);
-		GenerateTriadic(op_zseq, 0, ap3, ap1, ap4);
-		ReleaseTempRegister(ap4);
-	}
-	else
-		GenerateTriadic(op_zseq, 0, ap3, ap1, ap2);
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zseq)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zseq)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zseq, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -293,19 +751,12 @@ Operand* BigfootCodeGenerator::GenerateNe(ENODE* node)
 
 	size = node->GetNaturalSize();
 	ap3 = GetTempCrRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sne)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sne)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode == am_imm) {
-		ap4 = GetTempRegister();
-		GenerateDiadic(op_loadi, 0, ap4, ap2);
-		GenerateTriadic(op_zsne, 0, ap3, ap1, ap4);
-		ReleaseTempRegister(ap4);
-	}
-	else {
-		GenerateTriadic(op_zsne, 0, ap3, ap1, ap2);
-	}
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsne)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsne)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsne, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -315,19 +766,13 @@ Operand* BigfootCodeGenerator::GenerateLt(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_slt)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_slt)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode == am_imm) {
-		ap4 = GetTempRegister();
-		GenerateDiadic(op_loadi, 0, ap4, ap2);
-		GenerateTriadic(op_zslt, 0, ap3, ap1, ap4);
-		ReleaseTempRegister(ap4);
-	}
-	else
-		GenerateTriadic(op_zslt, 0, ap3, ap1, ap2);
+	ap3 = GetTempCrRegister();
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zslt)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zslt)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zslt, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap1);
 	ReleaseTempRegister(ap2);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -337,21 +782,13 @@ Operand* BigfootCodeGenerator::GenerateLe(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sle)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sle)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16)
-		GenerateTriadic(op_sle, 0, ap3, ap1, ap2);
-	else if (ap2->mode == am_imm) {
-		ap4 = GetTempRegister();
-		GenerateDiadic(op_loadi, 0, ap4, ap2);
-		GenerateTriadic(op_zsle, 0, ap3, ap1, ap4);
-		ReleaseTempRegister(ap4);
-	}
-	else
-		GenerateTriadic(op_zsle, 0, ap3, ap1, ap2);
+	ap3 = GetTempCrRegister();
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsle)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsle)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsle, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -361,19 +798,13 @@ Operand* BigfootCodeGenerator::GenerateGt(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sgt)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sgt)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode == am_imm) {
-		ap4 = GetTempRegister();
-		GenerateDiadic(op_loadi, 0, ap4, ap2);
-		GenerateTriadic(op_zsgt, 0, ap3, ap1, ap4);
-		ReleaseTempRegister(ap4);
-	}
-	else
-		GenerateTriadic(op_zsgt, 0, ap3, ap1, ap2);
+	ap3 = GetTempCrRegister();
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsgt)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsgt)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsgt, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	//		GenerateDiadic(op_sgt,0,ap3,ap3);
 	return (ap3);
 }
@@ -384,19 +815,13 @@ Operand* BigfootCodeGenerator::GenerateGe(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sge)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sge)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode == am_imm) {
-		ap4 = GetTempRegister();
-		GenerateDiadic(op_loadi, 0, ap4, ap2);
-		GenerateTriadic(op_zsge, 0, ap3, ap1, ap4);
-		ReleaseTempRegister(ap4);
-	}
-	else
-		GenerateTriadic(op_zsge, 0, ap3, ap1, ap2);
+	ap3 = GetTempCrRegister();
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsge)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsge)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsge, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -406,15 +831,13 @@ Operand* BigfootCodeGenerator::GenerateLtu(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sltu)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sltu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode == am_imm)
-		GenerateTriadic(op_zsltu, 0, ap3, ap1, ap2);
-	else
-		Generate4adic(op_zsltu, 0, ap3, ap1, ap2, MakeImmediate(1));
+	ap3 = GetTempCrRegister();
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsltu)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsltu)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsltu, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -424,15 +847,13 @@ Operand* BigfootCodeGenerator::GenerateLeu(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sleu)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sleu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode == am_imm)
-		GenerateTriadic(op_zsleu, 0, ap3, ap1, ap2);
-	else
-		Generate4adic(op_zsleu, 0, ap3, ap1, ap2, MakeImmediate(1));
+	ap3 = GetTempCrRegister();
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsleu)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsleu)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsleu, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -442,15 +863,13 @@ Operand* BigfootCodeGenerator::GenerateGtu(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sgtu)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sgtu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode==am_imm)
-		GenerateTriadic(op_zsgtu, 0, ap3, ap1, ap2);
-	else
-		Generate4adic(op_zsgtu, 0, ap3, ap1, ap2, MakeImmediate(1));
+	ap3 = GetTempCrRegister();
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsgtu)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsgtu)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsgtu, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	//		GenerateDiadic(op_sgt,0,ap3,ap3);
 	return (ap3);
 }
@@ -461,15 +880,13 @@ Operand* BigfootCodeGenerator::GenerateGeu(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_sgeu)->amclass2, node->p[0]->GetNaturalSize(), 1);
-	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_sgeu)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	if (ap2->mode == am_i16 || ap2->mode==am_imm)
-		GenerateTriadic(op_zsgeu, 0, ap3, ap1, ap2);
-	else
-		Generate4adic(op_zsgeu, 0, ap3, ap1, ap2, MakeImmediate(1));
+	ap3 = GetTempCrRegister();
+	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_zsgeu)->amclass2, node->p[0]->GetNaturalSize(), 1);
+	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_zsgeu)->amclass3, node->p[1]->GetNaturalSize(), 1);
+	GenerateTriadic(op_zsgeu, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -479,12 +896,13 @@ Operand* BigfootCodeGenerator::GenerateFeq(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
+	ap3 = GetTempCrRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_fcmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_fcmp)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	Generate4adic(op_feq, 0, ap3, ap1, ap2, MakeImmediate(1));
+	GenerateTriadic(op_feq, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -494,12 +912,13 @@ Operand* BigfootCodeGenerator::GenerateFne(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
+	ap3 = GetTempCrRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_fcmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_fcmp)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	Generate4adic(op_fne, 0, ap3, ap1, ap2, MakeImmediate(1));
+	GenerateTriadic(op_fne, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -509,12 +928,13 @@ Operand* BigfootCodeGenerator::GenerateFlt(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
+	ap3 = GetTempCrRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_fcmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_fcmp)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	Generate4adic(op_flt, 0, ap3, ap1, ap2, MakeImmediate(1));
+	GenerateTriadic(op_flt, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -524,12 +944,13 @@ Operand* BigfootCodeGenerator::GenerateFle(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
+	ap3 = GetTempCrRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_fcmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_fcmp)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	Generate4adic(op_fle, 0, ap3, ap1, ap2, MakeImmediate(1));
+	GenerateTriadic(op_fle, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -539,12 +960,13 @@ Operand* BigfootCodeGenerator::GenerateFgt(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
+	ap3 = GetTempCrRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_fcmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_fcmp)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	Generate4adic(op_fgt, 0, ap3, ap1, ap2, MakeImmediate(1));
+	GenerateTriadic(op_fgt, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -554,12 +976,13 @@ Operand* BigfootCodeGenerator::GenerateFge(ENODE* node)
 	int64_t size;
 
 	size = node->GetNaturalSize();
-	ap3 = GetTempRegister();
+	ap3 = GetTempCrRegister();
 	ap1 = cg.GenerateExpression(node->p[0], Instruction::Get(op_fcmp)->amclass2, node->p[0]->GetNaturalSize(), 1);
 	ap2 = cg.GenerateExpression(node->p[1], Instruction::Get(op_fcmp)->amclass3, node->p[1]->GetNaturalSize(), 1);
-	Generate4adic(op_fge, 0, ap3, ap1, ap2, MakeImmediate(1));
+	GenerateTriadic(op_fge, 0, ap3, ap1, ap2);
 	ReleaseTempRegister(ap2);
 	ReleaseTempRegister(ap1);
+	ap3->isBool = true;
 	return (ap3);
 }
 
@@ -670,7 +1093,7 @@ Operand *BigfootCodeGenerator::GenExpr(ENODE *node)
 		GenerateFalseJump(node,lab0,0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(cpu.ldi_op|op_dot,0,ap1,MakeImmediate(1));
-		GenerateMonadic(op_branch,0,MakeDataLabel(lab1,regZero));
+		GenerateMonadic(op_bra,0,MakeDataLabel(lab1,regZero));
 		GenerateLabel(lab0);
 		GenerateDiadic(cpu.ldi_op|op_dot,0,ap1,MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -734,16 +1157,39 @@ Operand *BigfootCodeGenerator::GenExpr(ENODE *node)
 
 void BigfootCodeGenerator::GenerateBranchTrue(Operand* ap, int64_t label)
 {
+	Operand* ap2;
+
 	gHeadif = currentFn->pl.tail;
-	ap->MakeLegal(amCrReg, 1);
-	GenerateDiadic(op_bnez, 0, ap, MakeCodeLabel(label));
+	if (ap->isBool && ap->IsCr()) {
+		GenerateDiadic(op_bne, 0, ap, MakeCodeLabel(label));
+		return;
+	}
+	ap2 = GetTempCrRegister();
+	ap->MakeLegal(am_reg, cpu.sizeOfWord);
+	GenerateTriadic(op_sne, 0, ap2, ap, makereg(regZero));
+	GenerateDiadic(op_bne, 0, ap2, MakeCodeLabel(label));
+	ReleaseTempRegister(ap2);
 }
 
 void BigfootCodeGenerator::GenerateBranchFalse(Operand* ap, int64_t label)
 {
+	Operand* ap2;
+
 	gHeadif = currentFn->pl.tail;
-	ap->MakeLegal(amCrReg, 1);
-	GenerateDiadic(op_beqz, 0, ap, MakeCodeLabel(label));
+	if (ap->isBool && ap->IsCr()) {
+		GenerateDiadic(op_beq, 0, ap, MakeCodeLabel(label));
+		return;
+	}
+	ap2 = GetTempCrRegister();
+	ap->MakeLegal(am_reg, cpu.sizeOfWord);
+	GenerateTriadic(op_zsne, 0, ap2, ap, makereg(regZero));
+	GenerateDiadic(op_beq, 0, ap2, MakeCodeLabel(label));
+	ReleaseTempRegister(ap2);
+}
+
+void BigfootCodeGenerator::GenerateBra(int64_t label)
+{
+	GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 }
 
 void BigfootCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
@@ -759,12 +1205,12 @@ void BigfootCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label
 			if (!Int128::IsEQ(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero())) {
 				ap1->MakeLegal(amCrReg, 1);
-				GenerateDiadic(op_beqz, 0, ap1, MakeCodeLabel(label));
+				GenerateDiadic(op_beq, 0, ap1, MakeCodeLabel(label));
 			}
 			else {
 				Operand* ap3 = GetTempCrRegister();
@@ -795,12 +1241,12 @@ void BigfootCodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label
 			if (Int128::IsEQ(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			if (Int128::IsEQ(&ap2->offset->i128, Int128::Zero())) {
 				ap1->MakeLegal(amCrReg, 1);
-				GenerateDiadic(op_bnez, 0, ap1, MakeCodeLabel(label));
+				GenerateDiadic(op_bne, 0, ap1, MakeCodeLabel(label));
 			}
 			else {
 				Operand* ap3 = GetTempCrRegister();
@@ -831,7 +1277,7 @@ void BigfootCodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label
 			if (!Int128::IsLT(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
@@ -885,7 +1331,7 @@ void BigfootCodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label
 			if (!Int128::IsLE(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
@@ -915,7 +1361,7 @@ void BigfootCodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label
 			if (Int128::IsLE(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
@@ -945,7 +1391,7 @@ void BigfootCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t labe
 			if (!Int128::IsULT(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
@@ -975,7 +1421,7 @@ void BigfootCodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t labe
 			if (Int128::IsULT(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
@@ -1005,7 +1451,7 @@ void BigfootCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t labe
 			if (!Int128::IsULE(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
@@ -1035,7 +1481,7 @@ void BigfootCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t labe
 			if (Int128::IsULE(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_bra, 0, MakeCodeLabel(label));
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
@@ -1056,34 +1502,30 @@ void BigfootCodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int64_t labe
 {
 	Operand* ap3, * ap4;
 
-	if (cpu.SupportsBand)
-		GenerateTriadic(op_band, 0, ap1, ap2, MakeCodeLabel(label));
-	else {
-		ap3 = GetTempRegister();
-		ap4 = GetTempCrRegister();
-		GenerateTriadic(op_and, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_sne, 0, ap4, ap3, makereg(regZero));
-		GenerateDiadic(op_beq, 0, ap4, MakeCodeLabel(label));
-		ReleaseTempRegister(ap4);
-		ReleaseTempReg(ap3);
-	}
+	ap3 = GetTempRegister();
+	ap4 = GetTempCrRegister();
+	ap1->MakeLegal(am_reg,cpu.sizeOfWord);
+	ap2->MakeLegal(am_reg, cpu.sizeOfWord);
+	GenerateTriadic(op_and, 0, ap3, ap1, ap2);
+	GenerateTriadic(op_sne, 0, ap4, ap3, makereg(regZero));
+	GenerateDiadic(op_bne, 0, ap4, MakeCodeLabel(label));
+	ReleaseTempRegister(ap4);
+	ReleaseTempRegister(ap3);
 }
 
 void BigfootCodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3, * ap4;
 
-	if (cpu.SupportsBor)
-		GenerateTriadic(op_bor, 0, ap1, ap2, MakeCodeLabel(label));
-	else {
-		ap3 = GetTempRegister();
-		ap4 = GetTempCrRegister();
-		GenerateTriadic(op_or, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_sne, 0, ap4, ap3, makereg(regZero));
-		GenerateDiadic(op_beq, 0, ap4, MakeCodeLabel(label));
-		ReleaseTempRegister(ap4);
-		ReleaseTempReg(ap3);
-	}
+	ap3 = GetTempRegister();
+	ap4 = GetTempCrRegister();
+	ap1->MakeLegal(am_reg, cpu.sizeOfWord);
+	ap2->MakeLegal(am_reg, cpu.sizeOfWord);
+	GenerateTriadic(op_or, 0, ap3, ap1, ap2);
+	GenerateTriadic(op_sne, 0, ap4, ap3, makereg(regZero));
+	GenerateDiadic(op_bne, 0, ap4, MakeCodeLabel(label));
+	ReleaseTempRegister(ap4);
+	ReleaseTempRegister(ap3);
 }
 
 void BigfootCodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int64_t label)
@@ -1092,11 +1534,13 @@ void BigfootCodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int64_t lab
 
 	ap3 = GetTempRegister();
 	ap4 = GetTempCrRegister();
+	ap1->MakeLegal(am_reg, cpu.sizeOfWord);
+	ap2->MakeLegal(am_reg, cpu.sizeOfWord);
 	GenerateTriadic(op_and, 0, ap3, ap1, ap2);
-	GenerateTriadic(op_seq, 0, ap4, ap3, makereg(regZero));
+	GenerateTriadic(op_zsne, 0, ap4, ap3, makereg(regZero));
 	GenerateDiadic(op_beq, 0, ap4, MakeCodeLabel(label));
 	ReleaseTempRegister(ap4);
-	ReleaseTempReg(ap3);
+	ReleaseTempRegister(ap3);
 }
 
 void BigfootCodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int64_t label)
@@ -1105,11 +1549,13 @@ void BigfootCodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int64_t labe
 
 	ap3 = GetTempRegister();
 	ap4 = GetTempCrRegister();
+	ap1->MakeLegal(am_reg, cpu.sizeOfWord);
+	ap2->MakeLegal(am_reg, cpu.sizeOfWord);
 	GenerateTriadic(op_or, 0, ap3, ap1, ap2);
-	GenerateTriadic(op_seq, 0, ap4, ap3, makereg(regZero));
+	GenerateTriadic(op_zsne, 0, ap4, ap3, makereg(regZero));
 	GenerateDiadic(op_beq, 0, ap4, MakeCodeLabel(label));
 	ReleaseTempRegister(ap4);
-	ReleaseTempReg(ap3);
+	ReleaseTempRegister(ap3);
 }
 
 bool BigfootCodeGenerator::GenerateBranch(ENODE *node, int op, int64_t label, int predreg, unsigned int prediction, bool limit)
@@ -1198,56 +1644,62 @@ bool BigfootCodeGenerator::GenerateBranch(ENODE *node, int op, int64_t label, in
 	switch(op) {
 
 	case op_fbne:
-		ap3 = GetTempRegister();
-		GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_bbs, 0, ap3, MakeImmediate(8+16), MakeCodeLabel(label));
+		ap3 = GetTempCrRegister();
+		GenerateTriadic(op_fcmp, 0, ap3, ap1, ap2);
+		GenerateDiadic(op_bne, 0, ap3, MakeCodeLabel(label));
 		//GenerateTriadic(op_fsne, 0, ap3, ap1, ap2);
 		//GenerateDiadic(op_bnez, 0, ap3, MakeCodeLabel(label));
+		ap3->isBool = true;
 		ReleaseTempReg(ap3);
 		break;
 
 	case op_fbeq:
-		ap3 = GetTempRegister();
-		GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_bbs, 0, ap3, MakeImmediate(0+16), MakeCodeLabel(label));
+		ap3 = GetTempCrRegister();
+		GenerateTriadic(op_fcmp, 0, ap3, ap1, ap2);
+		GenerateDiadic(op_beq, 0, ap3, MakeCodeLabel(label));
 		//GenerateTriadic(op_fseq, 0, ap3, ap1, ap2);
 		//GenerateDiadic(op_bnez, 0, ap3, MakeCodeLabel(label));
+		ap3->isBool = true;
 		ReleaseTempReg(ap3);
 		break;
 
 	case op_fblt:
-		ap3 = GetTempRegister();
+		ap3 = GetTempCrRegister();
 		GenerateTriadic(op_fcmp, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_bbs, 0, ap3, MakeImmediate(1), MakeCodeLabel(label));
+		GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
 		//GenerateTriadic(op_fslt, 0, ap3, ap1, ap2);
 		//GenerateDiadic(op_bnez, 0, ap3, MakeCodeLabel(label));
+		ap3->isBool = true;
 		ReleaseTempReg(ap3);
 		break;
 
 	case op_fble:
-		ap3 = GetTempRegister();
+		ap3 = GetTempCrRegister();
 		GenerateTriadic(op_fcmp, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_bbs, 0, ap3, MakeImmediate(2), MakeCodeLabel(label));
+		GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
 		//GenerateTriadic(op_fsle, 0, ap3, ap1, ap2);
 		//GenerateDiadic(op_bnez, 0, ap3, MakeCodeLabel(label));
+		ap3->isBool = true;
 		ReleaseTempReg(ap3);
 		break;
 
 	case op_fbgt:
-		ap3 = GetTempRegister();
+		ap3 = GetTempCrRegister();
 		GenerateTriadic(op_fcmp, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_bbs, 0, ap3, MakeImmediate(10), MakeCodeLabel(label));
+		GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
 		//GenerateTriadic(op_fslt, 0, ap3, ap2, ap1);
 		//GenerateDiadic(op_bnez, 0, ap3, MakeCodeLabel(label));
+		ap3->isBool = true;
 		ReleaseTempReg(ap3);
 		break;
 
 	case op_fbge:
-		ap3 = GetTempRegister();
+		ap3 = GetTempCrRegister();
 		GenerateTriadic(op_fcmp, 0, ap3, ap1, ap2);
-		GenerateTriadic(op_bbs, 0, ap3, MakeImmediate(11), MakeCodeLabel(label));
+		GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(label));
 		//GenerateTriadic(op_fsle, 0, ap3, ap2, ap1);
 		//GenerateDiadic(op_bnez, 0, ap3, MakeCodeLabel(label));
+		ap3->isBool = true;
 		ReleaseTempReg(ap3);
 		break;
 
@@ -1331,7 +1783,7 @@ void BigfootCodeGenerator::SaveRegisterVars(CSet *rmask)
 				if (rmask->isMember(nn))
 					mask = mask | (1LL << (nregs-1-nn-1));
 			//GenerateMonadic(op_reglist, 0, cg.MakeImmediate(mask, 16));
-			GenerateDiadic(op_stm, 0, cg.MakeIndirect(regSP), cg.MakeImmediate(mask, 16));
+			GenerateDiadic(op_storem, 0, cg.MakeImmediate(mask, 16), cg.MakeIndirect(regSP));
 		}
 		else {
 			cnt = 0;
@@ -1417,8 +1869,7 @@ static void RestoreRegisterVars()
 			for (nn = 0; nn < 32; nn++)
 				if (save_mask->isMember(nn))
 					mask = mask | (1LL << nn);
-			GenerateMonadic(op_reglist, 0, cg.MakeImmediate(mask, 1));
-			GenerateMonadic(op_ldm, 0, cg.MakeIndirect(regSP));
+			GenerateDiadic(op_loadm, 0, cg.MakeImmediate(mask, 1), cg.MakeIndirect(regSP));
 		}
 		else {
 			cnt2 = cnt = save_mask->NumMember() * cpu.sizeOfWord;
@@ -1431,6 +1882,56 @@ static void RestoreRegisterVars()
 			GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(cnt2));
 		}
 	}
+}
+
+int BigfootCodeGenerator::RestoreGPRegisterVars(CSet* save_mask)
+{
+	int cnt2 = 0, cnt;
+	int nn;
+	int64_t mask;
+
+	if (save_mask == nullptr)
+		return (0);
+	if (save_mask->NumMember()) {
+		if (cpu.SupportsLDM && save_mask->NumMember() > 2) {
+			mask = 0;
+			for (nn = 0; nn < 64; nn++)
+				if (save_mask->isMember(nn))
+					mask = mask | (1LL << (nn - 1));
+			//GenerateMonadic(op_reglist, 0, cg.MakeImmediate(mask, 16));
+			GenerateDiadic(op_loadm, 0, cg.MakeImmediate(mask, 16), cg.MakeIndirect(regSP));
+		}
+		else {
+			cnt2 = cnt = save_mask->NumMember() * cpu.sizeOfWord;
+			cnt = 0;
+			save_mask->resetPtr();
+			for (nn = 0; nn < save_mask->NumMember(); nn++) {
+				if (nn == 0)
+					cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				else
+					cg.GenerateLoad(makereg(cpu.saved_regs[nn]), MakeIndexed(cpu.sizeOfWord * nn, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+			}
+			/*
+			if (save_mask->NumMember() == 1)
+				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+			else if (save_mask->NumMember() == 2) {
+				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cg.GenerateLoad(makereg(cpu.saved_regs[1]), MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+			}
+			else {
+				sprintf_s(buf, sizeof(buf), "__load_s0s%d", save_mask->NumMember() - 1);
+				cg.GenerateMillicodeCall(MakeStringAsNameConst(buf, codeseg));
+			}
+			*/
+			/*
+			for (nn = save_mask->nextMember(); nn >= 0; nn = save_mask->nextMember()) {
+				cg.GenerateLoad(makereg(nn), MakeIndexed(cnt, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
+			}
+			*/
+		}
+	}
+	return (cnt2);
 }
 
 static void RestoreFPRegisterVars()
@@ -1813,21 +2314,21 @@ void BigfootCodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function
 	if (sym && sym->IsLeaf) {
 		sprintf_s(buf, sizeof(buf), "%s_ip", sym->sym->name->c_str());
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_branch : op_branch, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
 		else
 			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bsr : op_bsr, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else if (sym) {
 		if (flags & am_jmp)
-			GenerateMonadic(sym->sym->storage_class == sc_static ? op_branch : op_branch, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bra : op_bra, 0, MakeDirect(node->p[0]));
 		else
 			GenerateMonadic(sym->sym->storage_class == sc_static ? op_bsr : op_bsr, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
 	}
 	else {
 		if (flags & am_jmp)
-			GenerateMonadic(op_branch, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(op_bra, 0, MakeDirect(node->p[0]));
 		else
 			GenerateMonadic(op_bsr, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
@@ -1886,8 +2387,8 @@ void BigfootStatementGenerator::GenerateTabularSwitch(Statement* stmt, int64_t m
 	ap3 = GetTempCrRegister();
 	if (minv != 0)
 		GenerateTriadic(op_sub, 0, ap, ap, MakeImmediate(minv));
-	GenerateTriadic(op_cmp, 0, ap3, ap, MakeImmediate(maxv - minv + 1));
-	GenerateDiadic(op_bgeu, 0, ap3, MakeCodeLabel(HasDefcase ? deflbl : breaklab));
+	GenerateTriadic(op_cmpu, 0, ap3, ap, MakeImmediate(maxv - minv + 1));
+	GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(HasDefcase ? deflbl : breaklab));
 	ReleaseTempRegister(ap3);
 	ReleaseTempRegister(ap2);
 	GenerateTriadic(op_asl, 0, ap, ap, MakeImmediate(3));
@@ -2055,7 +2556,7 @@ void BigfootCodeGenerator::GenerateFalseJump(ENODE* node, int64_t label, unsigne
 		//}
 		//else
 		{
-			GenerateDiadic(op_beqz, 0, ap, MakeCodeLabel(label));
+			GenerateDiadic(op_beq, 0, ap, MakeCodeLabel(label));
 			if (false) {
 				//				if (ap->offset->nodetype==en_icon && ap->offset->i != 0)
 				//					GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
@@ -2202,7 +2703,7 @@ void BigfootCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 				}
 				else {
 					error(1000);	// NULL pointer
-					ip = GenerateDiadic(op_loadi, 0, ap2, MakeImmediate(0xdeadbeefLL));
+					ip = GenerateTriadic(op_add, 0, ap2, makereg(regZero), MakeImmediate(0xdeadbeefLL));
 				}
 			}
 		}
@@ -2322,12 +2823,12 @@ void BigfootCodeGenerator::GenerateSignExtendTetra(Operand* tgt, Operand* src)
 
 void BigfootCodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
 {
-	GenerateMonadic(op_retd, 0, ap1);
+	GenerateMonadic(op_ret, 0, ap1);
 }
 
 void BigfootCodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
 {
-	GenerateMonadic(op_retd, 0, MakeImmediate(amt));
+	GenerateMonadic(op_ret, 0, MakeImmediate(amt));
 }
 
 void BigfootCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
@@ -2763,15 +3264,13 @@ Operand* BigfootCodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool
 	lab1 = nextlabel++;
 	ap1 = GetTempRegister();
 	ap2 = cg.GenerateExpression(node, flags, cpu.sizeOfWord, 1);
-	ap1 = cg.MakeBoolean(ap2);
-	ReleaseTempReg(ap2);
 	/*
 	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(1));
 	cg.GenerateFalseJump(this, lab0, 0);
 	GenerateDiadic(op_loadi, 0, ap1, MakeImmediate(0));
 	GenerateLabel(lab0);
 	*/
-	ap1->MakeLegal(flags, 8);
+	ap1->MakeLegal(flags, cpu.sizeOfWord);
 	ap1->isBool = true;
 	return (ap1);
 }
@@ -2877,5 +3376,22 @@ void BigfootOCODE::OptAdd()
 		opcode = op_addq;
 		insn = GetInsn(op_addq);
 		optimized++;
+	}
+}
+
+void BigfootCodeGenerator::GenerateCrMove(Operand* dstreg, Operand* srcreg, Operand* mask)
+{
+	int rmask;
+
+	if (dstreg->mode == amCrReg && srcreg->mode == amCrReg) {
+		GenerateDiadic(op_cr2cr, 0, dstreg, srcreg);
+	}
+	else if (dstreg->mode == amCrReg) {
+		rmask = 1 << (dstreg->preg & 7);
+		GenerateDiadic(op_reg2crg, 0, srcreg, MakeImmediate(rmask));
+	}
+	else {
+		rmask = 1 << (srcreg->preg & 7);
+		GenerateDiadic(op_crg2reg, 0, dstreg, MakeImmediate(rmask));
 	}
 }

@@ -3645,6 +3645,57 @@ void CodeGenerator::RestoreRegisterVars(Function* func)
 	}
 }
 
+int CodeGenerator::RestoreGPRegisterVars(CSet* save_mask)
+{
+	int cnt2 = 0, cnt;
+	int nn;
+	int64_t mask;
+
+	if (save_mask == nullptr)
+		return (0);
+	if (save_mask->NumMember()) {
+		if (cpu.SupportsLDM && save_mask->NumMember() > 3) {
+			mask = 0;
+			for (nn = 0; nn < 64; nn++)
+				if (save_mask->isMember(nn))
+					mask = mask | (1LL << (nn - 1));
+			//GenerateMonadic(op_reglist, 0, cg.MakeImmediate(mask, 16));
+			GenerateDiadic(op_loadm, 0, cg.MakeImmediate(mask, 16), cg.MakeIndirect(regSP));
+		}
+		else {
+			cnt2 = cnt = save_mask->NumMember() * cpu.sizeOfWord;
+			cnt = 0;
+			save_mask->resetPtr();
+			for (nn = 0; nn < save_mask->NumMember(); nn++) {
+				if (nn == 0)
+					cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				else
+					cg.GenerateLoad(makereg(cpu.saved_regs[nn]), MakeIndexed(cpu.sizeOfWord * nn, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+			}
+			/*
+			if (save_mask->NumMember() == 1)
+				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+			else if (save_mask->NumMember() == 2) {
+				cg.GenerateLoad(makereg(cpu.saved_regs[0]), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cg.GenerateLoad(makereg(cpu.saved_regs[1]), MakeIndexed(cpu.sizeOfWord,regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+			}
+			else {
+				sprintf_s(buf, sizeof(buf), "__load_s0s%d", save_mask->NumMember() - 1);
+				cg.GenerateMillicodeCall(MakeStringAsNameConst(buf, codeseg));
+			}
+			*/
+			/*
+			for (nn = save_mask->nextMember(); nn >= 0; nn = save_mask->nextMember()) {
+				cg.GenerateLoad(makereg(nn), MakeIndexed(cnt, regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+				cnt += cpu.sizeOfWord;
+			}
+			*/
+		}
+	}
+	return (cnt2);
+}
+
+
 
 // Store entire argument list onto stack
 //
@@ -5184,5 +5235,135 @@ Operand* CodeGenerator::GenerateShift(ENODE*node, int flags, int64_t size, int o
 	ReleaseTempRegister(ap1);
 	ap3->MakeLegal(flags, size);
 	return (ap3);
+}
+
+// ----------------------------------------------------------------------------
+// Generate code to evaluate an index node (^+) and return the addressing mode
+// of the result. This routine takes no flags since it always returns either
+// am_ind or am_indx.
+//
+// No reason to ReleaseTempReg() because the registers used are transported
+// forward.
+// 
+// If we have nested indexes we really want the value from the inner index
+// array to use. Hence it is loaded.
+// ----------------------------------------------------------------------------
+Operand* CodeGenerator::GenerateIndex(ENODE* node, bool neg)
+{
+	Operand* ap1, * ap2;
+	static int ndxlvl = 0;
+
+	ndxlvl++;
+	//	if ((p[0]->nodetype == en_type || p[0]->nodetype == en_regvar)
+	//		&& (p[1]->nodetype == en_type || p[1]->nodetype == en_regvar))
+		/* Both nodes are registers? */
+	if (node->p[0]->nodetype == en_regvar && node->p[1]->nodetype == en_regvar) {
+		ap1 = node->GenerateRegRegIndex();
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
+
+	GenerateHint(8);
+	//	GenerateHint(begin_index);
+	ap1 = cg.GenerateExpression(node->p[0], am_reg | am_imm, cpu.sizeOfInt, 1);
+	if (ap1->mode == am_imm) {
+		ap1 = node->GenerateImmExprIndex(ap1, neg);
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
+
+	ap2 = cg.GenerateExpression(node->p[1], am_all, cpu.sizeOfWord, 1);   /* get right op */
+	//	GenerateHint(end_index);
+	GenerateHint(9);
+
+	// Do we have reg+imm? If so make am_indx
+	if (ap2->mode == am_imm) {
+		ap1 = node->GenerateRegImmIndex(ap1, ap2, neg);
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap1);
+	}
+
+	if (ap2->mode == am_ind && ap1->mode == am_reg) {
+		if (cpu.SupportsIndexed && ndxlvl == 1) {
+			ap2->mode = am_indx2;
+			ap2->sreg = ap1->preg;
+			ap2->deep2 = ap1->deep;
+		}
+		else {
+			//GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
+			cg.GenerateAdd(ap2, ap1, ap2);
+			ap2->mode = am_indx;
+			ap2->deep2 = ap1->deep;
+			ap2->offset = makeinode(en_icon, 0);
+			if (ndxlvl > 1) {
+				GenerateLoad(makereg(ap2->preg), ap2, node->esize, node->esize);
+				ap2->mode = am_reg;
+			}
+		}
+		ap2->scale = 1;
+		ndxlvl--;
+		return (ap2);
+	}
+
+	// Direct plus index register equals register indirect addressing.
+	if (ap2->mode == am_direct && ap1->mode == am_reg) {
+		ap2->mode = am_indx;
+		ap2->preg = ap1->preg;
+		ap2->deep = ap1->deep;
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap2->preg), ap2, node->esize, node->esize);
+			ap2->mode = am_reg;
+		}
+		ndxlvl--;
+		return (ap2);
+	}
+
+	// ap1->mode must be am_reg
+	ap2->MakeLegal(am_reg, ap2->tp ? ap2->tp->size : cpu.sizeOfWord);
+	if (cpu.SupportsIndexed && ndxlvl == 1) {
+		ap1->mode = am_indx2;            /* make indexed */
+		ap1->sreg = ap2->preg;
+		ap1->deep2 = ap2->deep;
+		ap1->offset = makeinode(en_icon, 0);
+		ap1->scale = node->scale;
+	}
+	else {
+		ap1->mode = am_indx2;            /* make indexed */
+		ap1->sreg = ap2->preg;
+		ap1->deep2 = ap2->deep;
+		ap1->offset = makeinode(en_icon, 0);
+		//ap1->scale = 1;
+		/*
+		ap4 = GetTempRegister();
+		ap3 = GetTempRegister();
+		ap2->MakeLegal(am_reg, this->esize);
+		GenerateTriadic(op_mulu, 0, ap3, ap2, MakeImmediate(this->esize));
+		GenerateTriadic(op_add, 0, ap4, ap1, ap3);
+		ReleaseTempRegister(ap3);
+		*/
+		if (ndxlvl > 1) {
+			GenerateLoad(makereg(ap1->preg), ap1, node->esize, node->esize);
+			ap1->mode = am_reg;
+		}
+		//		ap1->mode = am_indx;            /* make indexed */
+		//		ap1->deep2 = ap2->deep;
+		//		ap1->offset = makeinode(en_icon, 0);
+		ndxlvl--;
+		return (ap1);                     /* return indexed */
+	}
+	ndxlvl--;
+	return (ap1);                     /* return indexed */
 }
 
