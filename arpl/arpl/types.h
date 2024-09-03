@@ -135,12 +135,12 @@ struct clit {
 	char	*nmspace;
 };
 
-class C64PException
+class ArplException
 {
 public:
 	int errnum;
 	int data;
-	C64PException(int e, int d) { errnum = e; data = d; };
+	ArplException(int e, int d) { errnum = e; data = d; };
 };
 
 
@@ -1306,6 +1306,8 @@ public:
 	Operand *MakeStringAsNameConst(char *s, e_sg seg);
 	Operand *makereg(int r);
 	Operand *makecreg(int r);
+	Operand* makeCrReg(int r);
+	Operand* makeCrgReg(int r);
 	Operand *makevreg(int r);
 	Operand *makevmreg(int r);
 	Operand *makefpreg(int r);
@@ -1340,6 +1342,7 @@ public:
 	virtual Operand* GetTempRegister();
 	virtual Operand* GetTempFPRegister();
 	bool IsPascal(ENODE* ep);
+	int64_t GetSavedRegisterList(CSet* rmask);
 	Operand* MakeDataLabel(int64_t lab, int ndxreg);
 	Operand* MakeCodeLabel(int64_t lab);
 	Operand* MakeStringAsNameConst(char* s, e_sg seg);
@@ -1385,7 +1388,7 @@ public:
 	void GenerateComment(char* cm);
 	void GenMemop(int op, Operand* ap1, Operand* ap2, int64_t ssize, int typ);
 	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr) {
-		throw new C64PException(ERR_CODEGEN, 0);
+		throw new ArplException(ERR_CODEGEN, 0);
 	};
 	virtual void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
 	virtual void GenerateLoadAddress(Operand* ap3, Operand* ap1);
@@ -1393,7 +1396,7 @@ public:
 	Operand* GenerateMux(ENODE*, int flags, int64_t size);
 	Operand* GenerateHook(ENODE*, int flags, int64_t size);
 	virtual Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
-	Operand* GenerateSafeLand(ENODE*, int flags, int op) { return (nullptr); };
+	virtual Operand* GenerateSafeLand(ENODE*, int flags, int op) { return (nullptr); };
 	virtual void GenerateBranchTrue(Operand* ap, int64_t label) {};
 	virtual void GenerateBranchFalse(Operand* ap, int64_t label) {};
 	virtual bool GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit) { return (false); };
@@ -1429,7 +1432,7 @@ public:
 	virtual Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
 	virtual Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
 	virtual Operand* GenerateShift(ENODE* node, int flags, int64_t size, int op);
-	Operand* GenerateBinary(ENODE*, int flags, int64_t size, int op);
+	virtual Operand* GenerateBinary(ENODE*, int flags, int64_t size, int op);
 	Operand* GenerateBinaryFloat(ENODE* node, int flags, int64_t size, e_op op);
 	Operand* GenerateBinaryPosit(ENODE* node, int flags, int64_t size, e_op op);
 	Operand* GenerateVectorBinary(ENODE* node, int flags, int64_t size, e_op op);
@@ -1497,10 +1500,10 @@ public:
 	void SaveTemporaries(Function *sym, int *sp, int *fsp, int* psp, int* vsp);
 	void RestoreTemporaries(Function *sym, int sp, int fsp, int psp, int vsp);
 	virtual void GenerateInterruptSave(Function* func) {
-		throw new C64PException(ERR_CODEGEN, 0);
+		throw new ArplException(ERR_CODEGEN, 0);
 	};
 	virtual void GenerateInterruptLoad(Function* func) {
-		throw new C64PException(ERR_CODEGEN, 0);
+		throw new ArplException(ERR_CODEGEN, 0);
 	};
 	int GenerateInlineArgumentList(Function *func, ENODE *plist);
 	virtual int64_t PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat) { return(0); };
@@ -1516,6 +1519,7 @@ public:
 	virtual void GenerateReturn(Function* func, Statement* stmt);
 	Operand* GenerateTrinary(ENODE* node, int flags, int64_t size, int op);
 	virtual void GenerateUnlink(int64_t amt) {};
+	virtual void GenerateUnlinkStack(Function* func, int64_t amt);
 	virtual void RestoreRegisterVars(Function* func);
 	Operand* GenerateCase(ENODE* node, Operand* sw);
 //	Operand* GenerateSwitch(ENODE* node);
@@ -1552,6 +1556,8 @@ public:
 	virtual OCODE* GenerateReturnBlock(Function* fn);
 	virtual void SaveRegisterVars(CSet* mask) {};
 	virtual int RestoreGPRegisterVars(CSet* mask);
+	virtual void GenerateCrGroupPush() { };
+	virtual void GenerateCrGroupPop() { };
 	};
 
 class ThorCodeGenerator : public CodeGenerator
@@ -1805,6 +1811,7 @@ public:
 	Operand* MakeBoolean(Operand* oper);
 	Operand* BoolToInt(Operand* oper);
 	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
+	int64_t GetSavedRegisterList(CSet* rmask);
 	void GenerateLea(Operand* ap1, Operand* ap2);
 	void GenerateBranchTrue(Operand* ap, int64_t label);
 	void GenerateBranchFalse(Operand* ap, int64_t label);
@@ -1850,7 +1857,8 @@ public:
 	Operand* GenerateSafeLand(ENODE*, int flags, int op);
 	void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
 	void GenerateDirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
-	void SignExtendBitfield(Operand* ap3, uint64_t mask);
+	void GenerateSignExtendBit(Operand* ap3, Operand* width);
+	void GenerateZeroExtendBit(Operand* ap3, Operand* width);
 	void GenerateBitfieldInsert(Operand* dst, Operand* src, int offset, int width);
 	void GenerateBitfieldInsert(Operand* dst, Operand* src, Operand* offset, Operand* width);
 	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width);
@@ -1887,12 +1895,16 @@ public:
 	void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
 	void GenerateStoreImmediate(Operand* ap1, Operand* ap2, int64_t size);
 	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
+	Operand* GenerateBinary(ENODE* node, int flags, int64_t size, int op);
 	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateOr(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateEor(Operand* dst, Operand* src1, Operand* srci);
 
 	OCODE* GenerateReturnBlock(Function* fn);
+	void GenerateUnlinkStack(Function* fn, int64_t amt);
 
 	Operand* GenerateFloatcon(ENODE* node, int flags, int64_t size);
 	Operand* GenPositcon(ENODE* node, int flags, int64_t size);
@@ -1901,7 +1913,9 @@ public:
 	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
 	int GetSegmentIndexReg(e_sg seg);
 	void SaveRegisterVars(CSet* mask);
-	virtual int RestoreGPRegisterVars(CSet* save_mask);
+	int RestoreGPRegisterVars(CSet* save_mask);
+	void GenerateCrGroupPush();
+	void GenerateCrGroupPop();
 	void GenerateCrMove(Operand* dstreg, Operand* srcreg, Operand* mask = nullptr);
 };
 
@@ -2076,7 +2090,7 @@ public:
 			stk[sp] = v;
 		}
 		else
-			throw new C64PException(ERR_STACKFULL, 0);
+			throw new ArplException(ERR_STACKFULL, 0);
 	};
 	int pop() {
 		int v = 0;
@@ -2085,7 +2099,7 @@ public:
 			sp++;
 			return (v);
 		}
-		throw new C64PException(ERR_STACKEMPTY, 0);
+		throw new ArplException(ERR_STACKEMPTY, 0);
 	};
 	int tos() {
 		return (stk[sp]);
@@ -2883,6 +2897,27 @@ public:
 	void DumpGlobals();
 };
 
+class Register
+{
+public:
+	int number;
+	int depth;					// stack level
+	short int nextreg;	// next register in list
+	short int prevreg;	// previous register in list
+	int8_t cls;					// register class GPR, FLT, CCR
+	bool isCr;					// condition code register
+	bool isCrg;					// condition code group register
+	bool isTemp;
+	bool isLastTemp;
+	bool isFirstTemp;
+	bool isArg;
+	bool isSaved;
+	CSet isPushed;
+	CSet inUse;
+public:
+	static Operand* GetTempCrRegister();
+};
+
 class CPU
 {
 public:
@@ -2918,7 +2953,9 @@ public:
 	int vmargregs[64];
 	int vmtmpregs[64];
 	int vmsaved_regs[64];
-	int tmpCrRegs[64];
+	Register tmpCrRegs[64];
+	Register regs[64];
+	CSet availableTemps;
 	int savedCrRegs[64];
 	bool SupportsBand;
 	bool SupportsBor;

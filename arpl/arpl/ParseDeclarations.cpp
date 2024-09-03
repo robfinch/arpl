@@ -767,7 +767,7 @@ Symbol *Declaration::ParseSpecifierId()
 			sc_type
 		);
 		if (sp == nullptr)
-			throw new C64PException(ERR_OUT_OF_MEMORY, 0);
+			throw new ArplException(ERR_OUT_OF_MEMORY, 0);
 	}
 
 	// Did we just have a symbol name by itself?

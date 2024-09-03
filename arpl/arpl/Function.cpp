@@ -35,6 +35,9 @@ Function::Function()
 	rmask = CSet::MakeNew();
 	fprmask = CSet::MakeNew();
 	prmask = CSet::MakeNew();
+	mask = CSet::MakeNew();
+	fpmask = CSet::MakeNew();
+	pmask = CSet::MakeNew();
 	NumFixedAutoParms = 0;
 }
 
@@ -798,68 +801,9 @@ void Function::RestoreTemporaries(int sp, int fsp, int psp, int vsp)
 
 
 // Unlink the stack
-
 void Function::UnlinkStack(int64_t amt)
 {
-	Operand* ap;
-	/* auto news are garbage collected
-	if (hasAutonew) {
-		GenerateMonadic(op_call, 0, MakeStringAsNameConst("__autodel",codeseg));
-		GenerateMonadic(op_bex, 0, MakeDataLabel(throwlab));
-	}
-	*/
-	if (!cpu.SupportsLeave)
-		GenerateMonadic(op_hint, 0, MakeImmediate(begin_stack_unlink));
-	if (cpu.SupportsLeave) {
-	}
-	else if (!IsLeaf) {
-//		if (doesJAL) {	// ??? Not a leaf, so it must be transferring control
-			if (alstk) {
-				ap = GetTempRegister();
-				cg.GenerateLoad(ap, MakeIndexed(1 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
-				GenerateDiadic(op_move, 0, makereg(regLR), ap);
-				ReleaseTempRegister(ap);
-				//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
-				if (IsFar) {
-					ap = GetTempRegister();
-					cg.GenerateLoad(ap, MakeIndexed(3 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
-					GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3103));
-					ReleaseTempRegister(ap);
-				}
-				cg.GenerateMove(makereg(regSP), makereg(regFP));
-				cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-			}
-//		}
-	}
-	// Else leaf routine, reverse any stack allocation but do not pop link register
-	else {
-		if (alstk) {
-			cg.GenerateMove(makereg(regSP), makereg(regFP));
-			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-		}
-	}
-	cg.GenerateUnlink(amt);
-	/*
-	if (cpu.SupportsLeave) {
-	}
-	else if (!IsLeaf && doesJAL) {
-		if (alstk) {
-			cg.GenerateLoad(makereg(regLR), MakeIndexed(2 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
-			//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
-			if (IsFar) {
-				ap = GetTempRegister();
-				cg.GenerateLoad(ap, MakeIndexed(3 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
-				GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3103));
-				ReleaseTempRegister(ap);
-			}
-			cg.GenerateMove(makereg(regSP), makereg(regFP));
-			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
-		}
-	}
-	//	GenerateTriadic(op_add,0,makereg(regSP),makereg(regSP),MakeImmediate(3*cpu.sizeOfWord));
-	*/
-	if (!cpu.SupportsLeave)
-		GenerateMonadic(op_hint, 0, MakeImmediate(end_stack_unlink));
+	cg.GenerateUnlinkStack(this, amt);
 }
 
 int64_t Function::SizeofReturnBlock()
@@ -943,6 +887,7 @@ void Function::Generate()
 	ZeroMemory(seg_aligned, sizeof(seg_aligned));
 	compiler.temp_in_use.clear();
 	compiler.saved_in_use.clear();
+	OCODE* ip = nullptr;
 
 	if (opt_vreg)
 		cpu.SetVirtualRegisters();
@@ -986,7 +931,7 @@ void Function::Generate()
 	// Setup the return block.
 	pEnter = nullptr;
 	if (!IsNocall && !prolog)
-		SetupReturnBlock();
+		ip = SetupReturnBlock();
 
 	if (optimize)
 		currentFn->csetbl->Optimize(stmt);
@@ -1001,8 +946,12 @@ void Function::Generate()
 		psave_mask = ::psave_mask;// CSet::MakeNew();
 		mask = ::save_mask;
 	}
-	if (pEnter)
-		pEnter->oper1 = MakeImmediate(mask->NumMember());
+	if (pEnter) {
+		if (mask)
+			pEnter->oper1 = MakeImmediate(mask->NumMember());
+		else
+			pEnter->oper1 = MakeImmediate(0);
+	}
 
 	stmt->CheckReferences(&sp, &bp, &gp, &gp1, &gp2);
 	//	if (!IsInline)
@@ -1035,6 +984,7 @@ void Function::Generate()
 //	if (!IsInline)
 		cg.GenerateReturn(this,nullptr);
 
+
 	// Inline code needs to branch around the default exception handler.
 	if (compiler.exceptions && sym->IsInline)
 		cg.GenerateBra(lab0);
@@ -1043,6 +993,10 @@ void Function::Generate()
 		GenerateDefaultCatch();
 	if (compiler.exceptions && sym->IsInline)
 		GenerateLabel(lab0);
+
+	// Patch up the list of saved registers for ENTER instruction.
+	if (ip)
+		ip->oper1 = MakeImmediate(cg.GetSavedRegisterList(save_mask));
 
 	dfs.puts("<StaticRegs>");
 	dfs.puts("====== Statically Assigned Registers =======\n");
@@ -1514,7 +1468,7 @@ void Function::AddDerived()
 	if (sym->tp == nullptr)
 		dfs.printf("Nullptr");
 	if (sym->GetParentPtr() == nullptr)
-		throw C64PException(ERR_NULLPOINTER, 10);
+		throw ArplException(ERR_NULLPOINTER, 10);
 	mthd->typeno = sym->GetParentPtr()->tp->typeno;
 	dfs.printf("B");
 	mthd->name = BuildSignature();

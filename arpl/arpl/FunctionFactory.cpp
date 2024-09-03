@@ -33,5 +33,5 @@ Function* FunctionFactory::MakeFunction(int symnum, Symbol* sp, bool isPascal)
 			compiler.funcnum = 0;
 	}
 	dfs.printf("Too many functions.\n");
-	throw new C64PException(ERR_TOOMANY_SYMBOLS, 1);
+	throw new ArplException(ERR_TOOMANY_SYMBOLS, 1);
 }

@@ -1290,7 +1290,7 @@ int64_t Symbol::GenerateT(txtoStream& tfs, ENODE* node, TYP* ptp)
 	initlvl++;
 	if (initlvl > 100) {
 		error(ERR_TOOMANYELEMENTS);
-		throw new C64PException(ERR_TOOMANYELEMENTS,92);
+		throw new ArplException(ERR_TOOMANYELEMENTS,92);
 	}
 	switch (ptp->type) {
 	case bt_byte:

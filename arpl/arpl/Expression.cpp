@@ -1714,7 +1714,7 @@ j1:
 	tp1 = sp->tp;
 	dfs.printf("tp1->type:%d", tp1->type);
 	if (tp1 == nullptr)
-		throw new C64PException(ERR_NULLPOINTER, 5);
+		throw new ArplException(ERR_NULLPOINTER, 5);
 	if (tp1->type == bt_ifunc || tp1->type == bt_func) {
 		// build the name vector and create a nacon node.
 		dfs.printf("%s is a func\n", (char*)sp->name->c_str());
@@ -2085,11 +2085,11 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 			tp4 = tp1;
 			if (rnode == nullptr) {
 				error(ERR_EXPREXPECT);
-				throw new C64PException(ERR_EXPREXPECT, 9);
+				throw new ArplException(ERR_EXPREXPECT, 9);
 			}
 			if (!tp2->IsIntegralType()) {
 				error(ERR_BADARRAYNDX);
-				throw new C64PException(ERR_BADARRAYNDX, 12);
+				throw new ArplException(ERR_BADARRAYNDX, 12);
 			}
 		}
 		else {
@@ -2103,7 +2103,7 @@ ENODE* Expression::ParseOpenbr(TYP* tp1, ENODE* ep1)
 			}
 			if (tp3 == NULL) {
 				error(ERR_UNDEFINED);
-				throw new C64PException(ERR_UNDEFINED, 10);
+				throw new ArplException(ERR_UNDEFINED, 10);
 				goto xit;
 			}
 			tp1 = tp3;

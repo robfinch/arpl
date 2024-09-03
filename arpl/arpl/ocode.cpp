@@ -554,7 +554,7 @@ void OCODE::OptAnd()
 	}
 	return;
 	if (oper2 == nullptr || oper3 == nullptr)
-		throw new C64PException(ERR_NULLPOINTER, 0x50);
+		throw new ArplException(ERR_NULLPOINTER, 0x50);
 	if (oper2->offset == nullptr || oper3->offset == nullptr)
 		return;
 	if (oper2->offset->constflag == false)

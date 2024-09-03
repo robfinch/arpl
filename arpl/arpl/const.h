@@ -309,11 +309,11 @@ enum e_op {
 	op_storev, op_subtract,
 	// Bigfoot
 	op_bra,
-	op_loadm, op_storem,
+	op_loadm, op_storem, op_pushm, op_popm,
 	op_stib, op_stiw, op_stit, op_stio, op_addq,
 	op_zseq, op_zsne, op_zslt, op_zsle, op_zsgt, op_zsge, op_zsltu, op_zsleu, op_zsgtu, op_zsgeu,
 	op_crext, op_crdep,
-	op_crand, op_cror, op_reg2crg, op_crg2reg, op_cr2cr,
+	op_crand, op_cror, op_creor, op_reg2crg, op_crg2reg, op_cr2cr,
 	// i386
 	op_movb, op_movw, op_movl,
 	op_shl, op_shr, op_jae, op_jeq, op_jne, op_jl, op_jge, op_jle, op_jg, op_jb, op_jbe, op_ja,
@@ -334,7 +334,15 @@ enum e_regtype {
 	rt_vector = 8192,
 	rt_group = 16384,
 	rt_float = 32768,
-	rt_cr = 65536
+	rt_cr = 65536,
+	rt_crg = 1L << 17L
+};
+
+enum e_regclass {
+	rc_gpr = 0,
+	rc_flt = 1,
+	rc_ccr = 2,
+	rc_ccrg = 3
 };
 
 enum e_am {
@@ -371,6 +379,7 @@ enum e_am {
 	am_iindx2 = 1 << 28,
 	am_i16 = 1 << 29,
 	amCrReg = 1 << 30,
+	amCrgReg = 1 << 31,
 	am_all = 0x1FB,	// exclude fp reg for Thor
 };
 

@@ -80,6 +80,8 @@ extern void opt_const_unchecked(ENODE **node);
 extern Operand *MakeString(char *s);
 extern Operand *MakeDoubleIndexed(int i, int j, int scale);
 extern Operand *makecreg(int);
+extern Operand* makeCrReg(int);
+extern Operand* makeCrgReg(int);
 
 // Register.c
 extern Operand* GetTempReg(int);

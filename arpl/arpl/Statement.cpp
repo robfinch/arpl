@@ -2247,7 +2247,7 @@ void Statement::GenerateAsm()
 		thead = thead->GetNextPtr();
 		if (thead == firsts) {
 			dfs.printf("Circular list.\n");
-			throw new C64PException(ERR_CIRCULAR_LIST, 1);
+			throw new ArplException(ERR_CIRCULAR_LIST, 1);
 		}
 	}
 

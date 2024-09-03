@@ -90,7 +90,7 @@ public:
 	// Add a new element to the set.
 	inline void add(int bit)
 	{
-		if (bit > nbits)
+		if (bit >= nbits)
 			enlarge(bit >> SET_NBIT);
 		map[bit >> SET_NBIT] |= (1 << (bit & SET_BMASK));
 	};

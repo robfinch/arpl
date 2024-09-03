@@ -331,8 +331,28 @@ Operand *OperandFactory::makecreg(int r)
 	Operand *ap;
 	ap = allocOperand();
 	ap->mode = amCrReg;
-	ap->preg = r|rt_cr;
+	ap->preg = r;
 	ap->isBool = true;
+	return (ap);
+}
+
+Operand* OperandFactory::makeCrReg(int r)
+{
+	Operand* ap;
+	ap = allocOperand();
+	ap->mode = amCrReg;
+	ap->preg = r;
+	ap->isBool = true;
+	return (ap);
+}
+
+Operand* OperandFactory::makeCrgReg(int r)
+{
+	Operand* ap;
+	ap = allocOperand();
+	ap->mode = amCrgReg;
+	ap->preg = r;
+	ap->isBool = false;
 	return (ap);
 }
 
@@ -407,6 +427,16 @@ Operand* makepreg(int r)
 Operand *makecreg(int r)
 {
 	return(compiler.of.makecreg(r));
+}
+
+Operand* makeCrReg(int r)
+{
+	return(compiler.of.makeCrReg(r));
+}
+
+Operand* makeCrgReg(int r)
+{
+	return(compiler.of.makeCrgReg(r));
 }
 
 //Operand *makesreg(int r)

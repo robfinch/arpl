@@ -484,7 +484,7 @@ void Var::Transplant(Var *v)
 			trees.treecount++;
 		}
 		else
-			throw new C64PException(ERR_TOOMANY_TREES,1);
+			throw new ArplException(ERR_TOOMANY_TREES,1);
 	}
 }
 

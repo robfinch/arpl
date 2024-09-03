@@ -38,6 +38,8 @@ int bregstack[6];
 int brsp=5;
 int bregmask = 0;
 */
+CSet* stacked_regs_set;
+CSet stacked_ccr_regs_set;
 static unsigned short int next_reg;
 static unsigned short int next_fpreg;
 static unsigned short int next_preg;
@@ -71,7 +73,9 @@ static short int save_vreg_in_use[VR_COUNT];
 static short int vmreg_in_use[VR_COUNT];	// 0 to 15
 
 static int wrapno, save_wrapno;
+static int wrapno_1;
 static int CrWrapno, saveCrWrapno;
+static int CrWrapno_1;
 
 static struct {
 	Operand *Operand;
@@ -177,6 +181,25 @@ int NumSavedCrRegs()
 
 void CPU::InitRegs()
 {
+	int ii;
+
+	for (ii = 0; ii < 64; ii++) {
+		cpu.regs[ii].number = 0;
+		cpu.regs[ii].isCr = false;
+		cpu.regs[ii].isCrg = false;
+		cpu.regs[ii].isArg = false;
+		cpu.regs[ii].isTemp = false;
+		cpu.regs[ii].isSaved = false;
+		cpu.regs[ii].inUse.clear();
+		cpu.regs[ii].isPushed.clear();
+		if (ii < 32)
+			cpu.regs[ii].cls = rc_gpr;
+		else if (ii < 40)
+			cpu.regs[ii].cls = rc_ccr;
+		else if (ii == 40)
+			cpu.regs[ii].cls = rc_ccrg;
+	}
+
 #ifdef QUPLS
 	cpu.NumRegs = 32;
 	cpu.NumArgRegs = 8;
@@ -464,6 +487,115 @@ void CPU::InitRegs()
 	cpu.ftmpregs[11] = 31 | rt_float;
 #endif
 #ifdef BIGFOOT
+	cpu.regs[1].isArg = true;
+	cpu.regs[1].number = 1;
+	cpu.regs[2].isArg = true;
+	cpu.regs[2].number = 2;
+	cpu.regs[3].isArg = true;
+	cpu.regs[3].number = 3;
+	cpu.regs[4].isArg = true;
+	cpu.regs[4].number = 4;
+	cpu.regs[5].isArg = true;
+	cpu.regs[5].number = 5;
+	cpu.regs[6].isArg = true;
+	cpu.regs[6].number = 6;
+	cpu.regs[7].isArg = true;
+	cpu.regs[7].number = 7;
+	cpu.regs[8].isArg = true;
+	cpu.regs[8].number = 8;
+	cpu.regs[9].isTemp = true;
+	cpu.regs[9].isFirstTemp = true;
+	cpu.regs[9].number = 9;
+	cpu.regs[9].prevreg = 18;
+	cpu.regs[9].nextreg = 10;
+	cpu.regs[10].isTemp = true;
+	cpu.regs[10].number = 10;
+	cpu.regs[10].prevreg = 9;
+	cpu.regs[10].nextreg = 11;
+	cpu.regs[11].isTemp = true;
+	cpu.regs[11].number = 11;
+	cpu.regs[11].prevreg = 10;
+	cpu.regs[11].nextreg = 12;
+	cpu.regs[12].isTemp = true;
+	cpu.regs[12].number = 12;
+	cpu.regs[12].prevreg = 11;
+	cpu.regs[12].nextreg = 13;
+	cpu.regs[13].isTemp = true;
+	cpu.regs[13].number = 13;
+	cpu.regs[13].prevreg = 12;
+	cpu.regs[13].nextreg = 14;
+	cpu.regs[14].isTemp = true;
+	cpu.regs[14].number = 14;
+	cpu.regs[14].prevreg = 13;
+	cpu.regs[14].nextreg = 15;
+	cpu.regs[15].isTemp = true;
+	cpu.regs[15].number = 15;
+	cpu.regs[15].prevreg = 14;
+	cpu.regs[15].nextreg = 16;
+	cpu.regs[16].isTemp = true;
+	cpu.regs[16].number = 16;
+	cpu.regs[16].prevreg = 15;
+	cpu.regs[16].nextreg = 17;
+	cpu.regs[17].isTemp = true;
+	cpu.regs[17].number = 17;
+	cpu.regs[17].prevreg = 16;
+	cpu.regs[17].nextreg = 18;
+	cpu.regs[18].isTemp = true;
+	cpu.regs[18].isLastTemp = true;
+	cpu.regs[18].number = 18;
+	cpu.regs[18].prevreg = 17;
+	cpu.regs[18].nextreg = 9;
+	cpu.regs[19].isSaved = true;
+	cpu.regs[19].number = 19;
+	cpu.regs[20].isSaved = true;
+	cpu.regs[20].number = 20;
+	cpu.regs[21].isSaved = true;
+	cpu.regs[21].number = 21;
+	cpu.regs[22].isSaved = true;
+	cpu.regs[22].number = 2;
+	cpu.regs[23].isSaved = true;
+	cpu.regs[23].number = 23;
+	cpu.regs[24].isSaved = true;
+	cpu.regs[24].number = 24;
+	cpu.regs[25].isSaved = true;
+	cpu.regs[25].number = 25;
+	cpu.regs[26].isSaved = true;
+	cpu.regs[26].number = 26;
+	cpu.regs[27].isSaved = true;
+	cpu.regs[27].number = 27;
+	cpu.regs[32].isCr = true;
+	cpu.regs[32].number = 32;
+	cpu.regs[33].isCr = true;
+	cpu.regs[33].number = 33;
+	cpu.regs[34].isCr = true;
+	cpu.regs[34].number = 34;
+	cpu.regs[34].nextreg = 35;
+	cpu.regs[34].prevreg = 37;
+	cpu.regs[34].isTemp = true;
+	cpu.regs[34].isFirstTemp = true;
+	cpu.regs[35].isCr = true;
+	cpu.regs[35].number = 35;
+	cpu.regs[35].nextreg = 36;
+	cpu.regs[35].prevreg = 34;
+	cpu.regs[35].isTemp = true;
+	cpu.regs[36].isCr = true;
+	cpu.regs[36].number = 36;
+	cpu.regs[36].nextreg = 37;
+	cpu.regs[36].prevreg = 35;
+	cpu.regs[36].isTemp = true;
+	cpu.regs[37].isCr = true;
+	cpu.regs[37].number = 37;
+	cpu.regs[37].nextreg = 34;
+	cpu.regs[37].prevreg = 36;
+	cpu.regs[37].isTemp = true;
+	cpu.regs[37].isLastTemp = true;
+	cpu.regs[38].isCr = true;
+	cpu.regs[38].number = 38;
+	cpu.regs[39].isCr = true;
+	cpu.regs[39].number = 39;
+	cpu.regs[40].isCrg = true;
+	cpu.regs[40].number = 40;
+
 	cpu.NumTmpRegs = 9;
 	cpu.tmpregs[0] = 9;
 	cpu.tmpregs[1] = 10;
@@ -474,18 +606,29 @@ void CPU::InitRegs()
 	cpu.tmpregs[6] = 15;
 	cpu.tmpregs[7] = 16;
 	cpu.tmpregs[8] = 17;
+	cpu.availableTemps.add(9);
+	cpu.availableTemps.add(10);
+	cpu.availableTemps.add(11);
+	cpu.availableTemps.add(12);
+	cpu.availableTemps.add(13);
+	cpu.availableTemps.add(14);
+	cpu.availableTemps.add(15);
+	cpu.availableTemps.add(16);
+	cpu.availableTemps.add(17);
+	cpu.availableTemps.add(18);
 
 	cpu.NumTmpCrRegs = 4;
-	cpu.tmpCrRegs[0] = 2;
-	cpu.tmpCrRegs[1] = 3;
-	cpu.tmpCrRegs[2] = 4;
-	cpu.tmpCrRegs[3] = 5;
-	cpu.tmpCrRegs[4] = 0;
-	cpu.tmpCrRegs[5] = 0;
-	cpu.tmpCrRegs[6] = 0;
-	cpu.tmpCrRegs[7] = 0;
-	cpu.tmpCrRegs[8] = 0;
-
+	cpu.tmpCrRegs[0].number = 2;
+	cpu.tmpCrRegs[1].number = 3;
+	cpu.tmpCrRegs[2].number = 4;
+	cpu.tmpCrRegs[3].number = 5;
+	/*
+	cpu.tmpCrRegs[4].number = 0;
+	cpu.tmpCrRegs[5].number = 0;
+	cpu.tmpCrRegs[6].number = 0;
+	cpu.tmpCrRegs[7].number = 0;
+	cpu.tmpCrRegs[8].number = 0;
+	*/
 	// These are saved regs.
 	cpu.tmpregs[9] = 18;
 	cpu.tmpregs[10] = 19;
@@ -807,13 +950,15 @@ void initRegStack()
 	int i;
 	Function *sym = currentFn;
 
-	next_reg = 0;
+	stacked_regs_set = new CSet();
+	stacked_regs_set->clear();
+	next_reg = 9;
 	next_fpreg = 0;// regFirstTemp;
 	next_preg = 0;// regFirstTemp;
 	next_vreg = 0;// regFirstTemp;
 	next_vmreg = 0;
   next_breg = 0;
-	nextCrReg = 0;
+	nextCrReg = 34;
 	//for (rsp=0; rsp < 3; rsp=rsp+1)
 	//	regstack[rsp] = tmpregs[rsp];
 	//rsp = 0;
@@ -863,13 +1008,22 @@ void initRegStack()
 		memset(CrRegStack, 0, sizeof(CrRegStack));
 		memset(CrRegAlloc, 0, sizeof(CrRegAlloc));
 		wrapno = 0;
+		wrapno_1 = 0;
 		CrWrapno = 0;
+		CrWrapno_1 = 0;
 	ZeroMemory(rap, sizeof(rap));
+	for (i = 0; i < 64; i++) {
+		cpu.tmpCrRegs[i].inUse.clear();
+		cpu.tmpCrRegs[i].isPushed.clear();
+	}
+
 }
 
 int IsTempReg(int rg)
 {
 	int nn;
+
+	return ((cpu.regs[rg].isTemp && !cpu.regs[rg].isCr) ? rg : 0);
 
 	for (nn = 0; nn < cpu.NumTmpRegs; nn++) {
 		if (rg == cpu.tmpregs[nn])// || rg==cpu.vtmpregs[nn])
@@ -882,11 +1036,9 @@ int IsTempCrReg(int rg)
 {
 	int nn;
 
-	if ((rg & rt_cr)==0)
-		return (0);
-	rg &= 0xfffL;
+	return (cpu.regs[rg].isCr && cpu.regs[rg].isTemp);
 	for (nn = 0; nn < cpu.NumTmpCrRegs; nn++) {
-		if (rg == cpu.tmpCrRegs[nn])// || rg==cpu.vtmpregs[nn])
+		if (rg == cpu.tmpCrRegs[nn].number)// || rg==cpu.vtmpregs[nn])
 			return (nn + 1);
 	}
 	return (0);
@@ -907,6 +1059,7 @@ int IsArgReg(int rg)
 {
 	int nn;
 
+	return (cpu.regs[rg].isArg);
 	for (nn = 0; nn < cpu.NumArgRegs; nn++) {
 		if (rg == cpu.argregs[nn])// || rg == cpu.vargregs[nn])
 			return (nn + 1);
@@ -929,6 +1082,7 @@ int IsSavedReg(int rg)
 {
 	int nn;
 
+	return (cpu.regs[rg].isSaved && !cpu.regs[rg].isCr);
 	for (nn = 0; nn < cpu.NumSavedRegs; nn++) {
 		if (rg == cpu.saved_regs[nn])// || rg == cpu.vsaved_regs[nn])
 			return (nn + 1);
@@ -940,6 +1094,7 @@ int IsSavedCrReg(int rg)
 {
 	int nn;
 
+	return (cpu.regs[rg].isSaved && cpu.regs[rg].isCr);
 	if (((rg >> 30) & 3) != 3)
 		return (0);
 	rg &= 0x3fffffffL;
@@ -965,34 +1120,37 @@ int IsFsavedReg(int rg)
 
 void SpillRegister(Operand *ap, int number)
 {
+	if (pass == 1)
+		max_stack_use = max(max_stack_use, (ap->deep + 1) * cpu.sizeOfWord);
+#if 0
 	cg.GenerateStore(ap,cg.MakeIndexed(currentFn->GetTempBot()+ap->deep*cpu.sizeOfWord,regFP), cpu.sizeOfWord);
-	if (pass==1)
-		max_stack_use = max(max_stack_use, (ap->deep+1) * cpu.sizeOfWord);
   //reg_stack[reg_stack_ptr].Operand = ap;
   //reg_stack[reg_stack_ptr].f.allocnum = number;
   if (reg_alloc[number].f.isPushed=='T')
 	fatal("SpillRegister(): register already spilled");
   reg_alloc[number].f.isPushed = 'T';
 	compiler.reg_in_use[ap->preg&VR_MASK] = -1;
+#endif
+
+	GenerateMonadic(op_push, 0, ap);
+	if (cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno))
+		fatal("SpillRegister(): cr register already spilled");
+	cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
+	cpu.regs[ap->preg & VR_MASK].isPushed.add(wrapno);
 }
 
 void SpillCrRegister(Operand* ap, int number)
 {
-//	cg.GenerateMove()
 	Operand* ap1;
+	int ndx;
 
-	ap1 = GetTempRegister();
-	cg.GenerateCrMove(ap1, ap);
-	cg.GenerateStore(ap1, cg.MakeIndexed(currentFn->GetTempBot() + ap->deep * cpu.sizeOfWord, regFP), cpu.sizeOfWord);
-	ReleaseTempRegister(ap1);
+	GenerateMonadic(op_push, 0, ap);
 	if (pass == 1)
 		max_stack_use = max(max_stack_use, (ap->deep + 1) * cpu.sizeOfWord);
-	//reg_stack[reg_stack_ptr].Operand = ap;
-	//reg_stack[reg_stack_ptr].f.allocnum = number;
-	if (CrRegAlloc[number].f.isPushed == 'T')
-		fatal("SpillRegister(): cr register already spilled");
-	CrRegAlloc[number].f.isPushed = 'T';
-	compiler.CrRegInUse[ap->preg&VR_MASK] = -1;
+	if (cpu.regs[ap->preg & VR_MASK].isPushed.isMember(CrWrapno))
+		fatal("SpillCrRegister(): cr register already spilled");
+	cpu.regs[ap->preg & VR_MASK].inUse.remove(CrWrapno);
+	cpu.regs[ap->preg & VR_MASK].isPushed.add(CrWrapno);
 }
 
 void SpillVectorRegister(Operand* ap, int number)
@@ -1036,25 +1194,27 @@ void SpillPositRegister(Operand* ap, int number)
 
 void LoadRegister(int regno, int number)
 {
+#if 0
 	if (compiler.reg_in_use[regno] >= 0)
 		fatal("LoadRegister():register still in use");
 	compiler.reg_in_use[regno&VR_MASK] = number;
 	cg.GenerateLoad(makereg(regno&VR_MASK),cg.MakeIndexed(currentFn->GetTempBot()+number*cpu.sizeOfWord,regFP), cpu.sizeOfWord, cpu.sizeOfWord);
     reg_alloc[number].f.isPushed = 'F';
+#endif
+	if (cpu.regs[regno & VR_MASK].inUse.isMember(CrWrapno))
+		fatal("LoadRegister():register still in use");
+	GenerateMonadic(op_pop, 0, makereg(regno));
+	cpu.regs[regno & VR_MASK].isPushed.remove(wrapno);
+	cpu.regs[regno & VR_MASK].inUse.add(wrapno);
 }
 
-void LoadCrRegister(int regno, int number)
+static void LoadCrRegister(int regno)
 {
-	Operand* ap1;
-
-	if (compiler.CrRegInUse[regno & 0xffL] >= 0)
-		fatal("LoadRegister():register still in use");
-	compiler.CrRegInUse[regno&VR_MASK] = number;
-	ap1 = GetTempRegister();
-	cg.GenerateLoad(ap1, cg.MakeIndexed(currentFn->GetTempBot() + number * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
-	cg.GenerateCrMove(makecreg(regno & VR_MASK), ap1);
-	ReleaseTempRegister(ap1);
-	CrRegAlloc[number].f.isPushed = 'F';
+	if (cpu.regs[regno & VR_MASK].inUse.isMember(CrWrapno))
+		fatal("LoadCrRegister():register still in use");
+	GenerateMonadic(op_pop, 0, makeCrReg(regno));
+	cpu.regs[regno & VR_MASK].isPushed.remove(CrWrapno);
+	cpu.regs[regno & VR_MASK].inUse.add(CrWrapno);
 }
 
 // Load vector register from memory.
@@ -1152,6 +1312,7 @@ void initstack()
 	//initFPRegStack();
 }
 
+#if 0
 Operand *GetTempRegister()
 {
 	Operand *ap;
@@ -1201,54 +1362,65 @@ Operand *GetTempRegister()
 	max_reg_alloc_ptr = max(max_reg_alloc_ptr, reg_alloc_ptr);
 	return (ap);
 }
+#endif
 
-Operand* GetTempCrRegister()
+Operand* GetTempRegister()
 {
 	Operand* ap;
 	Function* sym = currentFn;
-	int number;
 
-	number = compiler.CrRegInUse[cpu.tmpCrRegs[nextCrReg]];
-	if (number >= 0) {// && number < rap[wrapno]) {
-		/*
-		nr = next_reg;
-		for (nn = regFirstTemp; nn <= regLastTemp; nn++) {
-			if (compiler.reg_in_use[nn] < 0) {
-				compiler.reg_in_use[nn] = reg_alloc_ptr;
-				ap = allocOperand();
-				ap->mode = am_reg;
-				ap->preg = next_reg;
-				ap->pdeep = ap->deep;
-				ap->deep = reg_alloc_ptr;
-				return (ap);
-			}
-		}
-		*/
-		SpillCrRegister(makereg(cpu.tmpCrRegs[nextCrReg]), number);
+	TRACE(printf("GetTempCrRegister:r%d\r\n", next_reg);)
+		if (wrapno >= MAX_REG_STACK)
+			fatal("GetTempRegister(): register stack overflow");
+	if (cpu.regs[next_reg].inUse.isMember(wrapno))
+		SpillRegister(makereg(next_reg), 0);
+	if (cpu.regs[next_reg].isLastTemp) {// regLastTemp) {
+		wrapno++;
+		wrapno_1 = 0;
 	}
-	TRACE(printf("GetTempRegister:r%d\r\n", nextCrReg);)
-	compiler.CrRegInUse[cpu.tmpCrRegs[nextCrReg]] = CrRegAllocPtr;
-	ap = allocOperand();
-	ap->mode = amCrReg;
-	ap->preg = rt_cr | cpu.tmpCrRegs[nextCrReg];
-	ap->pdeep = 0;
-	ap->deep = CrRegAllocPtr;
-	if (IsTempCrReg(ap->preg))
-		compiler.tempCrInUse.add(ap->preg & 7);
-	else if (IsSavedCrReg(ap->preg & 7))
-		compiler.savedCrInUse.add(ap->preg & 7);
-	CrRegAlloc[CrRegAllocPtr].reg = cpu.tmpCrRegs[nextCrReg];
-	CrRegAlloc[CrRegAllocPtr].Operand = ap;
-	CrRegAlloc[CrRegAllocPtr].f.isPushed = 'F';
-	nextCrReg++;
-	if (nextCrReg >= NumTempCrRegs() + NumSavedCrRegs()) {// regLastTemp) {
-		CrWrapno++;
-		Crrap[CrWrapno] = CrRegAllocPtr;
-		nextCrReg = 0;// regFirstTemp;		/* wrap around */
-	}
-	if (CrRegAllocPtr++ == MAX_REG_STACK)
+	ap = makereg(next_reg);
+	ap->deep = wrapno * cpu.NumTmpRegs + wrapno_1;
+	if (IsTempReg(ap->preg & VR_MASK))
+		compiler.temp_in_use.add(ap->preg & VR_MASK);
+	else if (IsSavedReg(ap->preg & VR_MASK))
+		compiler.saved_in_use.add(ap->preg & VR_MASK);
+	cpu.regs[next_reg].inUse.add(wrapno);
+	cpu.regs[next_reg].isPushed.remove(wrapno);
+	next_reg = cpu.regs[next_reg].nextreg;
+	wrapno_1++;
+	return (ap);
+}
+
+
+Operand* GetTempCrRegister()
+{
+	return (Register::GetTempCrRegister());
+}
+
+Operand* Register::GetTempCrRegister()
+{
+	Operand* ap;
+	Function* sym = currentFn;
+
+	TRACE(printf("GetTempCrRegister:r%d\r\n", nextCrReg);)
+	if (CrWrapno >= MAX_REG_STACK)
 		fatal("GetTempRegister(): register stack overflow");
-	maxCrRegAllocPtr = max(maxCrRegAllocPtr, CrRegAllocPtr);
+	if (cpu.regs[nextCrReg].inUse.isMember(CrWrapno))
+		SpillCrRegister(makeCrReg(nextCrReg), 0);
+	if (cpu.regs[nextCrReg].isLastTemp) {// regLastTemp) {
+		CrWrapno++;
+		CrWrapno_1 = 0;
+	}
+	ap = makeCrReg(nextCrReg);
+	ap->deep = CrWrapno * cpu.NumTmpCrRegs + CrWrapno_1;
+	compiler.tempCrInUse.add(ap->preg & VR_MASK);
+	if (IsSavedCrReg(ap->preg & VR_MASK))
+		compiler.savedCrInUse.add(ap->preg & VR_MASK);
+	cpu.regs[nextCrReg].inUse.add(CrWrapno);
+	cpu.regs[nextCrReg].isPushed.remove(CrWrapno);
+	cpu.regs[40].inUse.add(CrWrapno);
+	nextCrReg = cpu.regs[nextCrReg].nextreg;
+	CrWrapno_1++;
 	return (ap);
 }
 
@@ -1456,17 +1628,20 @@ void validate(Operand *ap)
 {
 	Function *sym = currentFn;
 	unsigned int frg = (unsigned)0;// regFirstTemp;
+	int ndx;
 
 	if (ap->typep!=&stdvector)
     switch (ap->mode) {
 	case am_reg:
-		if (IsTempReg(ap->preg) && reg_alloc[ap->pdeep].f.isPushed == 'T' ) {
-			LoadRegister(ap->preg, (int) ap->pdeep);
+		if (wrapno > 0) {
+			if (IsTempReg(ap->preg & VR_MASK) && cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno-1))//reg_alloc[ap->pdeep].f.isPushed == 'T') {
+				LoadRegister(ap->preg, (int)ap->pdeep);
 		}
 		break;
 	case amCrReg:
-		if (IsTempCrReg(ap->preg) && CrRegAlloc[ap->pdeep].f.isPushed == 'T') {
-			LoadCrRegister(ap->preg, (int)ap->pdeep);
+		if (CrWrapno > 0) {
+			if (cpu.regs[ap->preg & VR_MASK].isPushed.isMember(CrWrapno-1))
+				LoadCrRegister(ap->preg);
 		}
 		break;
 	case am_fpreg:
@@ -1482,32 +1657,112 @@ void validate(Operand *ap)
 		*/
 		break;
 	case am_indx2:
+		if (wrapno > 0) {
+			if (IsTempReg(ap->preg & VR_MASK) && cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno - 1))//reg_alloc[ap->pdeep].f.isPushed == 'T') {
+				LoadRegister(ap->preg, (int)ap->pdeep);
+			if (IsTempReg(ap->sreg & VR_MASK) && cpu.regs[ap->sreg & VR_MASK].isPushed.isMember(wrapno - 1))//reg_alloc[ap->pdeep].f.isPushed == 'T') {
+				LoadRegister(ap->sreg, (int)ap->pdeep);
+		}
+#if 0
 		if (IsTempReg(ap->preg) && reg_alloc[ap->deep].f.isPushed == 'T') {
 			LoadRegister(ap->preg, (int) ap->deep);
 		}
 		if (IsTempReg(ap->sreg) && reg_alloc[ap->deep2].f.isPushed  == 'T') {
 			LoadRegister(ap->sreg, (int) ap->deep2);
 		}
+#endif
 		break;
   case am_ind:
   case am_indx:
   case am_ainc:
   case am_adec:
-	if (IsTempReg(ap->preg) && reg_alloc[ap->deep].f.isPushed == 'T') {
-		LoadRegister(ap->preg, (int) ap->deep);
-	}
-	break;
+		if (wrapno > 0) {
+			if (IsTempReg(ap->preg & VR_MASK) && cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno - 1))//reg_alloc[ap->pdeep].f.isPushed == 'T') {
+				LoadRegister(ap->preg, (int)ap->pdeep);
+		}
+#if 0
+		if (IsTempReg(ap->preg) && reg_alloc[ap->deep].f.isPushed == 'T') {
+			LoadRegister(ap->preg, (int) ap->deep);
+		}
+#endif
+		break;
   }
 }
 
+#if 0
+static void ReleaseTempRegisterReg(Operand* ap, int regno)
+{
+	int number;
+
+	if (IsTempReg(regno)) {
+		if (compiler.reg_in_use[regno & VR_MASK] == -1)
+			return;
+		if (next_reg == 0) {
+			next_reg = cpu.NumTmpRegs - 1;// regLastTemp;
+			wrapno--;
+		}
+		else
+			next_reg--;
+		number = compiler.reg_in_use[regno & VR_MASK];
+		compiler.reg_in_use[regno & VR_MASK] = -1;
+		if (reg_alloc_ptr-- == 0 && ap->mode == am_reg)
+			fatal("ReleaseTempRegister(): no registers are allocated");
+	}
+	return;
+}
+#endif
+
+static void ReleaseTempRegisterReg(Operand* ap, int regno)
+{
+	int number;
+
+	if (!cpu.regs[ap->preg & VR_MASK].inUse.isMember(wrapno))
+		return;
+	cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
+	if (cpu.regs[next_reg].isFirstTemp) {
+		wrapno--;
+		wrapno_1 = cpu.regs[next_reg].prevreg - next_reg;
+	}
+	next_reg = cpu.regs[next_reg].prevreg;
+	if (wrapno < 0)
+		fatal("ReleaseTempRegister(): no cr registers are allocated");
+}
+
+static void ReleaseTempRegisterCrReg(Operand* ap, int regno)
+{
+	int number;
+	int ii;
+
+	if (!cpu.regs[ap->preg & VR_MASK].inUse.isMember(CrWrapno))
+		return;
+	cpu.regs[ap->preg & VR_MASK].inUse.remove(CrWrapno);
+	// Detect if all ccr regs are no longer in use. If none are in use then the
+	// ccr group register is not in use either. Used to suppress push/pop of
+	// ccr group register.
+	for (ii = 0; ii < cpu.NumRegs; ii++) {
+		if (cpu.regs[ii].cls == rc_ccr) {
+			if (cpu.regs[ii].inUse.isMember(CrWrapno))
+				break;
+		}
+	}
+	if (ii == cpu.NumRegs)
+		cpu.regs[40].inUse.remove(CrWrapno);
+
+	if (cpu.regs[nextCrReg].isFirstTemp)
+		CrWrapno--;
+	nextCrReg = cpu.regs[nextCrReg].prevreg;
+	if (CrWrapno < 0)
+		fatal("ReleaseTempRegister(): no cr registers are allocated");
+}
 
 /*
  * release any temporary registers used in an addressing mode.
  */
 void ReleaseTempRegister(Operand *ap)
 {
-	int nn;
+	int nn, ndx;
   int number;
+	bool inUse;
   Function *sym = currentFn;
 	unsigned int frg = 0;// regFirstTemp;
 
@@ -1522,18 +1777,41 @@ void ReleaseTempRegister(Operand *ap)
 	// is in use until it's released. The in_use flag will cause
 	// validate not to work. Need to keep the value of in_use for later.
 	if (ap->mode == amCrReg) {
-		nn = compiler.CrRegInUse[ap->preg & 0xff];
-		if (ap->typep != &stdvector && ap->mode != am_fpreg)
-			compiler.CrRegInUse[ap->preg & 0xff] = -1;
+		nn = compiler.CrRegInUse[ap->preg & VR_MASK];
+		ndx = IsTempCrReg(ap->preg);
+		inUse = cpu.regs[ap->preg & VR_MASK].inUse.isMember(CrWrapno);
+		if (ap->typep != &stdvector) {
+			compiler.CrRegInUse[ap->preg & VR_MASK] = -1;
+			cpu.regs[ap->preg & VR_MASK].inUse.remove(CrWrapno);
+		}
 		validate(ap);
-		compiler.CrRegInUse[ap->preg & 0xff] = nn;
+		compiler.CrRegInUse[ap->preg & VR_MASK] = nn;
+		if (inUse)
+			cpu.regs[ap->preg & VR_MASK].inUse.add(CrWrapno);
+		else
+			cpu.regs[ap->preg & VR_MASK].inUse.remove(CrWrapno);
 	}
 	else {
+		nn = compiler.CrRegInUse[ap->preg & VR_MASK];
+		ndx = IsTempReg(ap->preg);
+		inUse = cpu.regs[ap->preg & VR_MASK].inUse.isMember(wrapno);
+		if (ap->typep != &stdvector) {
+			compiler.CrRegInUse[ap->preg & VR_MASK] = -1;
+			cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
+	}
+		validate(ap);
+		compiler.CrRegInUse[ap->preg & VR_MASK] = nn;
+		if (inUse)
+			cpu.regs[ap->preg & VR_MASK].inUse.add(wrapno);
+		else
+			cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
+#if 0
 		nn = compiler.reg_in_use[ap->preg];
 		if (ap->typep != &stdvector && ap->mode != am_fpreg)
 			compiler.reg_in_use[ap->preg&VR_MASK] = -1;
 		validate(ap);
 		compiler.reg_in_use[ap->preg&VR_MASK] = nn;
+#endif
 	}
 
 	if (ap->typep==&stdvector) {
@@ -1630,68 +1908,31 @@ void ReleaseTempRegister(Operand *ap)
 		}
 		*/
 		return;
+
 	case amCrReg:
-		if (IsTempCrReg(ap->preg)) {
-			if (compiler.CrRegInUse[ap->preg & 7] == -1)
-				return;
-			if (nextCrReg == 0) {
-				nextCrReg = cpu.NumTmpCrRegs - 1;// regLastTemp;
-				CrWrapno--;
-			}
-			else
-				nextCrReg--;
-			number = compiler.CrRegInUse[ap->preg & 7];
-			compiler.CrRegInUse[ap->preg & 7] = -1;
-			break;
-		}
+		ReleaseTempRegisterCrReg(ap, ap->preg);
 		return;
+
 	case am_ind:
 	case am_indx:
 	case am_ainc:
 	case am_adec:
 	case am_reg:
-common:
-		if (IsTempReg(ap->preg)) {
-			if (compiler.reg_in_use[ap->preg&VR_MASK]==-1)
-				return;
-			if (next_reg == 0) {
-				next_reg = cpu.NumTmpRegs - 1;// regLastTemp;
-				wrapno--;
-			}
-			else
-				next_reg--;
-			number = compiler.reg_in_use[ap->preg&VR_MASK];
-			compiler.reg_in_use[ap->preg&VR_MASK] = -1;
-			break;
-		}
+	common:
+		ReleaseTempRegisterReg(ap, ap->preg);
 		return;
-    case am_indx2:
-		if (IsTempReg(ap->sreg)) {
-			if (compiler.reg_in_use[ap->sreg&VR_MASK]==-1)
-				goto common;
-			if (next_reg == 0) {
-				next_reg = cpu.NumTmpRegs - 1;// regLastTemp;
-				wrapno--;
-			}
-			else
-				next_reg--;
-			number = compiler.reg_in_use[ap->sreg&VR_MASK];
-			compiler.reg_in_use[ap->sreg&VR_MASK] = -1;
-			//break;
-		}
-		goto common;
-    default:
+  case am_indx2:
+		ReleaseTempRegisterReg(ap, ap->sreg);
+		ReleaseTempRegisterReg(ap, ap->preg);
 		return;
-    }
+  default:
+		return;
+  }
  //   /* some consistency checks */
 	//if (number != ap->deep) {
 	//	printf("number %d ap->deep %d\r\n", number, ap->deep);
 	//	//fatal("ReleaseTempRegister()/1");
 	//}
-	if (reg_alloc_ptr-- == 0 && ap->mode == am_reg)
-		fatal("ReleaseTempRegister(): no registers are allocated");
-	if (CrRegAllocPtr-- == 0 && ap->mode == amCrReg)
-		fatal("ReleaseTempRegister(): no cr registers are allocated");
 	//  if (reg_alloc_ptr != number)
 		//fatal("ReleaseTempRegister()/3");
 	//if (reg_alloc[number].f.isPushed=='T')
@@ -1711,6 +1952,8 @@ void ReleaseTempVectorRegister(Operand* ap)
 // Go through the allocated register list and generate a push instruction to
 // put the register on the stack if it isn't already on the stack.
 
+int64_t smask;
+
 int TempInvalidate(int *fsp, int* psp, int* vsp)
 {
   int i;
@@ -1719,8 +1962,12 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	int64_t fpmask = 0;
 	int64_t vmask = 0;
 	int mode;
+	int64_t msk = 0;
 
 	sp = 0;
+	stacked_regs_set->clear();
+	stacked_ccr_regs_set.clear();
+	smask = 0;
 	TRACE(printf("TempInvalidate()\r\n");)
 	save_wrapno = wrapno;
 	saveCrWrapno = CrWrapno;
@@ -1742,7 +1989,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	save_vreg_alloc_ptr = vreg_alloc_ptr;
 	memcpy(save_vreg_alloc, vreg_alloc, sizeof(save_vreg_alloc));
 	memcpy(save_vreg_in_use, vreg_in_use, sizeof(save_vreg_in_use));
-
+#if 0
 	for (sp = i = 0; i < reg_alloc_ptr; i++) {
 		if (reg_alloc[i].f.isPushed == 'F') {
 			mode = reg_alloc[i].Operand->mode;
@@ -1761,6 +2008,36 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 			compiler.reg_in_use[reg_alloc[i].reg&VR_MASK] = -1;
     }
 	}
+#endif
+	for (i = 0; i < cpu.NumRegs; i++) {
+		if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno)) {
+			stacked_regs_set->add(i);
+			smask = smask | (1LL << i);
+		}
+	}
+	if (stacked_regs_set->NumMember() > 2)
+		GenerateMonadic(op_pushm, 0, cg.MakeImmediate(smask));
+	else {
+		for (i = 0; i < cpu.NumRegs; i++) {
+			if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno)) {
+				SpillRegister(makereg(cpu.regs[i].number), i);
+			}
+		}
+	}
+	for (i = 0; i < cpu.NumRegs; i++) {
+		if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno)) {
+			cpu.regs[i].inUse.remove(wrapno);
+			cpu.regs[i].isPushed.add(wrapno);
+		}
+	}
+	/*
+	for (i = 0; i < cpu.NumTmpCrRegs; i++) {
+		if (!cpu.tmpCrRegs[i].isPushed.isMember(CrWrapno)) {
+			SpillCrRegister(makeCrReg(cpu.tmpCrRegs[i].number), i);
+		}
+	}
+	*/
+	/*
 	for (sp = i = 0; i < CrRegAllocPtr; i++) {
 		if (CrRegAlloc[i].f.isPushed == 'F') {
 			mode = CrRegAlloc[i].Operand->mode;
@@ -1770,7 +2047,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 				mask = mask | (1LL << (CrRegAlloc[i].Operand->preg & 0x3f));
 			}
 			CrRegAlloc[i].Operand->mode = mode;
-			//GenerateTempRegPush(reg_alloc[i].reg, /*reg_alloc[i].Operand->mode*/am_reg, i, sp);
+			//GenerateTempRegPush(reg_alloc[i].reg, /reg_alloc[i].Operand->mode/am_reg, i, sp);
 			stackedCrRegs[sp].reg = CrRegAlloc[i].reg;
 			stackedCrRegs[sp].Operand = CrRegAlloc[i].Operand;
 			stackedCrRegs[sp].f.allocnum = i;
@@ -1779,6 +2056,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 			compiler.CrRegInUse[CrRegAlloc[i].reg&VR_MASK] = -1;
 		}
 	}
+	*/
 	for (*fsp = i = 0; i < fpreg_alloc_ptr; i++) {
 		if (fpreg_alloc[i].f.isPushed == 'F') {
 			mode = fpreg_alloc[i].Operand->mode;
@@ -1864,17 +2142,13 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	}
 	*/
 	// Scalar regs
-	wrapno = 0;
+	//wrapno = 0;
 	reg_alloc_ptr = 0;
 	memset(compiler.reg_in_use, -1, sizeof(compiler.reg_in_use));
 	ZeroMemory(reg_alloc, sizeof(reg_alloc));
 	ZeroMemory(rap, sizeof(rap));
 	// Condition regs
-	CrWrapno = 0;
-	CrRegAllocPtr = 0;
-	memset(compiler.CrRegInUse, -1, sizeof(compiler.CrRegInUse));
-	ZeroMemory(CrRegAlloc, sizeof(CrRegAlloc));
-	ZeroMemory(Crrap, sizeof(Crrap));
+//	CrWrapno = 0;
 	// Float
 	fpreg_alloc_ptr = 0;
 	memset(fpreg_in_use, -1, sizeof(fpreg_in_use));
@@ -1915,19 +2189,44 @@ void TempRevalidate(int sp, int fsp, int psp, int vsp)
 	memcpy(fpreg_in_use, save_fpreg_in_use, sizeof(fpreg_in_use));
 	*/
 	mask.clear();
-	for (nn = sp-1; nn >= 0; nn--) {
-		if (!(mask.isMember(stacked_regs[nn].Operand->preg &VR_MASK)))
-			LoadRegister(stacked_regs[nn].Operand->preg&VR_MASK, stacked_regs[nn].f.allocnum);
-		mask.add(stacked_regs[nn].Operand->preg&VR_MASK);
-		//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode*/am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
+	if (stacked_regs_set->NumMember() > 2)
+		GenerateMonadic(op_popm, 0, cg.MakeImmediate(smask));
+	else {
+		for (nn = 63; nn >= 0; nn--)
+			if (stacked_regs_set->isMember(nn))
+				LoadRegister(nn & VR_MASK, 0);
+#if 0
+		for (nn = sp - 1; nn >= 0; nn--) {
+			if (!(mask.isMember(stacked_regs[nn].Operand->preg & VR_MASK)))
+				LoadRegister(stacked_regs[nn].Operand->preg & VR_MASK, stacked_regs[nn].f.allocnum);
+			mask.add(stacked_regs[nn].Operand->preg & VR_MASK);
+			//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode*/am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
+		}
+#endif
 	}
-	CrMask.clear();
+	for (nn = 0; nn < cpu.NumRegs; nn++) {
+		if (stacked_regs_set->isMember(nn)) {
+			cpu.regs[nn].isPushed.remove(wrapno);
+			cpu.regs[nn].inUse.add(wrapno);
+		}
+	}
+	//CrWrapno = saveCrWrapno;
+	//CrMask.clear();
+	/*
+	for (nn = 0; nn < cpu.NumTmpCrRegs; nn++) {
+		if (cpu.tmpCrRegs[nn].isPushed.isMember(CrWrapno)) {
+			LoadCrRegister(cpu.tmpCrRegs[nn].number, nn);// stackedCrRegs[nn].f.allocnum);
+		}
+	}
+	*/
+	/*
 	for (nn = sp - 1; nn >= 0; nn--) {
 		if (!(CrMask.isMember(stackedCrRegs[nn].Operand->preg&VR_MASK)))
 			LoadCrRegister(stackedCrRegs[nn].Operand->preg&7, stackedCrRegs[nn].f.allocnum);
 		CrMask.add(stackedCrRegs[nn].Operand->preg&VR_MASK);
-		//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode*/am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
+		//GenerateTempRegPop(stacked_regs[nn].reg, /*stacked_regs[nn].Operand->mode /am_reg, stacked_regs[nn].f.allocnum,sp-nn-1);
 	}
+	*/
 	fpmask.clear();
 	for (nn = fsp - 1; nn >= 0; nn--) {
 		if (stacked_fpregs[nn].Operand) {
@@ -1951,10 +2250,6 @@ void TempRevalidate(int sp, int fsp, int psp, int vsp)
 	memcpy(rap, save_rap, sizeof(rap));
 	// Condition
 	CrWrapno = saveCrWrapno;
-	CrRegAllocPtr = saveCrRegAllocPtr;
-	memcpy(CrRegAlloc, saveCrRegAlloc, sizeof(CrRegAlloc));
-	memcpy(CrRegInUse, saveCrRegInUse, sizeof(CrRegInUse));
-	memcpy(Crrap, save_Crrap, sizeof(Crrap));
 	// Float
 	fpreg_alloc_ptr = save_fpreg_alloc_ptr;
 	memcpy(fpreg_alloc, save_fpreg_alloc, sizeof(fpreg_alloc));

@@ -226,7 +226,7 @@ void Operand::MakeLegalReg(int flags, int64_t size)
 		GenerateTriadic(op_aslx, 0, ap2, makereg(regZero), cg.MakeImmediate((int64_t)1));
 		break;
 	case amCrReg:
-		GenerateDiadic(op_crext, 0, ap2, this);
+		GenerateTriadic(op_crext, 0, ap2, this, cg.MakeImmediate(2));
 		break;
 	default:
 		cg.GenerateLoad(ap2, this, size, size);
@@ -234,7 +234,7 @@ void Operand::MakeLegalReg(int flags, int64_t size)
 	}
 	if (ap2->preg & rt_vector)
 		mode = am_vreg;
-	else if (ap2->preg & rt_cr)
+	else if (IsTempCrReg(ap2->preg))
 		mode = amCrReg;
 	else
 		mode = am_reg;
@@ -471,6 +471,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 	}
 	if (flags & amCrReg) {
 		MakeLegalCrReg(flags, size);
+		return;
 	}
 	if (flags & am_fpreg)
 	{
@@ -806,6 +807,9 @@ void Operand::store(txtoStream& ofs)
 	case am_preg:
 	case am_fpreg:
 	case amCrReg:
+		ofs.printf("%s", cpu.RegMoniker(preg));
+		break;
+	case amCrgReg:
 		ofs.printf("%s", cpu.RegMoniker(preg));
 		break;
 	case am_ind:

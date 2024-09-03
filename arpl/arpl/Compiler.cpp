@@ -145,7 +145,7 @@ void Compiler::compile()
 		doInitCleanup();
 		dfs.printf("</compile>\n");
 	}
-	catch (C64PException * ex) {
+	catch (ArplException * ex) {
 		dfs.printf(errtext(ex->errnum));
  		dfs.printf("</compile>\n");
 	}

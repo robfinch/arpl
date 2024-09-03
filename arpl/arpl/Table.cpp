@@ -98,7 +98,7 @@ Symbol* TABLE::insert(Symbol *sp)
 
 	if (sp == nullptr || this == nullptr ) {
 	  dfs.printf("Null pointer at insert\n");
-		throw new C64PException(ERR_NULLPOINTER,1);
+		throw new ArplException(ERR_NULLPOINTER,1);
   }
 
   if (this==&tagtable) {
@@ -186,7 +186,7 @@ int TABLE::Find(std::string na,__int16 rettype, TypeArray *typearray, bool exact
   }
 	if (na.length()==0) {
 	  dfs.printf("name is empty string\n");
-		throw new C64PException(ERR_NULLPOINTER,1);
+		throw new ArplException(ERR_NULLPOINTER,1);
   }
 
 	matchno = 0;
@@ -230,7 +230,7 @@ int TABLE::Find(std::string na,__int16 rettype, TypeArray *typearray, bool exact
     thead = thead->nextp;
     if (thead==first) {
       dfs.printf("Circular list.\n");
-      throw new C64PException(ERR_CIRCULAR_LIST,1);
+      throw new ArplException(ERR_CIRCULAR_LIST,1);
     }
   }
   dfs.puts("</Find>\n");
@@ -251,7 +251,7 @@ int TABLE::Find(std::string na,__int16 rettype, TypeArray *typearray, bool exact
 			thead = thead->nextp;
 			if (thead == first) {
 				dfs.printf("Circular list.\n");
-				throw new C64PException(ERR_CIRCULAR_LIST, 1);
+				throw new ArplException(ERR_CIRCULAR_LIST, 1);
 			}
 		}
 	}
@@ -365,7 +365,7 @@ Symbol** TABLE::GetParameters()
 		thead = thead->nextp;
 		if (thead == first) {
 			dfs.printf("Circular list.\n");
-			throw new C64PException(ERR_CIRCULAR_LIST, 1);
+			throw new ArplException(ERR_CIRCULAR_LIST, 1);
 		}
 	}
 	return (&params[0]);
@@ -385,7 +385,7 @@ void TABLE::AddTo(TABLE* dst)
 		thead = next;
 		if (thead == first) {
 			dfs.printf("Circular list.\n");
-			throw new C64PException(ERR_CIRCULAR_LIST, 1);
+			throw new ArplException(ERR_CIRCULAR_LIST, 1);
 		}
 	}
 }

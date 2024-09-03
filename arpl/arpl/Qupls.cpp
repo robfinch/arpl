@@ -2134,7 +2134,7 @@ void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 			if (ip->oper2->offset)
 				ip->oper2->offset->constflag = true;
 		}
-		regs[ap2->preg].isConst = true;
+		regs[ap2->preg].isConst = false;// true;
 		if (ap2->tp) {
 			//				ap2->tp->type = bt_long;
 			//				ap2->tp->size = 16;

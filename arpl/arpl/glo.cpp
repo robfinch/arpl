@@ -27,7 +27,7 @@
 /*      global definitions      */
 
 int syntax;
-char comment_char = '#';
+char comment_char = ';';
 const char* imm_char = "$";
 Compiler compiler;
 int pass;
@@ -228,6 +228,7 @@ int regPP = 56;					// program pointer
 int regZero = 0;
 int regXoffs = 55;
 int regAsm = 58;
+int regFirstTemp = 9;
 int pregSP = 31;
 int pregFP = 30;
 int pregLR = 41;

@@ -92,7 +92,7 @@ void IGraph::AllocVecs()
 int IGraph::BitIndex(int x, int y, int *intndx, int *bitndx)
 {
 	if (x > y)
-		throw new C64PException(ERR_IGNODES, 1);
+		throw new ArplException(ERR_IGNODES, 1);
 	*bitndx = x + (y * y + 1) / 2;
 	*intndx = *bitndx / sizeof(int);
 	*bitndx %= (sizeof(int) * 8);
@@ -213,7 +213,7 @@ void IGraph::Unite(int father, int son)
 	__int16 *tmp;
 
 	if (father > son)
-		throw new C64PException(ERR_IGNODES, 2);
+		throw new ArplException(ERR_IGNODES, 2);
 
 	// Increase the size of the adjacency vector allocation for the father as
 	// the son's vectors will be added to them.

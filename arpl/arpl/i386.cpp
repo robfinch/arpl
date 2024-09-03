@@ -2542,7 +2542,7 @@ void i386CodeGenerator::GenerateLoadConst(Operand* cnst, Operand* ap2)
 		if (ip->oper1)
 			if (ip->oper1->offset)
 				ip->oper1->offset->constflag = true;
-		regs[ap2->preg].isConst = true;
+		regs[ap2->preg].isConst = false; // true;
 		if (ap2->tp) {
 			//				ap2->tp->type = bt_long;
 			//				ap2->tp->size = 16;
@@ -3591,7 +3591,7 @@ char* i386CPU::RegMoniker(int32_t regno)
 		is_float = true;
 		regno &= 0x3f;
 	}
-	if (regno & rt_cr) {
+	if (IsTempCrReg(regno)) {
 		is_cr = true;
 		regno &= 0xfffL;
 	}

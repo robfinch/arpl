@@ -227,7 +227,7 @@ Operand* CodeGenerator::GenerateMux(ENODE* inode, int flags, int64_t size)
 
 	labxit = nextlabel++;
 	if (inode->nodetype != en_safe_cond)
-		throw new C64PException(ERR_MISSING_MUX, 0);
+		throw new ArplException(ERR_MISSING_MUX, 0);
 
 	// Put the node list in the order we need.
 	nn = 0;
@@ -1041,7 +1041,11 @@ Operand *CodeGenerator::GenerateDereference(ENODE *node,int flags,int64_t size, 
 		level--;
 		return (nullptr);
 	}
-	ap1->isPtr = node->p[0]->IsRefType();
+	// Not sure about this. A en_fieldref will point to an en_ref. Field specs
+	// were dereferencing twice, so testing en_fieldref is a hack to prevent that.
+	// Seems to be some other issue in the dereference logic, other dereferences
+	// seem to work.
+	ap1->isPtr = node->p[0]->IsRefType() && node->nodetype != en_fieldref;
 	ap1->rhs = rhs;
 	if(ap1->mode == am_reg)
   {
@@ -1928,7 +1932,7 @@ void CodeGenerator::GenerateLoadConst(Operand *aConst, Operand *ap2)
 		if (ip->oper2)
 			if (ip->oper2->offset)
 				ip->oper2->offset->constflag = true;
-		regs[ap2->preg].isConst = true;
+		regs[ap2->preg].isConst = false;// true;
 			if (ap2->tp) {
 //				ap2->tp->type = bt_long;
 //				ap2->tp->size = 16;
@@ -2327,7 +2331,7 @@ Operand *CodeGenerator::GenerateAssign(ENODE *node, int flags, int64_t size)
 				mr->val128 = ap2->offset->i128;
 			}
 			mr->offset = ap2->offset;
-			mr->isConst = true;
+			mr->isConst = false;	//true;
 			break;
 
 		default:
@@ -2658,11 +2662,11 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 	compiler.expr_depth++;
 	if (compiler.expr_depth > 150) {
 		error(ERR_EXPRTOOCOMPLEX);
-		throw new C64PException(ERR_EXPRTOOCOMPLEX, 100);
+		throw new ArplException(ERR_EXPRTOOCOMPLEX, 100);
 	}
 	if( node == (ENODE *)NULL )
   {
-		throw new C64PException(ERR_NULLPOINTER, 'G');
+		throw new ArplException(ERR_NULLPOINTER, 'G');
 		numDiags++;
         printf("DIAG - null node in GenerateExpression.\n");
 		if (numDiags > 100)
@@ -3888,7 +3892,7 @@ bool CodeGenerator::IsPascal(ENODE* ep)
 	level++;
 	if (level > 150) {
 		error(ERR_EXPRTOOCOMPLEX);
-		throw new C64PException(ERR_EXPRTOOCOMPLEX, 99);
+		throw new ArplException(ERR_EXPRTOOCOMPLEX, 99);
 	}
 	if (ep == nullptr) {
 		level--;
@@ -4225,7 +4229,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	TYP* tp;
 
 	if (func == nullptr)
-		throw new C64PException(ERR_NULLPOINTER, 0);
+		throw new ArplException(ERR_NULLPOINTER, 0);
 
 	// Generate the return expression and force the result into r1.
 	if (stmt != NULL && stmt->exp != NULL)
@@ -4278,7 +4282,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 							GenerateAddOnto(makereg(regSP), MakeImmediate(cpu.sizeOfWord * 3));
 					}
 					else
-						throw new C64PException(ERR_MISSING_HIDDEN_STRUCTPTR,0);
+						throw new ArplException(ERR_MISSING_HIDDEN_STRUCTPTR,0);
 				}
 				else {
 					if (ap->isPtr) {
@@ -4388,11 +4392,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 	if (!cpu.SupportsLeave) {
 		RestoreRegisterVars(func);
 		func->UnlinkStack(0);
-#ifdef BIGFOOT
-		toAdd = func->has_return_block ? compiler.GetReturnBlockSize()-cpu.sizeOfWord : 0;
-#else
 		toAdd = func->has_return_block ? compiler.GetReturnBlockSize() : 0;
-#endif
 	}
 	if (!func->alstk) {
 		// The size of the return block is included in the link instruction, so the
@@ -5365,5 +5365,82 @@ Operand* CodeGenerator::GenerateIndex(ENODE* node, bool neg)
 	}
 	ndxlvl--;
 	return (ap1);                     /* return indexed */
+}
+
+void CodeGenerator::GenerateUnlinkStack(Function* func, int64_t amt)
+{
+	Operand* ap;
+	/* auto news are garbage collected
+	if (hasAutonew) {
+		GenerateMonadic(op_call, 0, MakeStringAsNameConst("__autodel",codeseg));
+		GenerateMonadic(op_bex, 0, MakeDataLabel(throwlab));
+	}
+	*/
+	if (!cpu.SupportsLeave)
+		GenerateMonadic(op_hint, 0, MakeImmediate(begin_stack_unlink));
+	if (cpu.SupportsLeave) {
+	}
+	else if (!func->IsLeaf) {
+		//		if (doesJAL) {	// ??? Not a leaf, so it must be transferring control
+		if (func->alstk) {
+			ap = GetTempRegister();
+			cg.GenerateLoad(ap, MakeIndexed(1 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+			GenerateDiadic(op_move, 0, makereg(regLR), ap);
+			ReleaseTempRegister(ap);
+			//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
+			if (func->IsFar) {
+				ap = GetTempRegister();
+				cg.GenerateLoad(ap, MakeIndexed(3 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+				GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3103));
+				ReleaseTempRegister(ap);
+			}
+			cg.GenerateMove(makereg(regSP), makereg(regFP));
+			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+		}
+		//		}
+	}
+	// Else leaf routine, reverse any stack allocation but do not pop link register
+	else {
+		if (func->alstk) {
+			cg.GenerateMove(makereg(regSP), makereg(regFP));
+			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+		}
+	}
+	cg.GenerateUnlink(amt);
+	/*
+	if (cpu.SupportsLeave) {
+	}
+	else if (!IsLeaf && doesJAL) {
+		if (alstk) {
+			cg.GenerateLoad(makereg(regLR), MakeIndexed(2 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+			//GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3102));
+			if (IsFar) {
+				ap = GetTempRegister();
+				cg.GenerateLoad(ap, MakeIndexed(3 * cpu.sizeOfWord, regFP), cpu.sizeOfWord, cpu.sizeOfWord);
+				GenerateTriadic(op_csrrw, 0, makereg(regZero), ap, MakeImmediate(0x3103));
+				ReleaseTempRegister(ap);
+			}
+			cg.GenerateMove(makereg(regSP), makereg(regFP));
+			cg.GenerateLoad(makereg(regFP), MakeIndirect(regSP), cpu.sizeOfWord, cpu.sizeOfWord);
+		}
+	}
+	//	GenerateTriadic(op_add,0,makereg(regSP),makereg(regSP),MakeImmediate(3*cpu.sizeOfWord));
+	*/
+	if (!cpu.SupportsLeave)
+		GenerateMonadic(op_hint, 0, MakeImmediate(end_stack_unlink));
+}
+
+int64_t CodeGenerator::GetSavedRegisterList(CSet* rmask)
+{
+	int cnt;
+	int nn;
+	int64_t mask = 0;
+
+	if (rmask->NumMember()) {
+		for (nn = 0; nn < nregs; nn++)
+			if (rmask->isMember(nn))
+				mask = mask | (1LL << nn);
+	}
+	return (mask);
 }
 

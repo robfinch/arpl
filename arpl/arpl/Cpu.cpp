@@ -53,15 +53,15 @@ void CPU::SetRealRegisters()
 	regXoffs = 10;
 	nregs = 64;
 	for (n = 0; n < nregs; n++) {
-		regs[n].number = n;
-		regs[n].assigned = false;
-		regs[n].isConst = false;
-		regs[n].modified = false;
-		regs[n].offset = nullptr;
-		regs[n].IsArg = false;
-		regs[n].isGP = (n < 32);
-		regs[n].isFP = (n >= 32 && n < 64);
-		regs[n].isPosit = (n >= 64 && n < 96);
+		::regs[n].number = n;
+		::regs[n].assigned = false;
+		::regs[n].isConst = false;
+		::regs[n].modified = false;
+		::regs[n].offset = nullptr;
+		::regs[n].IsArg = false;
+		::regs[n].isGP = (n < 32);
+		::regs[n].isFP = (n >= 32 && n < 64);
+		::regs[n].isPosit = (n >= 64 && n < 96);
 
 		vregs[n].number = n;
 		vregs[n].assigned = false;
@@ -89,12 +89,12 @@ void CPU::SetVirtualRegisters()
 	regZero = 0;
 	nregs = 1024;
 	for (n = 0; n < nregs; n++) {
-		regs[n].number = n;
-		regs[n].assigned = false;
-		regs[n].isConst = false;
-		regs[n].modified = false;
-		regs[n].offset = nullptr;
-		regs[n].IsArg = false;
+		::regs[n].number = n;
+		::regs[n].assigned = false;
+		::regs[n].isConst = false;
+		::regs[n].modified = false;
+		::regs[n].offset = nullptr;
+		::regs[n].IsArg = false;
 
 		vregs[n].number = n;
 		vregs[n].assigned = false;
@@ -166,7 +166,7 @@ char* CPU::RegMoniker(int32_t regno)
 		is_float = true;
 		regno &= 0x3f;
 	}
-	if (regno & rt_cr) {
+	if (IsTempCrReg(regno)) {
 		is_cr = true;
 		regno &= 0xfffL;
 	}

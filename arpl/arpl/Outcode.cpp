@@ -749,11 +749,11 @@ char *put_label(txtoStream& tfs, int64_t lab, char *nm, char *ns, char d, int64_
 			//sprintf_s(buf, sizeof(buf), "%s_%s:\n", nm, ns);
 			switch (syntax) {
 			case MOT:
-				tfs.printf((char*)"%s:	; %s\n", (char*)buf, (char*)nm);
+				tfs.printf((char*)"%s:	\n; %s\n", (char*)buf, (char*)nm);
 				break;
 			default:
 				tfs.printf((char*)"%s:	", (char*)buf);
-				tfs.printf((char*)"%c ", comment_char);
+				tfs.printf((char*)"\n%c ", comment_char);
 				tfs.printf((char*)"%s\n", (char*)nm);
 			}
 		}
@@ -789,10 +789,10 @@ char *put_label(txtoStream& tfs, int64_t lab, char *nm, char *ns, char d, int64_
 			tfs.printf("%s: ", buf);
 			switch (syntax) {
 			case MOT:
-				tfs.printf((char*)"; %s\n", (char*)nm);
+				tfs.printf((char*)"\n; %s\n", (char*)nm);
 				break;
 			default:
-				tfs.printf((char*)"%c %s\n", comment_char, (char*)nm);
+				tfs.printf((char*)"\n%c %s\n", comment_char, (char*)nm);
 			}
 		}
 		/*

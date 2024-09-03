@@ -68,6 +68,10 @@ int main(int argc, char **argv)
 	Int128 aa, bb, cc, qq, rr;
 	int xx;
 
+	save_mask = new CSet();
+	fpsave_mask = new CSet();
+	psave_mask = new CSet();
+
 	syntax = STD;
 	aa = Int128::Convert(0x769bdd5fLL);
 	bb = Int128::Convert(0xbcc6f09eLL);
@@ -321,12 +325,12 @@ int main(int argc, char **argv)
 	cpu.SupportsPush = false;
 	cpu.SupportsLink = false;
 	cpu.SupportsUnlink = false;
-	cpu.SupportsBitfield = false;
+	cpu.SupportsBitfield = true;
 	cpu.SupportsLDM = true;
 	cpu.SupportsSTM = true;
 	cpu.SupportsPtrdif = false;
-	cpu.SupportsEnter = false;
-	cpu.SupportsLeave = false;
+	cpu.SupportsEnter = true;
+	cpu.SupportsLeave = true;
 	cpu.SupportsIndexed = true;
 	cpu.SupportsTrinary = false;
 	cpu.Addsi = false;

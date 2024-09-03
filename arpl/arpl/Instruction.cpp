@@ -121,6 +121,8 @@ bool Instruction::IsLoad()
 		|| opcode == op_fldo
 		|| opcode == op_pldo
 		|| opcode == op_mov
+		|| opcode == op_pop
+		|| opcode == op_popm
 		)
 		return (true);
 	return (false);
@@ -143,6 +145,8 @@ bool Instruction::IsIntegerLoad()
 		|| opcode == op_ldpu
 		|| opcode == op_lddr
 		|| opcode == op_mov
+		|| opcode == op_pop
+		|| opcode == op_popm
 		)
 		return (true);
 	return (false);
@@ -172,6 +176,8 @@ bool Instruction::IsStore()
 		|| opcode == op_stit
 		|| opcode == op_stio
 		|| opcode == op_mov
+		|| opcode == op_push
+		|| opcode == op_pushm
 		)
 		return (true);
 	return (false);

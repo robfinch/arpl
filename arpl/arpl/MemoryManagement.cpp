@@ -180,7 +180,7 @@ Symbol* Symbol::alloc()
   if (compiler.symTables[compiler.symnum >> 15] == nullptr) {
     if ((compiler.symnum >> 15) > 9) {
       dfs.printf("Too many symbols.\n");
-      throw new C64PException(ERR_TOOMANY_SYMBOLS, 1);
+      throw new ArplException(ERR_TOOMANY_SYMBOLS, 1);
     }
     compiler.symTables[compiler.symnum >> 15] = (Symbol*)calloc(32768, sizeof(Symbol));
   }
@@ -215,7 +215,7 @@ TYP *allocTYP()
   compiler.typenum++;
 	if (compiler.typenum > 32760) {
 	  dfs.printf("Too many types\n");
-    throw new C64PException(ERR_TOOMANY_SYMBOLS,1);
+    throw new ArplException(ERR_TOOMANY_SYMBOLS,1);
   }
 	return tp;
 };

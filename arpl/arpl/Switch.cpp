@@ -108,7 +108,7 @@ int Statement::CheckForDuplicateCases()
 					if (top->casevals[cnt] == buf[cnt2])
 						return (TRUE);
 				if (ndx > 999)
-					throw new C64PException(ERR_TOOMANYCASECONSTANTS, 1);
+					throw new ArplException(ERR_TOOMANYCASECONSTANTS, 1);
 				buf[ndx] = top->casevals[cnt];
 				ndx++;
 			}

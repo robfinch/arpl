@@ -82,7 +82,7 @@ CSE *CSETable::InsertNode(ENODE *node, int duse, bool *first)
 	if ((csp = Search(node)) == nullptr) {   /* add to tree */
 		*first = true;
 		if (csendx > 499)
-			throw new C64PException(ERR_CSETABLE, 0x01);
+			throw new ArplException(ERR_CSETABLE, 0x01);
 		csp = &table[csendx];
 		ZeroMemory(csp, sizeof(CSE));
 		csendx++;

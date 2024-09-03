@@ -147,7 +147,7 @@ int GetPtrSize()
 static void CheckPtr(void* tp)
 {
 	if (tp == nullptr)
-		throw new C64PException(ERR_NULLPOINTER, 5);
+		throw new ArplException(ERR_NULLPOINTER, 5);
 }
 
 /*
@@ -672,7 +672,7 @@ TYP* Expression::AddRef(ENODE **node, TYP *tp)
 
   dfs.puts("<Deref>");
   if (tp==nullptr || node==nullptr || *node==nullptr)
-    throw new C64PException(ERR_NULLPOINTER,8);
+    throw new ArplException(ERR_NULLPOINTER,8);
 	dfs.puts(tp->ToString());
 	sp = (*node)->sym;
 	switch(tp->type) {
@@ -1005,7 +1005,7 @@ TYP *Expression::nameref2(std::string name, ENODE **node,int nt,bool alloc,TypeA
 		NextToken();
 xit:
 	if (*node == nullptr)
-		throw new C64PException(1, 2);
+		throw new ArplException(1, 2);
 	(*node)->sym = sp;
 	if (sp) {
 		if (sp->fi)
@@ -2356,7 +2356,7 @@ TYP *Expression::ParseAddOps(ENODE **node, Symbol* symi)
     NextToken();
     tp2 = ParseMultOps(&ep2, symi);
 		if (tp2==nullptr)
-			throw new C64PException(ERR_NULLPOINTER,1);
+			throw new ArplException(ERR_NULLPOINTER,1);
 		isScalar = !tp2->IsVectorType();
     if( tp2 == 0 ) {
       error(ERR_IDEXPECT);
@@ -3325,7 +3325,7 @@ TYP *Expression::ParseNonCommaExpression(ENODE **node, Symbol* symi)
 		if (*node)
 			(*node)->SetType(tp);
 	}
-	catch (C64PException* exc) {
+	catch (ArplException* exc) {
 	}
 	Leave("</NonCommaExpression>", tp ? tp->type : 0);
 	return (tp);
@@ -3422,7 +3422,7 @@ TYP *Expression::ParseExpression(ENODE **node, Symbol* symi)
 			val = tp->type;
 		}
 	}
-	catch (C64PException* exc) {
+	catch (ArplException* exc) {
 	}
 	Leave("</Expression>", val);
 	return (tp);
