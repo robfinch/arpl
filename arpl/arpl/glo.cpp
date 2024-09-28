@@ -34,7 +34,7 @@ int pass;
 int maxPn = 15;
 int gCpu = 5;
 #ifdef QUPLS
-CPU cpu;
+QuplsCPU cpu;
 int regTS = 52;
 int regPC = 34;
 int regSP = 31;

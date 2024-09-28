@@ -2,7 +2,7 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>+b -w -S -finline0 -fno-exceptions xmodem.a</LocalDebuggerCommandArguments>
-    <LocalDebuggerWorkingDirectory>..\..\..\Bigfoot\software\boot</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>..\..\..\Qupls\software\boot</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

@@ -266,7 +266,7 @@ extern Map map;
 extern int optimized;
 extern short int typ_sp;
 #ifdef QUPLS
-extern CPU cpu;
+extern QuplsCPU cpu;
 extern QuplsCodeGenerator cg;
 extern QuplsStatementGenerator sg;
 #endif

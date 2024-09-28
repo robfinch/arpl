@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 	cpu.fileExt = ".asm";
 	cpu.lea_op = op_lda;
 	cpu.pagesize = 14;
-	cpu.RIimmSize = 24;
+	cpu.RIimmSize = 32;
 	cpu.cache_line_size = 6;
 	cpu.code_align = 6;					// power of two
 	cpu.SupportsBand = false;

@@ -28,11 +28,11 @@
 //
 enum e_cpu { thor, qupls, riscv, bigfoot, i386 };
 //#define THOR	1
-//#define QUPLS	1
+#define QUPLS	1
 //#define QUPLS40 1
 //#define RISCV 5
 //#define I386 386
-#define BIGFOOT 999
+//#define BIGFOOT 999
 
 enum e_bt {
 	bt_none,

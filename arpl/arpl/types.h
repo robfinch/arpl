@@ -3019,11 +3019,14 @@ public:
 
 class QuplsCPU : public CPU
 {
+public:
 	QuplsCPU();
+	virtual char* RegMoniker(int32_t regno);
 };
 
 class RiscvCPU : public CPU
 {
+public:
 	RiscvCPU();
 };
 

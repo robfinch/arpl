@@ -31,6 +31,9 @@ extern i386CPU cpu;
 #ifdef BIGFOOT
 extern BigfootCPU cpu;
 #endif
+#ifdef QUPLS
+extern QuplsCPU cpu;
+#endif
 extern int lstackptr;
 extern char* lptr;
 extern int options(char *);
