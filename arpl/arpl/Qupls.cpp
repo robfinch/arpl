@@ -78,8 +78,8 @@ static Instruction QuplsInsnTbl[] =
 { "bit",op_bit,1,1,false,am_creg,am_reg,am_reg | am_imm,0 },
 { "ble", op_ble, 3,0,false,am_reg,am_reg,am_direct,0 },
 { "bleu", op_bleu,3,0,false,am_reg,am_reg,am_direct,0 },
-{ "blt", op_blt,3,0,false,am_reg,am_direct,0,0 },
-{ "bltu", op_bltu,3,0,false,am_reg,am_direct,0,0 },
+{ "blt", op_blt,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bltu", op_bltu,3,0,false,am_reg,am_reg,am_direct,0 },
 { "bmap", op_bmap,1,0,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "bmi", op_bmi,2,0,false,am_reg,am_direct,0,0 },
 { "bne", op_bne,3,0,false,am_reg,am_reg,am_direct,0 },
@@ -172,6 +172,7 @@ static Instruction QuplsInsnTbl[] =
 { "gtu",op_gtu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
 { "hint", op_hint,0 },
 { "hint2",op_hint2,0 },
+{ "iblt", op_iblt,3,0,false,am_reg,am_reg,am_direct,0 },
 { "inc", op_inc,4,0,true,am_i5,am_mem,0,0 },
 { "iret", op_iret,2,0,false,0,0,0,0 },
 { "isnull", op_isnullptr,1,1,false,am_reg,am_reg,0,0 },
@@ -472,7 +473,7 @@ char* QuplsCPU::RegMoniker(int32_t regno)
 		sprintf_s(&buf[n][0], 20, "%%cr%d", regno & 7);
 	}
 	else if (rg = IsTempReg(regno)) {
-		sprintf_s(&buf[n][0], 20, "%%t%d", rg - 9);// tmpregs[rg - 1]);
+		sprintf_s(&buf[n][0], 20, "%%t%d", rg - 1);// tmpregs[rg - 1]);
 	}
 	else if (rg = IsArgReg(regno)) {
 		sprintf_s(&buf[n][0], 20, "%%a%d", rg - 1);// tmpregs[rg - 1]);
@@ -514,6 +515,11 @@ char* QuplsCPU::RegMoniker(int32_t regno)
 		}
 	return &buf[n][0];
 }
+
+void QuplsCodeGenerator::banner()
+{
+	printf("Qupls Code Generator v0.01\n");
+};
 
 
 void QuplsCodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)

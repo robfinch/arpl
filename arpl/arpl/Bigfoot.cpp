@@ -495,13 +495,13 @@ char* BigfootCPU::RegMoniker(int32_t regno)
 		else if (regno == regSP)
 			sprintf_s(&buf[n][0], 20, "%%sp");
 		else if (regno == regLR)
-			sprintf_s(&buf[n][0], 20, "lr0");
+			sprintf_s(&buf[n][0], 20, "%%lr0");
 		else if (regno == regLR + 1)
-			sprintf_s(&buf[n][0], 20, "lr1");
+			sprintf_s(&buf[n][0], 20, "%%lr1");
 		else if (regno == regLR + 2)
-			sprintf_s(&buf[n][0], 20, "lr2");
+			sprintf_s(&buf[n][0], 20, "%%lr2");
 		else if (regno == regLR + 3)
-			sprintf_s(&buf[n][0], 20, "lr3");
+			sprintf_s(&buf[n][0], 20, "%%lr3");
 		else if (regno == 0) {
 			sprintf_s(&buf[n][0], 20, "%%r%d", regno);
 		}

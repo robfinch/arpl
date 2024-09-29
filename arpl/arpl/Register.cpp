@@ -201,6 +201,19 @@ void CPU::InitRegs()
 	}
 
 #ifdef QUPLS
+	for (ii = 0; ii < 64; ii++) {
+		cpu.regs[ii].number = 0;
+		cpu.regs[ii].isCr = false;
+		cpu.regs[ii].isCrg = false;
+		cpu.regs[ii].isArg = false;
+		cpu.regs[ii].isTemp = false;
+		cpu.regs[ii].isSaved = false;
+		cpu.regs[ii].inUse.clear();
+		cpu.regs[ii].isPushed.clear();
+		if (ii < 32)
+			cpu.regs[ii].cls = rc_gpr;
+	}
+
 	cpu.NumRegs = 32;
 	cpu.NumArgRegs = 8;
 	cpu.argregs[0] = 1;
@@ -378,9 +391,9 @@ void CPU::InitRegs()
 	cpu.tmpregs[6] = 15;
 	cpu.tmpregs[7] = 16;
 	cpu.tmpregs[8] = 17;
+	cpu.tmpregs[9] = 18;
 
 	// These are saved regs.
-	cpu.tmpregs[9] = 18;
 	cpu.tmpregs[10] = 19;
 	cpu.tmpregs[11] = 20;
 	cpu.tmpregs[12] = 21;
@@ -388,6 +401,8 @@ void CPU::InitRegs()
 	cpu.tmpregs[14] = 23;
 	cpu.tmpregs[15] = 24;
 	cpu.tmpregs[16] = 25;
+	cpu.tmpregs[17] = 26;
+	cpu.tmpregs[18] = 27;
 
 	cpu.NumvTmpRegs = 12;
 	cpu.vtmpregs[0] = 4;
@@ -463,22 +478,40 @@ void CPU::InitRegs()
 	cpu.regs[18].nextreg = 9;
 	cpu.regs[19].isSaved = true;
 	cpu.regs[19].number = 19;
+	cpu.regs[19].prevreg = 27;
+	cpu.regs[19].nextreg = 20;
 	cpu.regs[20].isSaved = true;
 	cpu.regs[20].number = 20;
+	cpu.regs[20].prevreg = 19;
+	cpu.regs[20].nextreg = 21;
 	cpu.regs[21].isSaved = true;
 	cpu.regs[21].number = 21;
+	cpu.regs[21].prevreg = 20;
+	cpu.regs[21].nextreg = 22;
 	cpu.regs[22].isSaved = true;
 	cpu.regs[22].number = 2;
+	cpu.regs[22].prevreg = 21;
+	cpu.regs[22].nextreg = 23;
 	cpu.regs[23].isSaved = true;
 	cpu.regs[23].number = 23;
+	cpu.regs[23].prevreg = 22;
+	cpu.regs[23].nextreg = 24;
 	cpu.regs[24].isSaved = true;
 	cpu.regs[24].number = 24;
+	cpu.regs[24].prevreg = 23;
+	cpu.regs[24].nextreg = 25;
 	cpu.regs[25].isSaved = true;
 	cpu.regs[25].number = 25;
+	cpu.regs[25].prevreg = 24;
+	cpu.regs[25].nextreg = 26;
 	cpu.regs[26].isSaved = true;
 	cpu.regs[26].number = 26;
+	cpu.regs[26].prevreg = 25;
+	cpu.regs[26].nextreg = 27;
 	cpu.regs[27].isSaved = true;
 	cpu.regs[27].number = 27;
+	cpu.regs[27].prevreg = 26;
+	cpu.regs[27].nextreg = 19;
 	cpu.regs[32].isCr = true;
 	cpu.regs[32].number = 32;
 	cpu.regs[33].isCr = true;
@@ -812,16 +845,16 @@ void CPU::InitRegs()
 #endif
 
 #ifdef QUPLS
-	cpu.NumSavedRegs = 8;
-	cpu.saved_regs[0] = 18;
-	cpu.saved_regs[1] = 19;
-	cpu.saved_regs[2] = 20;
-	cpu.saved_regs[3] = 21;
-	cpu.saved_regs[4] = 22;
-	cpu.saved_regs[5] = 23;
-	cpu.saved_regs[6] = 24;
-	cpu.saved_regs[7] = 25;
-	cpu.saved_regs[8] = 26;
+	cpu.NumSavedRegs = 9;
+	cpu.saved_regs[0] = 19;
+	cpu.saved_regs[1] = 20;
+	cpu.saved_regs[2] = 21;
+	cpu.saved_regs[3] = 22;
+	cpu.saved_regs[4] = 23;
+	cpu.saved_regs[5] = 24;
+	cpu.saved_regs[6] = 25;
+	cpu.saved_regs[7] = 26;
+	cpu.saved_regs[8] = 27;
 	cpu.saved_regs[9] = 0;
 	cpu.saved_regs[10] = 0;
 	cpu.saved_regs[11] = 0;
@@ -1131,8 +1164,7 @@ int IsTempReg(int rg)
 {
 	int nn;
 
-	return ((cpu.regs[rg].isTemp && !cpu.regs[rg].isCr) ? rg : 0);
-
+//	return ((cpu.regs[rg].isTemp && !cpu.regs[rg].isCr) ? rg : 0);
 	for (nn = 0; nn < cpu.NumTmpRegs; nn++) {
 		if (rg == cpu.tmpregs[nn])// || rg==cpu.vtmpregs[nn])
 			return (nn+1);
@@ -1144,7 +1176,7 @@ int IsTempCrReg(int rg)
 {
 	int nn;
 
-	return (cpu.regs[rg].isCr && cpu.regs[rg].isTemp);
+//	return (cpu.regs[rg].isCr && cpu.regs[rg].isTemp);
 	for (nn = 0; nn < cpu.NumTmpCrRegs; nn++) {
 		if (rg == cpu.tmpCrRegs[nn].number)// || rg==cpu.vtmpregs[nn])
 			return (nn + 1);
@@ -1167,7 +1199,7 @@ int IsArgReg(int rg)
 {
 	int nn;
 
-	return (cpu.regs[rg].isArg);
+//	return (cpu.regs[rg].isArg);
 	for (nn = 0; nn < cpu.NumArgRegs; nn++) {
 		if (rg == cpu.argregs[nn])// || rg == cpu.vargregs[nn])
 			return (nn + 1);
@@ -1189,8 +1221,11 @@ int IsFargReg(int rg)
 int IsSavedReg(int rg)
 {
 	int nn;
-
-	return (cpu.regs[rg].isSaved && !cpu.regs[rg].isCr);
+/*
+	if (cpu.regs[rg].isSaved && !cpu.regs[rg].isCr);
+		return (&cpu.regs[rg]);
+	return (nullptr);
+*/
 	for (nn = 0; nn < cpu.NumSavedRegs; nn++) {
 		if (rg == cpu.saved_regs[nn])// || rg == cpu.vsaved_regs[nn])
 			return (nn + 1);

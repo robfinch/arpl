@@ -1636,6 +1636,7 @@ public:
 class QuplsCodeGenerator : public CodeGenerator
 {
 public:
+	void banner();
 	Operand* MakeBoolean(Operand* oper);
 	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
 	void GenerateLea(Operand* ap1, Operand* ap2);
@@ -3008,7 +3009,7 @@ public:
 	Instruction* itbl;
 	int itbl_cnt;
 	CPU();
-	void InitRegs();
+	virtual void InitRegs();
 	int GetTypePrecision(e_bt typ);
 	int GetTypeSize(e_bt typ);
 	virtual int ReturnBlockSize() {
@@ -3021,7 +3022,7 @@ class QuplsCPU : public CPU
 {
 public:
 	QuplsCPU();
-	virtual char* RegMoniker(int32_t regno);
+	char* RegMoniker(int32_t regno);
 };
 
 class RiscvCPU : public CPU

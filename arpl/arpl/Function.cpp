@@ -1315,8 +1315,9 @@ void Function::BuildParameterList(int *num, int *numa, int* ellipos)
 	this->hasParameters = true;
 	if (opt_vreg)
 		cpu.SetVirtualRegisters();
-	poffset = 0;// compiler.GetReturnBlockSize();
-				//	sp->parms = (SYM *)NULL;
+	//poffset = 0;// compiler.GetReturnBlockSize();
+	poffset = cpu.ReturnBlockSize();
+	//	sp->parms = (SYM *)NULL;
 	old_nparms = nparms;
 	for (np = 0; np < nparms; np++)
 		oldnames[np] = names[np];
