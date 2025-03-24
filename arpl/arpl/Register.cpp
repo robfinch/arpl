@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -200,6 +200,48 @@ void CPU::InitRegs()
 			cpu.regs[ii].cls = rc_ccrg;
 	}
 
+#ifdef LB650
+	for (ii = 0; ii < 64; ii++) {
+		cpu.regs[ii].number = 0;
+		cpu.regs[ii].isCr = false;
+		cpu.regs[ii].isCrg = false;
+		cpu.regs[ii].isArg = false;
+		cpu.regs[ii].isTemp = false;
+		cpu.regs[ii].isSaved = false;
+		cpu.regs[ii].inUse.clear();
+		cpu.regs[ii].isPushed.clear();
+		if (ii < 32)
+			cpu.regs[ii].cls = rc_gpr;
+	}
+
+	cpu.NumRegs = 32;
+	cpu.NumArgRegs = 8;
+	cpu.argregs[0] = 1;
+	cpu.argregs[1] = 2;
+	cpu.argregs[2] = 3;
+	cpu.argregs[3] = 4;
+	cpu.argregs[4] = 5;
+	cpu.argregs[5] = 6;
+	cpu.argregs[6] = 7;
+	cpu.argregs[7] = 8;
+	cpu.argregs[8] = 0;
+	cpu.argregs[9] = 0;
+	cpu.argregs[10] = 0;
+
+	cpu.NumvArgRegs = 10;
+	cpu.vargregs[0] = 1;
+	cpu.vargregs[1] = 2;
+	cpu.vargregs[2] = 3;
+	cpu.vargregs[3] = 40;
+	cpu.vargregs[4] = 41;
+	cpu.vargregs[5] = 42;
+	cpu.vargregs[6] = 43;
+	cpu.vargregs[7] = 44;
+	cpu.vargregs[8] = 45;
+	cpu.vargregs[9] = 46;
+	cpu.vargregs[10] = 47;
+
+#endif
 #ifdef QUPLS
 	for (ii = 0; ii < 64; ii++) {
 		cpu.regs[ii].number = 0;
@@ -380,6 +422,171 @@ void CPU::InitRegs()
 
 #endif
 
+#ifdef LB650
+	cpu.NumTmpRegs = 9;
+	cpu.tmpregs[0] = 9;
+	cpu.tmpregs[1] = 10;
+	cpu.tmpregs[2] = 11;
+	cpu.tmpregs[3] = 12;
+	cpu.tmpregs[4] = 13;
+	cpu.tmpregs[5] = 14;
+	cpu.tmpregs[6] = 15;
+	cpu.tmpregs[7] = 16;
+	cpu.tmpregs[8] = 17;
+	cpu.tmpregs[9] = 18;
+
+	// These are saved regs.
+	cpu.tmpregs[10] = 19;
+	cpu.tmpregs[11] = 20;
+	cpu.tmpregs[12] = 21;
+	cpu.tmpregs[13] = 22;
+	cpu.tmpregs[14] = 23;
+	cpu.tmpregs[15] = 24;
+	cpu.tmpregs[16] = 25;
+	cpu.tmpregs[17] = 26;
+	cpu.tmpregs[18] = 27;
+
+	cpu.NumvTmpRegs = 12;
+	cpu.vtmpregs[0] = 4;
+	cpu.vtmpregs[1] = 5;
+	cpu.vtmpregs[2] = 6;
+	cpu.vtmpregs[3] = 7;
+	cpu.vtmpregs[4] = 8;
+	cpu.vtmpregs[5] = 9;
+	cpu.vtmpregs[6] = 10;
+	cpu.vtmpregs[7] = 11;
+	cpu.vtmpregs[8] = 12;
+	cpu.vtmpregs[9] = 13;
+	cpu.vtmpregs[10] = 14;
+	cpu.vtmpregs[11] = 15;
+
+	cpu.regs[1].isArg = true;
+	cpu.regs[1].number = 1;
+	cpu.regs[2].isArg = true;
+	cpu.regs[2].number = 2;
+	cpu.regs[3].isArg = true;
+	cpu.regs[3].number = 3;
+	cpu.regs[4].isArg = true;
+	cpu.regs[4].number = 4;
+	cpu.regs[5].isArg = true;
+	cpu.regs[5].number = 5;
+	cpu.regs[6].isArg = true;
+	cpu.regs[6].number = 6;
+	cpu.regs[7].isArg = true;
+	cpu.regs[7].number = 7;
+	cpu.regs[8].isArg = true;
+	cpu.regs[8].number = 8;
+	cpu.regs[9].isTemp = true;
+	cpu.regs[9].isFirstTemp = true;
+	cpu.regs[9].number = 9;
+	cpu.regs[9].prevreg = 18;
+	cpu.regs[9].nextreg = 10;
+	cpu.regs[10].isTemp = true;
+	cpu.regs[10].number = 10;
+	cpu.regs[10].prevreg = 9;
+	cpu.regs[10].nextreg = 11;
+	cpu.regs[11].isTemp = true;
+	cpu.regs[11].number = 11;
+	cpu.regs[11].prevreg = 10;
+	cpu.regs[11].nextreg = 12;
+	cpu.regs[12].isTemp = true;
+	cpu.regs[12].number = 12;
+	cpu.regs[12].prevreg = 11;
+	cpu.regs[12].nextreg = 13;
+	cpu.regs[13].isTemp = true;
+	cpu.regs[13].number = 13;
+	cpu.regs[13].prevreg = 12;
+	cpu.regs[13].nextreg = 14;
+	cpu.regs[14].isTemp = true;
+	cpu.regs[14].number = 14;
+	cpu.regs[14].prevreg = 13;
+	cpu.regs[14].nextreg = 15;
+	cpu.regs[15].isTemp = true;
+	cpu.regs[15].number = 15;
+	cpu.regs[15].prevreg = 14;
+	cpu.regs[15].nextreg = 16;
+	cpu.regs[16].isTemp = true;
+	cpu.regs[16].number = 16;
+	cpu.regs[16].prevreg = 15;
+	cpu.regs[16].nextreg = 17;
+	cpu.regs[17].isTemp = true;
+	cpu.regs[17].number = 17;
+	cpu.regs[17].prevreg = 16;
+	cpu.regs[17].nextreg = 18;
+	cpu.regs[18].isTemp = true;
+	cpu.regs[18].isLastTemp = true;
+	cpu.regs[18].number = 18;
+	cpu.regs[18].prevreg = 17;
+	cpu.regs[18].nextreg = 9;
+	cpu.regs[19].isSaved = true;
+	cpu.regs[19].number = 19;
+	cpu.regs[19].prevreg = 27;
+	cpu.regs[19].nextreg = 20;
+	cpu.regs[20].isSaved = true;
+	cpu.regs[20].number = 20;
+	cpu.regs[20].prevreg = 19;
+	cpu.regs[20].nextreg = 21;
+	cpu.regs[21].isSaved = true;
+	cpu.regs[21].number = 21;
+	cpu.regs[21].prevreg = 20;
+	cpu.regs[21].nextreg = 22;
+	cpu.regs[22].isSaved = true;
+	cpu.regs[22].number = 2;
+	cpu.regs[22].prevreg = 21;
+	cpu.regs[22].nextreg = 23;
+	cpu.regs[23].isSaved = true;
+	cpu.regs[23].number = 23;
+	cpu.regs[23].prevreg = 22;
+	cpu.regs[23].nextreg = 24;
+	cpu.regs[24].isSaved = true;
+	cpu.regs[24].number = 24;
+	cpu.regs[24].prevreg = 23;
+	cpu.regs[24].nextreg = 25;
+	cpu.regs[25].isSaved = true;
+	cpu.regs[25].number = 25;
+	cpu.regs[25].prevreg = 24;
+	cpu.regs[25].nextreg = 26;
+	cpu.regs[26].isSaved = true;
+	cpu.regs[26].number = 26;
+	cpu.regs[26].prevreg = 25;
+	cpu.regs[26].nextreg = 27;
+	cpu.regs[27].isSaved = true;
+	cpu.regs[27].number = 27;
+	cpu.regs[27].prevreg = 26;
+	cpu.regs[27].nextreg = 19;
+	cpu.regs[32].isCr = true;
+	cpu.regs[32].number = 32;
+	cpu.regs[33].isCr = true;
+	cpu.regs[33].number = 33;
+	cpu.regs[34].isCr = true;
+	cpu.regs[34].number = 34;
+	cpu.regs[34].nextreg = 35;
+	cpu.regs[34].prevreg = 37;
+	cpu.regs[34].isTemp = true;
+	cpu.regs[34].isFirstTemp = true;
+	cpu.regs[35].isCr = true;
+	cpu.regs[35].number = 35;
+	cpu.regs[35].nextreg = 36;
+	cpu.regs[35].prevreg = 34;
+	cpu.regs[35].isTemp = true;
+	cpu.regs[36].isCr = true;
+	cpu.regs[36].number = 36;
+	cpu.regs[36].nextreg = 37;
+	cpu.regs[36].prevreg = 35;
+	cpu.regs[36].isTemp = true;
+	cpu.regs[37].isCr = true;
+	cpu.regs[37].number = 37;
+	cpu.regs[37].nextreg = 34;
+	cpu.regs[37].prevreg = 36;
+	cpu.regs[37].isTemp = true;
+	cpu.regs[37].isLastTemp = true;
+	cpu.regs[38].isCr = true;
+	cpu.regs[38].number = 38;
+	cpu.regs[39].isCr = true;
+	cpu.regs[39].number = 39;
+	cpu.regs[40].isCrg = true;
+	cpu.regs[40].number = 40;
+#endif
 #ifdef QUPLS
 	cpu.NumTmpRegs = 9;
 	cpu.tmpregs[0] = 9;
@@ -844,6 +1051,44 @@ void CPU::InitRegs()
 
 #endif
 
+#ifdef LB650
+	cpu.NumSavedRegs = 9;
+	cpu.saved_regs[0] = 19;
+	cpu.saved_regs[1] = 20;
+	cpu.saved_regs[2] = 21;
+	cpu.saved_regs[3] = 22;
+	cpu.saved_regs[4] = 23;
+	cpu.saved_regs[5] = 24;
+	cpu.saved_regs[6] = 25;
+	cpu.saved_regs[7] = 26;
+	cpu.saved_regs[8] = 27;
+	cpu.saved_regs[9] = 0;
+	cpu.saved_regs[10] = 0;
+	cpu.saved_regs[11] = 0;
+	cpu.saved_regs[12] = 0;
+	cpu.saved_regs[13] = 0;
+	cpu.saved_regs[14] = 0;
+	cpu.saved_regs[15] = 0;
+
+	cpu.NumvSavedRegs = 16;
+	cpu.vsaved_regs[0] = 16;
+	cpu.vsaved_regs[1] = 17;
+	cpu.vsaved_regs[2] = 18;
+	cpu.vsaved_regs[3] = 19;
+	cpu.vsaved_regs[4] = 20;
+	cpu.vsaved_regs[5] = 21;
+	cpu.vsaved_regs[6] = 22;
+	cpu.vsaved_regs[7] = 23;
+	cpu.vsaved_regs[8] = 24;
+	cpu.vsaved_regs[9] = 25;
+	cpu.vsaved_regs[10] = 26;
+	cpu.vsaved_regs[11] = 27;
+	cpu.vsaved_regs[12] = 28;
+	cpu.vsaved_regs[13] = 29;
+	cpu.vsaved_regs[14] = 30;
+	cpu.vsaved_regs[15] = 31;
+
+#endif
 #ifdef QUPLS
 	cpu.NumSavedRegs = 9;
 	cpu.saved_regs[0] = 19;
@@ -1156,6 +1401,8 @@ void initRegStack()
 	for (i = 0; i < 64; i++) {
 		cpu.tmpCrRegs[i].inUse.clear();
 		cpu.tmpCrRegs[i].isPushed.clear();
+		cpu.regs[i].inUse.clear();
+		cpu.regs[i].isPushed.clear();
 	}
 
 }
@@ -1344,7 +1591,7 @@ void LoadRegister(int regno, int number)
 	cg.GenerateLoad(makereg(regno&VR_MASK),cg.MakeIndexed(currentFn->GetTempBot()+number*cpu.sizeOfWord,regFP), cpu.sizeOfWord, cpu.sizeOfWord);
     reg_alloc[number].f.isPushed = 'F';
 #endif
-	if (cpu.regs[regno & VR_MASK].inUse.isMember(CrWrapno))
+	if (cpu.regs[regno & VR_MASK].inUse.isMember(wrapno))
 		fatal("LoadRegister():register still in use");
 	GenerateMonadic(op_pop, 0, makereg(regno));
 	cpu.regs[regno & VR_MASK].isPushed.remove(wrapno);
@@ -1451,7 +1698,7 @@ void initstack()
 {
 	ExpressionHasReference = false;
 	compiler.expr_depth = 0;
-	initRegStack();
+	//initRegStack();
 	//initFPRegStack();
 }
 
@@ -1629,6 +1876,9 @@ Operand *GetTempFPRegister()
   Function *sym = currentFn;
 	int number;
 
+#ifdef LB650
+	return (GetTempRegister());
+#endif
 #ifdef QUPLS
 	return (GetTempRegister());
 #endif
@@ -1777,8 +2027,10 @@ void validate(Operand *ap)
     switch (ap->mode) {
 	case am_reg:
 		if (wrapno > 0) {
-			if (IsTempReg(ap->preg & VR_MASK) && cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno-1))//reg_alloc[ap->pdeep].f.isPushed == 'T') {
+			if (IsTempReg(ap->preg & VR_MASK) && cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno - 1)) {//reg_alloc[ap->pdeep].f.isPushed == 'T') {
+				cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
 				LoadRegister(ap->preg, (int)ap->pdeep);
+			}
 		}
 		break;
 	case amCrReg:
@@ -1905,7 +2157,7 @@ void ReleaseTempRegister(Operand *ap)
 {
 	int nn, ndx;
   int number;
-	bool inUse;
+	bool inUse = false;
   Function *sym = currentFn;
 	unsigned int frg = 0;// regFirstTemp;
 
@@ -1944,9 +2196,9 @@ void ReleaseTempRegister(Operand *ap)
 	}
 		validate(ap);
 		compiler.CrRegInUse[ap->preg & VR_MASK] = nn;
-		if (inUse)
-			cpu.regs[ap->preg & VR_MASK].inUse.add(wrapno);
-		else
+//		if (inUse)
+//			cpu.regs[ap->preg & VR_MASK].inUse.add(wrapno);
+//		else
 			cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
 #if 0
 		nn = compiler.reg_in_use[ap->preg];
@@ -1955,6 +2207,7 @@ void ReleaseTempRegister(Operand *ap)
 		validate(ap);
 		compiler.reg_in_use[ap->preg&VR_MASK] = nn;
 #endif
+		return;
 	}
 
 	if (ap->typep==&stdvector) {
@@ -2153,7 +2406,7 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	}
 #endif
 	for (i = 0; i < cpu.NumRegs; i++) {
-		if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno)) {
+		if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno) && cpu.regs[i].containsValue) {
 			stacked_regs_set->add(i);
 			smask = smask | (1LL << i);
 		}
@@ -2162,13 +2415,13 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 		GenerateMonadic(op_pushm, 0, cg.MakeImmediate(smask));
 	else {
 		for (i = 0; i < cpu.NumRegs; i++) {
-			if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno)) {
+			if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno) && cpu.regs[i].containsValue) {
 				SpillRegister(makereg(cpu.regs[i].number), i);
 			}
 		}
 	}
 	for (i = 0; i < cpu.NumRegs; i++) {
-		if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno)) {
+		if (!cpu.regs[i].isPushed.isMember(wrapno) && cpu.regs[i].inUse.isMember(wrapno) && cpu.regs[i].containsValue) {
 			cpu.regs[i].inUse.remove(wrapno);
 			cpu.regs[i].isPushed.add(wrapno);
 		}
@@ -2469,6 +2722,7 @@ void ReleaseTempReg(Operand *ap)
 		ReleaseTempRegister(ap);
 	if (ap->toRelease)
 		ReleaseTempReg(ap->toRelease);
+	cpu.regs[ap->preg & VR_MASK].containsValue = false;
 }
 
 int GetTempMemSpace()

@@ -1413,9 +1413,11 @@ void OCODE::OptIndexScale()
 					frwd = nullptr;
 					break;
 				}
-				if (rg1 == back->oper2->preg || rg2 == back->oper2->preg) {
-					frwd = nullptr;
-					break;
+				if (back->oper2) {
+					if (rg1 == back->oper2->preg || rg2 == back->oper2->preg) {
+						frwd = nullptr;
+						break;
+					}
 				}
 			}
 		}
@@ -1856,7 +1858,7 @@ void OCODE::OptPush()
 		return;
 	ip = fwd;
 	if (ip && !ip->remove) {
-		if (ip->opcode == op_push) {
+		if (ip->opcode == op_push && cpu.pushpop_multiple > 1) {
 			if (ip->oper1->mode == am_reg) {
 				if (oper2==nullptr)
 					oper2 = makereg(ip->oper1->preg);
@@ -1868,7 +1870,7 @@ void OCODE::OptPush()
 				if (ip) {
 					ip = ip->fwd;
 					if (ip) {
-						if (ip->opcode == op_push) {
+						if (ip->opcode == op_push && cpu.pushpop_multiple > 2) {
 							if (ip->oper1->mode == am_reg) {
 								if (oper2 == nullptr)
 									oper2 = makereg(ip->oper1->preg);
@@ -1880,7 +1882,63 @@ void OCODE::OptPush()
 								if (ip) {
 									ip = ip->fwd;
 									if (ip) {
-										if (ip->opcode == op_push) {
+										if (ip->opcode == op_push && cpu.pushpop_multiple > 3) {
+											if (ip->oper1->mode == am_reg) {
+												if (oper2 == nullptr)
+													oper2 = makereg(ip->oper1->preg);
+												else if (oper3 == nullptr)
+													oper3 = makereg(ip->oper1->preg);
+												else if (oper4 == nullptr)
+													oper4 = makereg(ip->oper1->preg);
+												ip->MarkRemove();
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Converts up to four separate register pops into one operation.
+void OCODE::OptPop()
+{
+	OCODE* ip;
+
+	//return;
+	if (oper1->mode != am_reg)
+		return;
+	ip = fwd;
+	if (ip && !ip->remove) {
+		if (ip->opcode == op_pop && cpu.pushpop_multiple > 1) {
+			if (ip->oper1->mode == am_reg) {
+				if (oper2 == nullptr)
+					oper2 = makereg(ip->oper1->preg);
+				else if (oper3 == nullptr)
+					oper3 = makereg(ip->oper1->preg);
+				else if (oper4 == nullptr)
+					oper4 = makereg(ip->oper1->preg);
+				ip->MarkRemove();
+				if (ip) {
+					ip = ip->fwd;
+					if (ip) {
+						if (ip->opcode == op_pop && cpu.pushpop_multiple > 2) {
+							if (ip->oper1->mode == am_reg) {
+								if (oper2 == nullptr)
+									oper2 = makereg(ip->oper1->preg);
+								else if (oper3 == nullptr)
+									oper3 = makereg(ip->oper1->preg);
+								else if (oper4 == nullptr)
+									oper4 = makereg(ip->oper1->preg);
+								ip->MarkRemove();
+								if (ip) {
+									ip = ip->fwd;
+									if (ip) {
+										if (ip->opcode == op_pop && cpu.pushpop_multiple > 3) {
 											if (ip->oper1->mode == am_reg) {
 												if (oper2 == nullptr)
 													oper2 = makereg(ip->oper1->preg);

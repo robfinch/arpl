@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2023-2025  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2023-2024  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -51,7 +51,7 @@ static Instruction QuplsInsnTbl[] =
 { "abs", op_abs,2,1,false,am_reg,am_reg,0,0 },
 { "add",op_add,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "addq",op_addq,1,1,false,am_reg, am_imm,0, 0 },
-{ "adds",op_adds,1,1,false,am_reg,am_reg,am_reg, 0 },
+{ "adds",op_adds,1,1,false,am_reg,am_imm,am_imm, 0 },
 { "addu", op_addu,1,1 },
 { "and",op_and,1,1,false,am_reg | amCrReg,am_reg | amCrReg,am_reg | amCrReg | am_imm,0 },
 { "andcm",op_andcm,1,1,false,am_reg,am_reg,am_reg,0 },
@@ -335,7 +335,6 @@ static Instruction QuplsInsnTbl[] =
 { "stt",op_stt,4,0,true,am_reg,am_mem,0,0 },
 { "stw",op_stw,4,0,true,am_reg,am_mem,0,0 },
 { "sub",op_sub,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
-{ "subs",op_subs,1,1,false,am_reg,am_reg,am_reg, 0 },
 { "subtract",op_subtract,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "subu", op_subu,1,1 },
 { "sv", op_sv,256,0 },
@@ -519,7 +518,7 @@ char* QuplsCPU::RegMoniker(int32_t regno)
 
 void QuplsCodeGenerator::banner()
 {
-	printf("Qupls Code Generator v0.02\n");
+	printf("Qupls Code Generator v0.01\n");
 };
 
 
@@ -2240,8 +2239,6 @@ void QuplsCodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function
 
 void QuplsCodeGenerator::GenerateUnlink(int64_t amt)
 {
-	if (cpu.SupportsEnter)
-		currentFn->PatchEnter(currentFn->mask);
 	if (cpu.SupportsLeave) {
 		GenerateDiadic(op_leave, 0, MakeImmediate(currentFn->mask->NumMember()), MakeImmediate(amt,0));
 	}
@@ -2571,10 +2568,18 @@ void QuplsCodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 				ip = GenerateLoadFloatConst(ap1, ap2);
 			else {
 				if (ap1->offset) {
-					if (ap1->offset->i128.IsNBit(5))
-						ip = GenerateTriadic(op_addq, 0, ap2, makereg(regZero), MakeImmediate(ap1->offset->i128.low));
+					if (!ap1->offset->i128.IsNBit(32))
+						ip = GenerateTriadic(op_or, 0, ap2, makereg(regZero), MakeImmediate(ap1->offset->i128.low & 0xffffffffLL));
 					else
-						ip = GenerateTriadic(op_add, 0, ap2, makereg(regZero), MakeImmediate(ap1->offset->i128.low));
+						ip = GenerateTriadic(op_add, 0, ap2, makereg(regZero), MakeImmediate(ap1->offset->i128.low & 0xffffffffLL));
+					if (!ap1->offset->i128.IsNBit(32)) {
+						if (!ap1->offset->i128.IsNBit(64))
+							GenerateTriadic(op_ors, 0, ap2, MakeImmediate((ap1->offset->i128.low >> 32LL) & 0xffffffffLL), MakeImmediate(1LL));
+						else
+							GenerateTriadic(op_adds, 0, ap2, MakeImmediate((ap1->offset->i128.low >> 32LL) & 0xffffffffLL), MakeImmediate(1LL));
+					}
+					if (!ap1->offset->i128.IsNBit(64))
+						GenerateTriadic(op_adds, 0, ap2, MakeImmediate((ap1->offset->i128.low >> 64LL) & 0xffffffffLL), MakeImmediate(2LL));
 					// ToDo handle constant >64 bits
 					/*
 					ip = GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(ap1->offset->i128.low & 0xffffLL));
@@ -2617,7 +2622,14 @@ void QuplsCodeGenerator::GenerateLoadDataPointer()
 	Operand* ap = GetTempRegister();
 
 	return;
-	cg.GenerateLoadAddress(makereg(regGP), MakeStringAsNameConst((char*)"_start_data", dataseg));
+	if (address_bits > 24) {
+		cg.GenerateLoadAddress(makereg(regGP), MakeStringAsNameConst((char*)"<_start_data", dataseg));
+		GenerateDiadic(op_orm, 0, makereg(regGP), MakeStringAsNameConst((char*)"_start_data", dataseg));
+		if (address_bits > 48)
+			GenerateDiadic(op_orh, 0, makereg(regGP), MakeStringAsNameConst((char*)">_start_data", dataseg));
+	}
+	else
+		cg.GenerateLoadAddress(makereg(regGP), MakeStringAsNameConst((char*)"_start_data", dataseg));
 	ReleaseTempRegister(ap);
 }
 
@@ -2718,6 +2730,20 @@ void QuplsCodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 	if (address_bits > 24)
 		ap1->lowhigh = 1;
 	GenerateDiadic(op_lda, 0, ap3, ap1);
+	if (address_bits > 24) {
+		ap2 = ap1->Clone();
+		ap2->lowhigh = 2;
+		ap2->mode = am_imm;
+		if (!ap2->offset->i128.IsNBit(address_bits))
+			GenerateDiadic(op_orm, 0, ap3, ap2);
+	}
+	if (address_bits > 48) {
+		ap4 = ap1->Clone();
+		ap4->lowhigh = 2;
+		ap4->mode = am_imm;
+		if (!ap4->offset->i128.IsNBit(address_bits))
+			GenerateDiadic(op_orh, 0, ap3, ap4);
+	}
 }
 
 // Generate load or store operation taking into consideration the number of
@@ -2737,22 +2763,18 @@ void QuplsCodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* a
 			ap2->mode = am_direct;
 	}
 	if (ap2->mode == am_direct || ap2->mode==am_direct2) {
-		if (ap2->offset == nullptr || ap2->offset2 != nullptr || ap2->mode == am_direct2) {// || !ap2->offset->i128.IsNBit(21)) {
+		if (ap2->offset == nullptr || ap2->offset2 != nullptr || ap2->mode == am_direct2 || !ap2->offset->i128.IsNBit(21)) {
 			Operand* ap4;
 			ap4 = GetTempRegister();
 			GenerateLoadAddress(ap4, ap2);
 			GenerateDiadic(opcode, 0, ap1, MakeIndirect(ap4->preg));
 			return;
 		}
-		if (opcode == op_store && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
-			opcode = op_stos;
-		if (opcode == op_load && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
-			opcode = op_ldos;
 		GenerateDiadic(opcode, 0, ap1, ap2);
 		return;
 	}
 	else if (ap2->mode == am_indx) {
-		if (ap2->offset == nullptr || ap2->offset2!=nullptr) {
+		if (ap2->offset == nullptr || ap2->offset2!=nullptr || !ap2->offset->i128.IsNBit(21)) {
 			Operand* ap4;
 			ap4 = GetTempRegister();
 			if (ap2->offset) {
@@ -2770,28 +2792,11 @@ void QuplsCodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* a
 			GenerateDiadic(opcode, 0, ap1, ap4);
 			return;
 		}
-		if (opcode == op_store && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
-			opcode = op_stos;
-		if (opcode == op_load && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
-			opcode = op_ldos;
 		GenerateDiadic(opcode, 0, ap1, ap2);
 		return;
 	}
-	else {
-		if (ap2->mode == am_ind) {
-			if (opcode == op_store)
-				opcode = op_stos;
-			if (opcode == op_load)
-				opcode = op_ldos;
-		}
-		else if (ap2->mode == am_indx2) {
-			if (opcode == op_store && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
-				opcode = op_stos;
-			if (opcode == op_load && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
-				opcode = op_ldos;
-		}
+	else
 		GenerateDiadic(opcode, 0, ap1, ap2);
-	}
 }
 
 void QuplsCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
@@ -3032,14 +3037,14 @@ OCODE* QuplsCodeGenerator::GenerateReturnBlock(Function* fn)
 	if (cpu.SupportsEnter)
 	{
 		if (fn->stkspace < 8388607LL) {
-			GenerateDiadic(op_enter, 0, MakeImmediate(15LL), MakeImmediate(-fn->tempbot));
+			GenerateDiadic(op_enter, 0, MakeImmediate(15), MakeImmediate(-fn->tempbot));
 			ip = currentFn->pl.tail;
 			//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
 						//spAdjust = pl.tail;
 			fn->alstk = true;
 		}
 		else {
-			GenerateDiadic(op_enter, 0, MakeImmediate(15LL), MakeImmediate(8388600LL));
+			GenerateDiadic(op_enter, 0, MakeImmediate(15), MakeImmediate(8388600LL));
 			ip = currentFn->pl.tail;
 			GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 8388600LL));
 			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
@@ -3165,10 +3170,6 @@ Operand* QuplsCodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, O
 	if (src2->offset == nullptr)
 		return (dst);
 
-	if (src2->offset->i128.IsNBit(5)) {
-		GenerateTriadic(op_addq, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
-		return (dst);
-	}
 	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
 		GenerateTriadic(op_add, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 		return (dst);
@@ -3209,11 +3210,21 @@ Operand* QuplsCodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, O
 */
 Operand* QuplsCodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
+	Operand* ap5;
+
 	// ToDo: Should spit out a compiler warning here.
 	if (src2->offset == nullptr)
 		return (dst);
 
-	GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+		GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+		return (dst);
+	}
+	ap5 = nullptr;
+	GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i & 0xffffffLL));
+	GenerateTriadic(op_ands, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
+	if (!src2->offset->i128.IsNBit(48LL))
+		GenerateTriadic(op_ands, 0, dst, MakeImmediate((src2->offset->i >> 48LL) & 0xffffffLL), MakeImmediate(2LL));
 	return (dst);
 }
 
@@ -3230,11 +3241,21 @@ Operand* QuplsCodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, O
 */
 Operand* QuplsCodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
+	Operand* ap5;
+
 	// ToDo: Should spit out a compiler warning here.
 	if (src2->offset == nullptr)
 		return (dst);
 
-	GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+		GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+		return (dst);
+	}
+	ap5 = nullptr;
+	GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i & 0xffffffLL));
+	GenerateTriadic(op_ors, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
+	if (!src2->offset->i128.IsNBit(48LL))
+		GenerateTriadic(op_ors, 0, dst, MakeImmediate((src2->offset->i >> 48LL) & 0xffffffLL), MakeImmediate(2LL));
 	return (dst);
 }
 
@@ -3251,79 +3272,21 @@ Operand* QuplsCodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, Op
 */
 Operand* QuplsCodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
+	Operand* ap5;
+
 	// ToDo: Should spit out a compiler warning here.
 	if (src2->offset == nullptr)
 		return (dst);
 
-	GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
-	return (dst);
-}
-
-/* Generate code for a shift operation. A warning message is displayed if the
-* shift is known to be by too many bits.
-*
-* Parameters:
-*		flags (input) the legal address modes to use for the result.
-*		size (input) the size of the result in bytes.
-*		op (input) the shift opcode.
-*
-* Returns:
-*		an operand referencing the shift value.
-*/
-// ToDo: ShiftBitfield
-Operand* QuplsCodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size, int op)
-{
-	Operand* ap1, * ap2, * ap3;
-	Int128 val;
-
-	ap3 = GetTempRegister();
-	ap1 = cg.GenerateExpression(node->p[0], am_reg, size, 0);
-	ap2 = cg.GenerateExpression(node->p[1], am_reg | am_ui6, cpu.sizeOfWord, 1);
-	if (ap2->GetConstValue(&val))
-	{
-		Int128 sz, eight;
-		eight = Int128::Convert(8LL);
-		sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
-		Int128::Mul(&sz, &sz, &eight);
-		if (Int128::IsGT(&val, &sz))
-			error(ERR_SHIFT_TOOMANYBITS);
+	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
+		GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+		return (dst);
 	}
-	Generate4adic(op, size == cpu.sizeOfWord ? 0 : (int)size, ap3, ap1, makereg(regZero), ap2);
-	// Rotates automatically sign extend
-	if ((op == op_rol || op == op_ror) && ap2->isUnsigned && !ap1->tp->IsVectorType())
-		switch (size) {
-		case 1:	ap1 = ap2->GenerateBitfieldClear(8, cpu.sizeOfWord * 8 - 9); break;
-		case 2:	ap1 = ap2->GenerateBitfieldClear(16, cpu.sizeOfWord * 8 - 17); break;
-		case 4:
-			if (cpu.sizeOfWord > 4)
-				ap1 = ap2->GenerateBitfieldClear(32, cpu.sizeOfWord * 8 - 33); break;
-		case 8:
-			if (cpu.sizeOfWord > 8)
-				ap1 = ap2->GenerateBitfieldClear(64, cpu.sizeOfWord * 8 - 65); break;
-		default:;
-		}
-	ReleaseTempRegister(ap2);
-	ReleaseTempRegister(ap1);
-	ap3->MakeLegal(flags, size);
-	return (ap3);
-}
-
-Operand* QuplsCodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
-{
-	if (dst->preg < 32 && src1->preg < 32 && src2->preg < 32)
-		GenerateTriadic(op_adds, 0, dst, src1, src2);
-	else
-		GenerateTriadic(op_add, 0, dst, src1, src2);
+	ap5 = nullptr;
+	GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i & 0xffffffLL));
+	GenerateTriadic(op_eors, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
+	if (!src2->offset->i128.IsNBit(48LL))
+		GenerateTriadic(op_eors, 0, dst, MakeImmediate((src2->offset->i >> 48LL) & 0xffffffLL), MakeImmediate(2LL));
 	return (dst);
 }
 
-Operand* QuplsCodeGenerator::GenerateSubtract(Operand* dst, Operand* src1, Operand* src2)
-{
-	/*
-	if (dst->preg < 32 && src1->preg < 32 && src2->preg < 32)
-		GenerateTriadic(op_subs, 0, dst, src1, src2);
-	else
-	*/
-		GenerateTriadic(op_sub, 0, dst, src1, src2);
-	return (dst);
-}

@@ -161,6 +161,10 @@
     <ClCompile Include="List.cpp" />
     <ClCompile Include="LTRIM.Cpp" />
     <ClCompile Include="MachineReg.cpp" />
+    <ClCompile Include="machines\LB650\LB650.cpp" />
+    <ClCompile Include="machines\LB650\LB650CSE.cpp" />
+    <ClCompile Include="machines\Qupls\Qupls.cpp" />
+    <ClCompile Include="machines\Qupls\QuplsCSE.cpp" />
     <ClCompile Include="MemoryManagement.cpp" />
     <ClCompile Include="NextToken.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -180,8 +184,6 @@
     <ClCompile Include="Posit64.cpp" />
     <ClCompile Include="Posit64DividerLUT.cpp" />
     <ClCompile Include="Preprocessor.cpp" />
-    <ClCompile Include="Qupls.cpp" />
-    <ClCompile Include="QuplsCSE.cpp" />
     <ClCompile Include="rand.cpp" />
     <ClCompile Include="Range.cpp" />
     <ClCompile Include="Register.cpp" />

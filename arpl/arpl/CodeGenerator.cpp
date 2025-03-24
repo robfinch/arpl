@@ -389,6 +389,7 @@ void CodeGenerator::GenerateStore(Operand *ap1, Operand *ap3, int64_t size, Oper
 			Operand* ap4;
 			ap4 = GetTempRegister();
 			GenerateLoadConst(MakeImmediate(ap3->offset->i128), ap4);
+			ReleaseTempReg(ap3);
 			ap3->mode = am_ind;
 			ap3->preg = ap4->preg;
 			switch (size) {
@@ -2029,6 +2030,9 @@ Operand *CodeGenerator::GenerateAggregateAssign(ENODE *node1, ENODE *node2)
 #ifdef QUPLS
 	GenerateDiadic(op_jsr, 0, makereg(regLR), MakeStringAsNameConst((char*)"__aacpy", codeseg));
 #endif
+#ifdef LB650
+	GenerateDiadic(op_jsr, 0, makereg(regLR), MakeStringAsNameConst((char*)"__aacpy", codeseg));
+#endif
 	ReleaseTempReg(base2);
 	currentFn->IsLeaf = false;
 	return (base);
@@ -2165,6 +2169,8 @@ Operand* CodeGenerator::GenerateRegToRegAssign(ENODE* node, Operand* ap1, Operan
 	else {
 		GenerateMove(ap1, ap2);
 	}
+	if (ap1->preg < cpu.nregs)
+		cpu.regs[ap1->preg].containsValue = true;
 	return (ap1);
 }
 
@@ -2208,6 +2214,8 @@ Operand* CodeGenerator::GenerateImmToRegAssign(Operand* ap1, Operand* ap2, int64
 //	GenerateZeradic(op_setwb);
 	GenerateLoadConst(ap2, ap1);
 	ap1->isPtr = ap2->isPtr;
+	if (ap1->preg < cpu.nregs)
+		cpu.regs[ap1->preg].containsValue = true;
 	return (ap1);
 }
 
@@ -2229,6 +2237,8 @@ Operand* CodeGenerator::GenerateMemToRegAssign(Operand* ap1, Operand* ap2, int64
 		GenerateLoad(ap1, ap2, ssize, size);
 	}
 	ap1->isPtr = ap2->isPtr;
+	if (ap1->preg < cpu.nregs)
+		cpu.regs[ap1->preg].containsValue = true;
 	return (ap1);
 }
 
@@ -2487,6 +2497,13 @@ Operand* CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1;
 
+#ifdef LB650
+	ap1 = allocOperand();
+	ap1->mode = am_imm;
+	ap1->offset = node;
+	ap1->tp = node->tp;
+	return (ap1);
+#endif
 #ifdef QUPLS
 	ap1 = allocOperand();
 	ap1->mode = am_imm;
@@ -3130,12 +3147,12 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
   case en_udiv:   ap1 = node->GenerateDivMod(flags,size,op_divu); goto retpt;
   case en_mod:    ap1 = node->GenerateDivMod(flags,size,op_rem); goto retpt;
   case en_umod:   ap1 = node->GenerateDivMod(flags,size,op_remu); goto retpt;
-  case en_asl:    ap1 = node->GenerateShift(flags,size,op_asl); goto retpt;
-  case en_shl:    ap1 = GenerateShift(node,flags,size,op_asl); goto retpt;
-  case en_shlu:   ap1 = GenerateShift(node,flags,size,op_asl); goto retpt;
-  case en_asr:	ap1 = GenerateShift(node,flags,size,op_asr); goto retpt;
-  case en_shr:	ap1 = GenerateShift(node,flags,size,op_asr); goto retpt;
-  case en_shru:   ap1 = GenerateShift(node,flags,size,op_lsr); goto retpt;
+  case en_asl:    ap1 = node->GenerateShift(flags,size,op_sll); goto retpt;
+  case en_shl:    ap1 = GenerateShift(node,flags,size,op_sll); goto retpt;
+  case en_shlu:   ap1 = GenerateShift(node,flags,size,op_sll); goto retpt;
+  case en_asr:	ap1 = GenerateShift(node,flags,size,op_sra); goto retpt;
+  case en_shr:	ap1 = GenerateShift(node,flags,size,op_sra); goto retpt;
+  case en_shru:   ap1 = GenerateShift(node,flags,size,op_srl); goto retpt;
 	case en_rol:   ap1 = GenerateShift(node,flags,size,op_rol); goto retpt;
 	case en_ror:   ap1 = GenerateShift(node,flags,size,op_ror); goto retpt;
 	case en_bitoffset:
@@ -4824,10 +4841,8 @@ Operand* CodeGenerator::GenerateBinary(ENODE* node, int flags, int64_t size, int
 						else {
 							if (op==op_add)
 								GenerateAdd(ap3, ap1, ap5 ? ap5 : ap2);
-							/*
 							else if (op == op_sub)
 								GenerateSubtract(ap3, ap1, ap5 ? ap5 : ap2);
-							*/
 							else
 								GenerateSubtractImmediate(ap3, ap1, ap2);
 								//GenerateTriadic(op, 0, ap3, ap1, ap5 ? ap5 : ap2);
@@ -4836,6 +4851,8 @@ Operand* CodeGenerator::GenerateBinary(ENODE* node, int flags, int64_t size, int
 					default:
 						if (op == op_add)
 							GenerateAdd(ap3, ap1, ap5 ? ap5 : ap2);
+						else if (op == op_subtract)
+							GenerateSubtract(ap3, ap1, ap5 ? ap5 : ap2);
 						else
 							GenerateTriadic(op, 0, ap3, ap1, ap5 ? ap5 : ap2);
 					}
@@ -4845,6 +4862,8 @@ Operand* CodeGenerator::GenerateBinary(ENODE* node, int flags, int64_t size, int
 				else {
 					if (op == op_add)
 						GenerateAdd(ap3, ap1, ap2);
+					else if (op == op_subtract)
+						GenerateSubtract(ap3, ap1, ap2);
 					else
 						GenerateTriadic(op, 0, ap3, ap1, ap2);
 				}
@@ -5176,6 +5195,12 @@ Operand* CodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
 	return (dst);
 }
 
+Operand* CodeGenerator::GenerateSubtract(Operand* dst, Operand* src1, Operand* src2)
+{
+	GenerateTriadic(op_sub, 0, dst, src1, src2);
+	return (dst);
+}
+
 Operand* CodeGenerator::GenerateAnd(Operand* dst, Operand* src1, Operand* src2)
 {
 	GenerateTriadic(op_and, 0, dst, src1, src2);
@@ -5432,7 +5457,6 @@ void CodeGenerator::GenerateUnlinkStack(Function* func, int64_t amt)
 
 int64_t CodeGenerator::GetSavedRegisterList(CSet* rmask)
 {
-	int cnt;
 	int nn;
 	int64_t mask = 0;
 
@@ -5442,5 +5466,12 @@ int64_t CodeGenerator::GetSavedRegisterList(CSet* rmask)
 				mask = mask | (1LL << nn);
 	}
 	return (mask);
+}
+
+Operand* CodeGenerator::PatchEnter(OCODE* pe, CSet* rmask)
+{
+	if (pe)
+		return(pe->oper1 = MakeImmediate((int64_t)rmask->NumMember()));
+	return (nullptr);
 }
 

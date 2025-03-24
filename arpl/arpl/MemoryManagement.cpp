@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -189,6 +189,7 @@ Symbol* Symbol::alloc()
   sym->id = compiler.symnum;
   sym->SetName(std::string(""));
   sym->lsyms.ownerp = sym;// SetOwner(compiler.symnum);
+  sym->valid = true;
   compiler.symnum++;
   return (sym);
 }

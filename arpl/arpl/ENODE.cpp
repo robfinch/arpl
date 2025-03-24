@@ -2643,6 +2643,14 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 			sprintf_s(buf, sizeof(buf), "0x%llx", CopyRawDouble(f));
 		ofs.write(buf);
 #endif
+#ifdef LB650
+		// The following spits out a warning, but is okay.
+		if (true || this->tp->type == bt_quad)
+			sprintf_s(buf, sizeof(buf), "%.16s", f128.ToCompressedString());
+		else
+			sprintf_s(buf, sizeof(buf), "0x%llx", CopyRawDouble(f));
+		ofs.write(buf);
+#endif
 		break;
 
 	case en_pcon:
@@ -2882,19 +2890,21 @@ void ENODE::GenerateInt(txtoStream& tfs)
 	Int128 i128, t128;
 
 	if (gentype == halfgen && outcol < 60) {
-		if (p[0]->tp) {
-			tfs.printf(",");
-			if (p[1]) {
-				i128 = p[1]->i128;
-				t128 = Int128(p[0]->tp->size);
-				Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
-				PutConstant(tfs, 0, 0, false, 0);
-				p[1]->i128 = i128;
-				p[1]->i = i128.low;
+		if (p[0]) {
+			if (p[0]->tp) {
+				tfs.printf(",");
+				if (p[1]) {
+					i128 = p[1]->i128;
+					t128 = Int128(p[0]->tp->size);
+					Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
+					PutConstant(tfs, 0, 0, false, 0);
+					p[1]->i128 = i128;
+					p[1]->i = i128.low;
+				}
+				else
+					PutConstant(tfs, 0, 0, false, 0);
+				outcol += 10;
 			}
-			else
-				PutConstant(tfs, 0, 0, false, 0);
-			outcol += 10;
 		}
 	}
 	else {
@@ -2913,18 +2923,20 @@ void ENODE::GenerateInt(txtoStream& tfs)
 				PutConstant(tfs, 0, 0, false, 0);
 		}
 		else {
-			if (p[0]->tp) {
-				tfs.printf("\t.8byte\t");
-				if (p[1]) {
-					i128 = p[1]->i128;
-					t128 = Int128(p[0]->tp->size);
-					Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
-					PutConstant(tfs, 0, 0, false, 0);
-					p[1]->i128 = i128;
-					p[1]->i = i128.low;
+			if (p[0]) {
+				if (p[0]->tp) {
+					tfs.printf("\t.8byte\t");
+					if (p[1]) {
+						i128 = p[1]->i128;
+						t128 = Int128(p[0]->tp->size);
+						Int128::Mul(&p[1]->i128, &p[1]->i128, &t128);
+						PutConstant(tfs, 0, 0, false, 0);
+						p[1]->i128 = i128;
+						p[1]->i = i128.low;
+					}
+					else
+						PutConstant(tfs, 0, 0, false, 0);
 				}
-				else
-					PutConstant(tfs, 0, 0, false, 0);
 			}
 		}
 		gentype = halfgen;

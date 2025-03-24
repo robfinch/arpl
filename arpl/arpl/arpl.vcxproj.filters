@@ -165,12 +165,6 @@
     <ClCompile Include="Preprocessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Qupls.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="QuplsCSE.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -253,6 +247,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="i386.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="machines\Qupls\Qupls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="machines\Qupls\QuplsCSE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="machines\LB650\LB650.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="machines\LB650\LB650CSE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

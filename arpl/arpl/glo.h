@@ -3,7 +3,7 @@
 
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -265,6 +265,11 @@ extern int worstAlignment;
 extern Map map;
 extern int optimized;
 extern short int typ_sp;
+#ifdef LB650
+extern LB650CPU cpu;
+extern LB650CodeGenerator cg;
+extern LB650StatementGenerator sg;
+#endif
 #ifdef QUPLS
 extern QuplsCPU cpu;
 extern QuplsCodeGenerator cg;

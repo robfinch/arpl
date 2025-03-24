@@ -23,7 +23,7 @@
 //                                                                          
 // ============================================================================
 //
-#include "stdafx.h"
+#include "..\..\stdafx.h"
 
 extern TYP              stdfunc;
 
@@ -64,6 +64,7 @@ static Instruction QuplsInsnTbl[] =
 { "bchk", op_bchk,3,0 },
 { "beq", op_beq,3,0,false,am_reg,am_reg,am_direct,0 },
 { "beqi", op_beqi,3,0,false,am_reg,am_imm,am_direct,0 },
+{ "beqz", op_beqz,3,0,false,am_reg,am_direct,0,0 },
 { "bex", op_bex,0,0,false,0,0,0,0 },
 { "bf", op_bf,3,0,false,am_reg,am_direct,0,0 },
 { "bfclr", op_bfclr,2,1,false,am_reg,am_reg | am_ui6,am_reg | am_ui6,0 },
@@ -83,6 +84,7 @@ static Instruction QuplsInsnTbl[] =
 { "bmap", op_bmap,1,0,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "bmi", op_bmi,2,0,false,am_reg,am_direct,0,0 },
 { "bne", op_bne,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bnez", op_bnez,3,0,false,am_reg,am_direct,0,0 },
 { "br",op_br,3,0,false,0,0,0,0 },
 { "branch",op_bra,3,0,false,0,0,0,0 },
 //{ "branch",op_branch,3,0,false,am_direct,0,0,0 },
@@ -1780,7 +1782,7 @@ void SavePositRegisterVars(CSet* rmask)
 #endif
 
 // Restore registers used as register variables.
-
+ 
 static void RestoreRegisterVars()
 {
 	int cnt2, cnt;

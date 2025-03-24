@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2023  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -426,15 +426,17 @@ j1:
 		sp1 = compiler.symTables[n >> 15];
 		if (sp1) {
 			sp = &compiler.symTables[n >> 15][n & 0x7fff];
-			if (sp->name) {
-				if (sp->name->compare(na) == 0) {
-					if (sp->tp == &stdconst || sp->tp->type == bt_enum) {
-						if (gSearchCnt < 100) {
-							gSearchSyms[gSearchCnt] = sp;
-							gSearchCnt++;
+			if (sp->valid) {
+				if (sp->name) {
+					if (sp->name->compare(na) == 0) {
+						if (sp->tp == &stdconst || sp->tp->type == bt_enum) {
+							if (gSearchCnt < 100) {
+								gSearchSyms[gSearchCnt] = sp;
+								gSearchCnt++;
+							}
+							TABLE::match[0] = sp;
+							TABLE::matchno = 1;
 						}
-						TABLE::match[0] = sp;
-						TABLE::matchno = 1;
 					}
 				}
 			}

@@ -258,25 +258,34 @@ Instruction *Instruction::GetMapping(int op)
 
 size_t Instruction::store(txtoStream& ofs)
 {
-//	if (strnicmp(mnem, ";empty", 6)==0)
-//		printf("hi");
+	if (_strnicmp(mnem, ";empty", 6)==0)
+		printf("hi");
 	switch (syntax) {
 	case MOT:
 		if (mnem[0] == '#') {
 			ofs.write(";");
 			ofs.write(&mnem[1]);
+			ofs.printf(" %d\n", this->opcode);
 		}
 		else {
 			if (mnem[0] == ';') {
-				ofs.printf("%c", comment_char);
+				ofs.printf(";");// , comment_char);
 				ofs.write(&mnem[1]);
+				ofs.printf(" %d\n", this->opcode);
 			}
 			else
 				ofs.write(mnem);
 		}
 		break;
 	default:
-		ofs.write(mnem);
+		if (mnem[0] == ';') {
+			ofs.printf(";");// , comment_char);
+			ofs.write(&mnem[1]);
+			ofs.printf(" %d\n", this->opcode);
+		}
+		else
+			ofs.write(mnem);
+//		ofs.write(mnem);
 	}
 	return (strlen(mnem));
 }

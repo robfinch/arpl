@@ -946,12 +946,6 @@ void Function::Generate()
 		psave_mask = ::psave_mask;// CSet::MakeNew();
 		mask = ::save_mask;
 	}
-	if (pEnter) {
-		if (mask)
-			pEnter->oper1 = MakeImmediate(mask->NumMember());
-		else
-			pEnter->oper1 = MakeImmediate(0);
-	}
 
 	stmt->CheckReferences(&sp, &bp, &gp, &gp1, &gp2);
 	//	if (!IsInline)
@@ -993,10 +987,6 @@ void Function::Generate()
 		GenerateDefaultCatch();
 	if (compiler.exceptions && sym->IsInline)
 		GenerateLabel(lab0);
-
-	// Patch up the list of saved registers for ENTER instruction.
-	if (ip)
-		ip->oper1 = MakeImmediate(cg.GetSavedRegisterList(save_mask));
 
 	dfs.puts("<StaticRegs>");
 	dfs.puts("====== Statically Assigned Registers =======\n");
@@ -1411,7 +1401,7 @@ void Function::BuildParameterList(int *num, int *numa, int* ellipos)
 			}
 		}
 	}
-	arg_space = poffset;
+	arg_space = poffset - cpu.ReturnBlockSize();
 	nparms = old_nparms;
 	for (np = 0; np < nparms; np++)
 		names[np] = oldnames[np];
@@ -1608,6 +1598,11 @@ Operand *Function::MakeIndexed(int64_t o, int i) { return (cg.MakeIndexed(o, i))
 Operand *Function::MakeIndexed(ENODE *node, int rg) { return (cg.MakeIndexed(node, rg)); }
 void Function::GenLoad(Operand *ap3, Operand *ap1, int ssize, int size) { cg.GenerateLoad(ap3, ap1, ssize, size); }
 
+void Function::PatchEnter(CSet* rmask)
+{
+	if (pEnter)
+		cg.PatchEnter(pEnter, rmask);
+}
 
 // When going to insert a class method, check the base classes to see if it's
 // a virtual function override. If it's an override, then add the method to

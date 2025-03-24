@@ -3,7 +3,7 @@
 
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -28,6 +28,7 @@
 //
 enum e_cpu { thor, qupls, riscv, bigfoot, i386 };
 //#define THOR	1
+//#define LB650	1
 #define QUPLS	1
 //#define QUPLS40 1
 //#define RISCV 5
@@ -303,7 +304,7 @@ enum e_op {
 	// Q+
 	op_addmo,
 	op_addm, op_addh, op_eorm, op_eorh, op_eors, op_andm, op_andh, op_ands,
-	op_adds, op_ors, op_orh, op_orm, op_movsxb, op_movsxw, op_movsxt,
+	op_adds, op_ors, op_orh, op_orm, op_movsxb, op_movsxw, op_movsxt, op_subs,
 	op_or_and, op_or_or, op_and_and, op_and_or,
 	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
 	op_storev, op_subtract,
