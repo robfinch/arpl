@@ -128,8 +128,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BasicBlock.cpp" />
-    <ClCompile Include="Bigfoot.cpp" />
-    <ClCompile Include="BigfootCSE.cpp" />
     <ClCompile Include="CFG.cpp" />
     <ClCompile Include="arpl.cpp" />
     <ClCompile Include="CodeGenerator.cpp" />
@@ -161,6 +159,8 @@
     <ClCompile Include="List.cpp" />
     <ClCompile Include="LTRIM.Cpp" />
     <ClCompile Include="MachineReg.cpp" />
+    <ClCompile Include="machines\bigfoot\Bigfoot.cpp" />
+    <ClCompile Include="machines\bigfoot\BigfootCSE.cpp" />
     <ClCompile Include="machines\LB650\LB650.cpp" />
     <ClCompile Include="machines\LB650\LB650CSE.cpp" />
     <ClCompile Include="machines\Qupls\Qupls.cpp" />

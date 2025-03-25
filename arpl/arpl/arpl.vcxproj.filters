@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BasicBlock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CFG.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -240,12 +237,6 @@
     <ClCompile Include="xtolower.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Bigfoot.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BigfootCSE.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="i386.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -259,6 +250,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="machines\LB650\LB650CSE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="machines\bigfoot\Bigfoot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="machines\bigfoot\BigfootCSE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicBlock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

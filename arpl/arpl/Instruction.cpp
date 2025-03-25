@@ -161,6 +161,7 @@ bool Instruction::IsStore()
 		|| opcode == op_stt
 		|| opcode == op_stp
 		|| opcode == op_sto
+		|| opcode == op_stos
 		|| opcode == op_store
 		|| opcode == op_storem
 		|| opcode == op_sth

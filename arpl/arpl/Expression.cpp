@@ -634,6 +634,41 @@ void Expression::ParseAggregateHelper(ENODE** node, ENODE* cnode)
 }
 
 /*
+*/
+
+ENODE* Expression::ParseAggregateStringConst(ENODE** node, Symbol* symi)
+{
+	TYP* tptr;
+	ENODE* pnode;
+	bool cont = false;
+
+	do {
+		tptr = ParseNonCommaExpression(&pnode, symi);
+		if (!(tptr->type == bt_pointer  && tptr->btpp->IsCharType()) && !tptr->IsIntegralType()) {
+			error(ERR_MISMATCH);
+			return (nullptr);
+		}
+		cont = lastst == comma;
+		if (*node == nullptr) {
+			*node = pnode;
+			if (!cont)
+				break;
+			continue;
+		}
+		// If a character is found, append to string
+		if (tptr->IsIntegralType())
+			(*node)->sp->append(1, pnode->i128.low);
+		// was a string, add two strings together
+		else
+			(*node)->sp->append(*(pnode->sp));
+		// skip over comma
+		if (cont)
+			NextToken();
+	} while (cont);
+	return (*node);
+}
+
+/*
 * On Entry:
 *		The parser has just found and skipped past an opening brace bracket '{'. An
 *	aggregate value must be following.
@@ -665,11 +700,12 @@ TYP* Expression::ParseAggregate(ENODE** node, Symbol* symi, TYP* tp)
 	NextToken(0);
 
 	// A string constant enclosed in aggregate brackets is treated as just a
-	// string constant.
+	// string constant. A string constant in this manner may be made up of a
+	// comma separated list of strings and characters.
 
 	if (tp->type == bt_pointer && tp->btpp && tp->btpp->IsCharType()) {
-		if (lastst == sconst) {
-			tptr = ParseStringConst(node, symi);
+		if (lastst == sconst || lastst == asconst) {
+			tptr = ParseAggregateStringConst(node, symi)->tp;
 			needpunc(e_sym::end, 79);
 			return (tptr);
 		}

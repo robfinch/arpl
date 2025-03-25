@@ -2473,6 +2473,8 @@ int TempInvalidate(int *fsp, int* psp, int* vsp)
 	}
 	for (*vsp = i = 0; i < vreg_alloc_ptr; i++) {
 		if (vreg_alloc[i].f.isPushed == 'F') {
+			if (reg_alloc[i].Operand == nullptr)
+				continue;
 			mode = reg_alloc[i].Operand->mode;
 			reg_alloc[i].Operand->mode = am_vreg;
 			if (!(vmask & (1LL << reg_alloc[i].Operand->preg))) {

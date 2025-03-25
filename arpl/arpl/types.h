@@ -1013,6 +1013,7 @@ private:
 	TYP* ParseRealConst(ENODE** node);
 	TYP* ParsePositConst(ENODE** node);
 	ENODE* ParseAggregateConst(ENODE** node);
+	ENODE* ParseAggregateStringConst(ENODE** node, Symbol* sym);
 	TYP* ParseFloatMax(ENODE** node);
 	ENODE* ParseThis(ENODE** node);
 	void ParseAggregateHelper(ENODE** node, ENODE* cnode);
@@ -1741,6 +1742,7 @@ public:
 	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
 	int GetSegmentIndexReg(e_sg seg);
 	void SaveRegisterVars(CSet* mask);
+	bool CheckForShortAddressMode(e_op opcode, Operand* oper, e_op* opopcode);
 };
 
 class LB650CodeGenerator : public CodeGenerator
