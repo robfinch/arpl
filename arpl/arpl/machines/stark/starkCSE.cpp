@@ -23,7 +23,7 @@
 //                                                                          
 // ============================================================================
 //
-#include "stdafx.h"
+#include "..\..\stdafx.h"
 
 //
 // Returns the desirability of optimization for a subexpression.
@@ -32,7 +32,7 @@
 // can be directly encoded in the instruction. There's no value to
 // placing them in registers.
 
-int BigfootCSE::OptimizationDesireability()
+int starkCSE::OptimizationDesireability()
 {
 	int depth;
 

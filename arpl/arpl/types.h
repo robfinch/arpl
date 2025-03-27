@@ -3,7 +3,7 @@
 
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2024 Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2025 Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -101,6 +101,7 @@ struct slit {
 		struct slit *tail;
     int             label;
     char            *str;
+		std::string sp;
 		bool		isString;
 		int8_t pass;
 	char			*nmspace;
@@ -1639,6 +1640,112 @@ public:
 	void GenerateLoadConst(Operand* ap1, Operand* ap2);
 };
 
+class starkCodeGenerator : public CodeGenerator
+{
+public:
+	void banner();
+	Operand* MakeBoolean(Operand* oper);
+	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
+	void GenerateLea(Operand* ap1, Operand* ap2);
+	void GenerateBranchTrue(Operand* ap, int64_t label);
+	void GenerateBranchFalse(Operand* ap, int64_t label);
+	void GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction);
+	void GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction);
+	bool GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit);
+	void GenerateBeq(Operand*, Operand*, int64_t);
+	void GenerateBne(Operand*, Operand*, int64_t);
+	void GenerateBlt(Operand*, Operand*, int64_t);
+	void GenerateBle(Operand*, Operand*, int64_t);
+	void GenerateBgt(Operand*, Operand*, int64_t);
+	void GenerateBge(Operand*, Operand*, int64_t);
+	void GenerateBltu(Operand*, Operand*, int64_t);
+	void GenerateBleu(Operand*, Operand*, int64_t);
+	void GenerateBgtu(Operand*, Operand*, int64_t);
+	void GenerateBgeu(Operand*, Operand*, int64_t);
+	void GenerateBand(Operand*, Operand*, int64_t);
+	void GenerateBor(Operand*, Operand*, int64_t);
+	void GenerateBnand(Operand*, Operand*, int64_t);
+	void GenerateBnor(Operand*, Operand*, int64_t);
+	Operand* GenerateEq(ENODE* node);
+	Operand* GenerateNe(ENODE* node);
+	Operand* GenerateLt(ENODE* node);
+	Operand* GenerateLe(ENODE* node);
+	Operand* GenerateGt(ENODE* node);
+	Operand* GenerateGe(ENODE* node);
+	Operand* GenerateLtu(ENODE* node);
+	Operand* GenerateLeu(ENODE* node);
+	Operand* GenerateGtu(ENODE* node);
+	Operand* GenerateGeu(ENODE* node);
+	Operand* GenerateFeq(ENODE* node);
+	Operand* GenerateFne(ENODE* node);
+	Operand* GenerateFlt(ENODE* node);
+	Operand* GenerateFle(ENODE* node);
+	Operand* GenerateFgt(ENODE* node);
+	Operand* GenerateFge(ENODE* node);
+	Operand* GenExpr(ENODE* node);
+	void LinkAutonew(ENODE* node);
+	int64_t PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount = true);
+	int64_t PushArguments(Function* func, ENODE* plist);
+	void PopArguments(Function* func, int howMany, bool isPascal = true);
+	Operand* GenerateSafeLand(ENODE*, int flags, int op);
+	void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
+	void GenerateDirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
+	void SignExtendBitfield(Operand* ap3, uint64_t mask);
+	void GenerateBitfieldInsert(Operand* dst, Operand* src, int offset, int width);
+	void GenerateBitfieldInsert(Operand* dst, Operand* src, Operand* offset, Operand* width);
+	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width);
+	Operand* GenerateBitfieldExtract(Operand* src, Operand* offset, Operand* width);
+	Operand* GenerateBitfieldExtract(Operand* ap1, ENODE* offset, ENODE* width);
+	Operand* GenerateShift(ENODE* node, int flags, int64_t size, int op);
+	void GenerateUnlink(int64_t amt);
+	void GenerateCall(Operand* tgt) {
+		GenerateMonadic(op_bsr, 0, tgt);
+	};
+	void GenerateLocalCall(Operand* tgt) {
+		GenerateMonadic(op_bsr, 0, tgt);
+	};
+	void GenerateReturnInsn() {
+		GenerateZeradic(op_rts);
+	};
+	void GenerateInterruptReturn(Function* func) {
+		GenerateZeradic(op_rti);
+	};
+	void GenerateReturnAndDeallocate(int64_t amt);
+	void GenerateReturnAndDeallocate(Operand* ap1);
+	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
+	void GenerateInterruptSave(Function* func);
+	void GenerateInterruptLoad(Function* func);
+	void GenerateLoadConst(Operand* operi, Operand* dst);
+	void GenerateLoadDataPointer(void);
+	void GenerateLoadBssPointer(void);
+	void GenerateLoadRodataPointer(void);
+	void GenerateSmallDataRegDecl(void);
+	void GenerateSignExtendByte(Operand*, Operand*);
+	void GenerateSignExtendWyde(Operand*, Operand*);
+	void GenerateSignExtendTetra(Operand*, Operand*);
+	void GenerateLoadAddress(Operand* ap3, Operand* ap1);
+	void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
+	void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
+	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
+	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateAdd(Operand* dst, Operand* src1, Operand* src2);
+	Operand* GenerateSubtract(Operand* dst, Operand* src1, Operand* src2);
+
+	OCODE* GenerateReturnBlock(Function* fn);
+
+	Operand* GenerateFloatcon(ENODE* node, int flags, int64_t size);
+	Operand* GenPositcon(ENODE* node, int flags, int64_t size);
+	Operand* GenLabelcon(ENODE* node, int flags, int64_t size);
+	Operand* GenNacon(ENODE* node, int flags, int64_t size);
+	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
+	int GetSegmentIndexReg(e_sg seg);
+	void SaveRegisterVars(CSet* mask);
+	bool CheckForShortAddressMode(e_op opcode, Operand* oper, e_op* opopcode);
+};
+
 class QuplsCodeGenerator : public CodeGenerator
 {
 public:
@@ -2510,6 +2617,12 @@ public:
 	int OptimizationDesireability();
 };
 
+class starkCSE : public CSE
+{
+public:
+	int OptimizationDesireability();
+};
+
 class QuplsCSE : public CSE
 {
 public:
@@ -2737,6 +2850,13 @@ public:
 	virtual void GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel) {};
 	static void GenerateSwitchLo(Statement* stmt, Case* cases, Operand* ap, Operand* ap2, int lo, int xitlab, int deflab, bool is_unsigned, bool one_hot, bool last_case);
 	static void GenerateSwitchSearch(Statement* stmt, Case* cases, Operand* ap, Operand* ap2, int midlab, int lo, int hi, int xitlab, int deflab, bool is_unsigned, bool one_hot);
+};
+
+class starkStatementGenerator : public StatementGenerator
+{
+public:
+	void GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel);
+	void GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel);
 };
 
 class QuplsStatementGenerator : public StatementGenerator
@@ -2996,6 +3116,9 @@ public:
 		typenum = 0; ipoll = false; pollCount = 33;
 		autoInline = 5;
 		table_density = 33;
+#ifdef STARK
+		sg = new starkStatementGenerator;
+#endif
 #ifdef LB650
 		sg = new LB650StatementGenerator;
 #endif
@@ -3074,22 +3197,22 @@ public:
 	int NumvmTmpRegs;
 	int NumvmSavedRegs;
 	int NumSavedCrRegs;
-	int argregs[64];
-	int tmpregs[64];
-	int saved_regs[64];
-	int fargregs[64];
-	int ftmpregs[64];
-	int fsaved_regs[64];
-	int vargregs[64];
-	int vtmpregs[64];
-	int vsaved_regs[64];
-	int vmargregs[64];
-	int vmtmpregs[64];
-	int vmsaved_regs[64];
-	Register tmpCrRegs[64];
-	Register regs[64];
+	int argregs[96];
+	int tmpregs[96];
+	int saved_regs[96];
+	int fargregs[96];
+	int ftmpregs[96];
+	int fsaved_regs[96];
+	int vargregs[96];
+	int vtmpregs[96];
+	int vsaved_regs[96];
+	int vmargregs[96];
+	int vmtmpregs[96];
+	int vmsaved_regs[96];
+	Register tmpCrRegs[96];
+	Register regs[96];
 	CSet availableTemps;
-	int savedCrRegs[64];
+	int savedCrRegs[96];
 	bool SupportsBand;
 	bool SupportsBor;
 	bool SupportsBBS;
@@ -3149,6 +3272,14 @@ public:
 		return (4 * sizeOfWord);
 	};
 	virtual char* RegMoniker(int32_t regno);
+};
+
+class starkCPU : public CPU
+{
+public:
+	starkCPU();
+	void InitRegs();
+	char* RegMoniker(int32_t regno);
 };
 
 class QuplsCPU : public CPU

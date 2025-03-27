@@ -183,7 +183,7 @@ void CPU::InitRegs()
 {
 	int ii;
 
-	for (ii = 0; ii < 64; ii++) {
+	for (ii = 0; ii < 96; ii++) {
 		cpu.regs[ii].number = 0;
 		cpu.regs[ii].isCr = false;
 		cpu.regs[ii].isCrg = false;
@@ -1344,7 +1344,7 @@ void initRegStack()
 	next_vreg = 0;// regFirstTemp;
 	next_vmreg = 0;
   next_breg = 0;
-	nextCrReg = 34;
+	nextCrReg = 82;
 	//for (rsp=0; rsp < 3; rsp=rsp+1)
 	//	regstack[rsp] = tmpregs[rsp];
 	//rsp = 0;
@@ -1398,7 +1398,7 @@ void initRegStack()
 		CrWrapno = 0;
 		CrWrapno_1 = 0;
 	ZeroMemory(rap, sizeof(rap));
-	for (i = 0; i < 64; i++) {
+	for (i = 0; i < 96; i++) {
 		cpu.tmpCrRegs[i].inUse.clear();
 		cpu.tmpCrRegs[i].isPushed.clear();
 		cpu.regs[i].inUse.clear();
@@ -1876,6 +1876,9 @@ Operand *GetTempFPRegister()
   Function *sym = currentFn;
 	int number;
 
+#ifdef STARK
+	return (GetTempRegister());
+#endif
 #ifdef LB650
 	return (GetTempRegister());
 #endif

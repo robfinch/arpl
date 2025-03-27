@@ -165,6 +165,8 @@
     <ClCompile Include="machines\LB650\LB650CSE.cpp" />
     <ClCompile Include="machines\Qupls\Qupls.cpp" />
     <ClCompile Include="machines\Qupls\QuplsCSE.cpp" />
+    <ClCompile Include="machines\stark\stark.cpp" />
+    <ClCompile Include="machines\stark\starkCSE.cpp" />
     <ClCompile Include="MemoryManagement.cpp" />
     <ClCompile Include="NextToken.cpp" />
     <ClCompile Include="Object.cpp" />

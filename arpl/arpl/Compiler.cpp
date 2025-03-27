@@ -34,6 +34,9 @@ extern BigfootCPU cpu;
 #ifdef QUPLS
 extern QuplsCPU cpu;
 #endif
+#ifdef STARK
+extern starkCPU cpu;
+#endif
 extern int lstackptr;
 extern char* lptr;
 extern int options(char *);

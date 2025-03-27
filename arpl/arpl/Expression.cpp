@@ -636,11 +636,34 @@ void Expression::ParseAggregateHelper(ENODE** node, ENODE* cnode)
 /*
 */
 
+static int updateStringLit(int i, char* str, char ch)
+{
+	slit* lit;
+	std::string t;
+
+	for (lit = strtab; lit; lit = lit->next) {
+		if (lit->label == i) {
+			t = lit->str;
+			if (str)
+				t.append(str);
+			else if (ch)
+				t.append(1,ch);
+			lit->str = my_strdup((char *)t.c_str());
+		}
+	}
+	return (i);
+}
+
 ENODE* Expression::ParseAggregateStringConst(ENODE** node, Symbol* symi)
 {
 	TYP* tptr;
 	ENODE* pnode;
 	bool cont = false;
+	slit* lit;
+	int prevstr = 0;
+	int firststr = 0;
+	bool first = true;
+	int lst;
 
 	do {
 		tptr = ParseNonCommaExpression(&pnode, symi);
@@ -648,23 +671,34 @@ ENODE* Expression::ParseAggregateStringConst(ENODE** node, Symbol* symi)
 			error(ERR_MISMATCH);
 			return (nullptr);
 		}
+		if (firststr == 0) {
+			firststr = pnode->i;
+			lst = lastst;
+		}
+		else {
+			if (tptr->type==bt_pointer)
+				string_exclude.add(pnode->i);
+		}
 		cont = lastst == comma;
 		if (*node == nullptr) {
 			*node = pnode;
 			if (!cont)
 				break;
+			NextToken();
 			continue;
 		}
 		// If a character is found, append to string
 		if (tptr->IsIntegralType())
-			(*node)->sp->append(1, pnode->i128.low);
+			updateStringLit(firststr, nullptr, pnode->i128.low);
 		// was a string, add two strings together
 		else
-			(*node)->sp->append(*(pnode->sp));
+			updateStringLit(firststr,(char *)(pnode->sp->c_str()), 0);
 		// skip over comma
 		if (cont)
 			NextToken();
 	} while (cont);
+//	sp = SymbolFactory::Make(*sym->name, sym->tp, sym->parentp, sym->depth, sc_const);
+	(*node)->i = firststr;// stringlit((char*)(*node)->sp->c_str(), symi);
 	return (*node);
 }
 

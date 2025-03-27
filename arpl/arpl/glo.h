@@ -265,6 +265,11 @@ extern int worstAlignment;
 extern Map map;
 extern int optimized;
 extern short int typ_sp;
+#ifdef STARK
+extern starkCPU cpu;
+extern starkCodeGenerator cg;
+extern starkStatementGenerator sg;
+#endif
 #ifdef LB650
 extern LB650CPU cpu;
 extern LB650CodeGenerator cg;

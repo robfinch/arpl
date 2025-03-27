@@ -2033,6 +2033,9 @@ Operand *CodeGenerator::GenerateAggregateAssign(ENODE *node1, ENODE *node2)
 #ifdef LB650
 	GenerateDiadic(op_jsr, 0, makereg(regLR), MakeStringAsNameConst((char*)"__aacpy", codeseg));
 #endif
+#ifdef STARK
+	GenerateDiadic(op_jsr, 0, makereg(regLR), MakeStringAsNameConst((char*)"__aacpy", codeseg));
+#endif
 	ReleaseTempReg(base2);
 	currentFn->IsLeaf = false;
 	return (base);
@@ -2497,6 +2500,13 @@ Operand* CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1;
 
+#ifdef STARK
+	ap1 = allocOperand();
+	ap1->mode = am_imm;
+	ap1->offset = node;
+	ap1->tp = node->tp;
+	return (ap1);
+#endif
 #ifdef LB650
 	ap1 = allocOperand();
 	ap1->mode = am_imm;
