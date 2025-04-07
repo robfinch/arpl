@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 	compiler.os_code = false;
 #ifdef STARK
 	cpu.NumTmpCrRegs = 3;
-	cpu.fileExt = ".asm";
+	cpu.fileExt = ".qpa";
 	cpu.lea_op = op_lda;
 	cpu.pagesize = 14;
 	cpu.RIimmSize = 32;
@@ -153,8 +153,8 @@ int main(int argc, char **argv)
 	cpu.SupportsBor = false;
 	cpu.SupportsBBC = true;
 	cpu.SupportsBBS = true;
-	cpu.SupportsPop = false;
-	cpu.SupportsPush = false;
+	cpu.SupportsPop = true;
+	cpu.SupportsPush = true;
 	cpu.SupportsLink = false;
 	cpu.SupportsUnlink = false;
 	cpu.SupportsBitfield = false;
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 	cpu.SupportsEnter = true;
 	cpu.SupportsLeave = true;
 	cpu.SupportsIndexed = true;
-	cpu.SupportsTrinary = true;
+	cpu.SupportsTrinary = false;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;
@@ -637,7 +637,7 @@ int	options(char *s)
   else if (s[1]=='S')
     mixedSource = TRUE;
 	else if (s[0] == '+' && s[1] == 'b') {
-		printf("ARPL v1.03 64-bit Compiler (C) 2024 Robert Finch\n");
+		printf("ARPL v1.05 64-bit Compiler (C) 2024-2025 Robert Finch\n");
 		cg.banner();
 	}
 	return 0;

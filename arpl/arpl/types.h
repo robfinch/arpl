@@ -1398,6 +1398,7 @@ public:
 	virtual void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
 	virtual void GenerateLoadAddress(Operand* ap3, Operand* ap1);
 	virtual void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
+	virtual void GenerateStoreImmediate(Operand* src, Operand* dst, int64_t size, Operand* mask = nullptr);
 	Operand* GenerateMux(ENODE*, int flags, int64_t size);
 	Operand* GenerateHook(ENODE*, int flags, int64_t size);
 	virtual Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
@@ -1666,6 +1667,9 @@ public:
 	void GenerateBor(Operand*, Operand*, int64_t);
 	void GenerateBnand(Operand*, Operand*, int64_t);
 	void GenerateBnor(Operand*, Operand*, int64_t);
+	virtual void GenerateBra(int64_t lab) {
+		GenerateMonadic(op_b, 0, MakeCodeLabel(lab));
+	};
 	Operand* GenerateEq(ENODE* node);
 	Operand* GenerateNe(ENODE* node);
 	Operand* GenerateLt(ENODE* node);
@@ -1726,8 +1730,10 @@ public:
 	void GenerateLoadAddress(Operand* ap3, Operand* ap1);
 	void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
 	void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
+	void GenerateStoreImmediate(Operand* src, Operand* dst, int64_t size, Operand* mask);
 	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
 	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateSubtractImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
 	Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
@@ -1744,6 +1750,7 @@ public:
 	int GetSegmentIndexReg(e_sg seg);
 	void SaveRegisterVars(CSet* mask);
 	bool CheckForShortAddressMode(e_op opcode, Operand* oper, e_op* opopcode);
+	bool SetDot(OCODE* ip);
 };
 
 class QuplsCodeGenerator : public CodeGenerator

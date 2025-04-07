@@ -266,16 +266,19 @@ void PeepList::SetLabelReference()
 	OCODE *p, *q;
 	struct clit *ct;
 	int nn;
+	short opcode;
 
 	ZeroMemory(LabelTable, sizeof(LabelTable));
 	for (p = head; p; p = p->fwd) {
-		if (p->opcode == op_label && !p->str) {
+		opcode = p->opcode & 0xfff;
+		if (opcode == op_label && !p->str) {
 			LabelTable[(int)p->oper1] = p;
 			p->isReferenced = DataLabels[(int)p->oper1] > 0;
 		}
 	}
 	for (q = head; q; q = q->fwd) {
-		if (q->opcode != op_label && q->opcode != op_nop) {
+		opcode = q->opcode & 0xfff;
+		if (opcode != op_label && opcode != op_nop) {
 			if (q->oper1 && (q->oper1->mode == am_direct || q->oper1->mode == am_imm)) {
 				if (q->oper1->offset) {
 					if (p = PeepList::FindLabel(q->oper1->offset->i)) {

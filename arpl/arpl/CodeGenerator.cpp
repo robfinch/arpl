@@ -416,6 +416,15 @@ void CodeGenerator::GenerateStore(Operand *ap1, Operand *ap3, int64_t size, Oper
 	}
 }
 
+void CodeGenerator::GenerateStoreImmediate(Operand* src, Operand* dst, int64_t size, Operand* mask)
+{
+	Operand* ap;
+
+	ap = GetTempRegister();
+	GenerateLoadConst(src, ap);
+	GenerateStore(ap, dst, size);
+}
+
 Operand* CodeGenerator::GenerateBitfieldDereference(ENODE* node, int flags, int64_t size, int opt)
 {
 	return (node->GenerateBitfieldDereference(flags, size, opt));
@@ -2213,9 +2222,18 @@ Operand* CodeGenerator::GenerateVregToVregAssign(ENODE* node, Operand* ap1, Oper
 
 Operand* CodeGenerator::GenerateImmToRegAssign(Operand* ap1, Operand* ap2, int64_t ssize)
 {
+	int om;
+
 	//if (ap2->isPtr)
 //	GenerateZeradic(op_setwb);
-	GenerateLoadConst(ap2, ap1);
+	if (ap1->isPtr) {
+		om = ap1->mode;
+		ap1->mode = am_ind;
+		GenerateStoreImmediate(ap2, ap1, ssize);
+		ap1->mode = om;
+	}
+	else
+		GenerateLoadConst(ap2, ap1);
 	ap1->isPtr = ap2->isPtr;
 	if (ap1->preg < cpu.nregs)
 		cpu.regs[ap1->preg].containsValue = true;
@@ -2349,6 +2367,7 @@ Operand *CodeGenerator::GenerateAssign(ENODE *node, int flags, int64_t size)
 
 		default:
 			ap1 = GenerateMemToRegAssign(ap1, ap2, node->p[1]->GetReferenceSize(), ssize);
+//			ap1 = GenerateRegToMemAssign(ap1, ap2, node->p[1]->GetReferenceSize());
 			mr->modified = true;
 			break;
 		}
