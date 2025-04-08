@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2017-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2017-2025  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -244,7 +244,7 @@ void Function::GenerateBody(bool force_inline)
 		insn_cnt = pl.Count(pl.head);
 		if (((insn_cnt < compiler.autoInline) ||
 				(insn_cnt < inline_threshold)) && force_inline && !IsPrototype)
-			IsInline = true;
+			IsInline = cpu.SupportsInlineCode;
 		PeepOpt();
 		FlushPeep(ofs);
 //		ofs.printf("\tpadi\n");
@@ -280,7 +280,7 @@ void Function::Init()
 //	NumParms = nump;
 //	numa = numarg;
 	IsVirtual = isVirtual;
-	IsInline = isInline;
+	IsInline = isInline && cpu.SupportsInlineCode;
 
 	isPascal = defaultcc==1;
 	isKernel = FALSE;
@@ -1511,6 +1511,8 @@ void Function::GenerateLocalFunctions()
 	Statement* stmt2;
 	std::string nm;
 	bool inline_flag;
+	bool supportsEnter = false;
+	bool supportsLeave = false;
 
 	if (!Islocal)
 		genfi.clear();
@@ -1521,9 +1523,15 @@ void Function::GenerateLocalFunctions()
 					if (symb->fi->Islocal && !genfi.isMember(symb->fi->number)) {
 						symb->fi->GenerateName(true);
 						inline_flag = symb->fi->IsInline;
+						supportsEnter = cpu.SupportsEnter;
+						supportsLeave = cpu.SupportsLeave;
+						cpu.SupportsEnter = false;
+						cpu.SupportsLeave = false;
 						symb->fi->IsInline = false;
 						symb->fi->GenerateBody(true);
 						symb->fi->IsInline = inline_flag;
+						cpu.SupportsEnter = supportsEnter;
+						cpu.SupportsLeave = supportsLeave;
 						genfi.add(symb->fi->number);
 					}
 			}

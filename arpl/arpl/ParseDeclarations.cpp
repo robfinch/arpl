@@ -1829,7 +1829,7 @@ Function* Declaration::ParseSuffixOpenpa(Function *sp)
 	dfs.printf("****************************\n");
 	NextToken();
 	sp->IsPascal = isPascal;
-	sp->IsInline = isInline;
+	sp->IsInline = isInline && cpu.SupportsInlineCode;
 	sp->IsFar = isFar;
 	sp->IsCoroutine = isCoroutine;
 	sp->IsUnknown = true;
@@ -2855,7 +2855,7 @@ void GlobalDeclaration::Parse()
 			if (symo) {
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 					symo->fi->depth = 0;
 					symo->segment = codeseg;
 				}
@@ -2893,7 +2893,7 @@ void GlobalDeclaration::Parse()
 					symo->segment = bssseg;
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 					symo->fi->depth = 0;
 					symo->segment = codeseg;
 				}
@@ -2908,7 +2908,7 @@ void GlobalDeclaration::Parse()
 				symo->segment = use_iprel ? codeseg : rodataseg;
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 					symo->fi->depth = 0;
 					symo->segment = codeseg;
 				}
@@ -2923,7 +2923,7 @@ void GlobalDeclaration::Parse()
 				if (symo)
 					if (symo->fi) {
 						symo->fi->inline_threshold = inline_threshold;
-						symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+						symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 						symo->fi->depth = 0;
 					}
 				inline_threshold = compiler.autoInline;
@@ -2936,7 +2936,7 @@ void GlobalDeclaration::Parse()
 			if (symo)
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 					symo->fi->depth = 0;
 				}
 			inline_threshold = compiler.autoInline;
@@ -2949,7 +2949,7 @@ void GlobalDeclaration::Parse()
 			if (symo) {
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 					symo->fi->depth = 0;
 				}
 				// Not a function, must be a var.
@@ -3008,7 +3008,7 @@ j1:
 					if (symo)
 						if (symo->fi) {
 							symo->fi->inline_threshold = inline_threshold;
-							symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+							symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 							symo->fi->depth = 0;
 						}
 					inline_threshold = compiler.autoInline;
@@ -3111,7 +3111,7 @@ int AutoDeclaration::ParseId(Symbol* parent, TABLE* ssyms, Statement* st)
 				symo->segment = dataseg;
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 					symo->segment = codeseg;
 				}
 			}
@@ -3133,7 +3133,7 @@ void AutoDeclaration::ParseThread(Symbol* parent, TABLE* ssyms, Statement* st)
 	if (symo)
 		if (symo->fi) {
 			symo->fi->inline_threshold = inline_threshold;
-			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 		}
 	inline_threshold = compiler.autoInline;
 }
@@ -3149,7 +3149,7 @@ void AutoDeclaration::ParseStatic(Symbol* parent, TABLE* ssyms, Statement* st)
 	if (symo) {
 		if (symo->fi) {
 			symo->fi->inline_threshold = inline_threshold;
-			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 			symo->segment = codeseg;
 		}
 		else
@@ -3181,7 +3181,7 @@ void AutoDeclaration::ParseExtern(Symbol* parent, TABLE* ssyms, Statement* st)
 		if (symo->fi) {
 			symo->segment = codeseg;
 			symo->fi->inline_threshold = inline_threshold;
-			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 		}
 	inline_threshold = compiler.autoInline;
 	--global_flag;
@@ -3197,7 +3197,7 @@ void AutoDeclaration::ParseIntrinsicType(Symbol* parent, TABLE* ssyms, Statement
 	if (symo)
 		if (symo->fi) {
 			symo->fi->inline_threshold = inline_threshold;
-			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+			symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 		}
 	inline_threshold = compiler.autoInline;
 }
@@ -3237,7 +3237,7 @@ ENODE *AutoDeclaration::Parse(Symbol *parent, TABLE *ssyms, Statement* st)
 			if (symo)
 				if (symo->fi) {
 					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype;
+					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
 				}
 			inline_threshold = compiler.autoInline;
 			break;

@@ -1894,7 +1894,7 @@ j1:
 		ap2 = cg.GenerateExpression(node->p[1], flags, size, 1);
 		if (!IsEqualOperand(ap1, ap2))
 		{
-			GenerateMonadic(op_hint, 0, MakeImmediate(2));
+			GenerateHint(2);
 			switch (ap1->mode)
 			{
 			case am_reg:
@@ -1948,7 +1948,7 @@ j1:
 	GenerateLabel(false_label);
 	if (!IsEqualOperand(ap1, ap2))
 	{
-		GenerateMonadic(op_hint, 0, MakeImmediate(2));
+		GenerateHint(2);
 		switch (ap1->mode)
 		{
 		case am_reg:

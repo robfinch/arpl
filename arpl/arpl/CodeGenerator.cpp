@@ -4142,7 +4142,7 @@ Operand* CodeGenerator::GenerateFunctionCall(ENODE* node, int flags, int lab)
 	*/
 		i += GeneratePrepareFunctionCall(node, sym, &sp, &fsp, &psp, &vsp);
 
-		if (sym && sym->IsInline)
+		if (sym && sym->IsInline && cpu.SupportsInlineCode)
 			GenerateInlineCall(node, sym);
 		else {
 			/*
@@ -4179,7 +4179,7 @@ Operand* CodeGenerator::GenerateFunctionCall(ENODE* node, int flags, int lab)
 
 		ap->mode = am_ind;
 		ap->offset = 0;
-		if (sym && sym->IsInline)
+		if (sym && sym->IsInline && cpu.SupportsInlineCode)
 			GenerateInlineCall(node, sym);
 		else
 			GenerateIndirectJump(node, ap, sym, flags, lab);
@@ -4295,7 +4295,7 @@ void CodeGenerator::GenerateReturn(Function* func, Statement* stmt)
 			ap = cg.GenerateExpression(stmt->exp, am_vreg, 64, 1);
 		else
 			ap = cg.GenerateExpression(stmt->exp, am_reg | am_imm, cpu.sizeOfWord, 1);
-		GenerateMonadic(op_hint, 0, MakeImmediate(2));
+		GenerateHint(2);
 		if (ap->mode == am_imm)
 			GenerateDiadic(cpu.ldi_op, 0, makereg(cpu.argregs[0]), ap);
 		else if (ap->mode == am_reg || ap->mode == am_vreg) {
@@ -4790,7 +4790,7 @@ Operand* CodeGenerator::GenerateBinary(ENODE* node, int flags, int64_t size, int
 		ap3 = GetTempRegister();
 		if (ENODE::IsEqual(node->p[0], node->p[1]) && !opt_nocgo) {
 			// Duh, subtract operand from itself, result would be zero.
-			if (op == op_sub || op==op_subtract || op == op_ptrdif || op == op_eor) {
+			if (op == op_sub || op==op_subtract || op == op_ptrdif || op == op_eor || op == op_xor) {
 				GenerateMove(ap3, makereg(0));
 				ap3->isConst = true;
 				if (ap3->offset == nullptr)
@@ -5027,7 +5027,7 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 	ip = nullptr;
 	fn->alstk = false;
 	if (!cpu.SupportsEnter)
-		GenerateMonadic(op_hint, 0, MakeImmediate(begin_return_block));
+		GenerateHint(begin_return_block);
 	if (cpu.SupportsEnter)
 	{
 		if (fn->stkspace < 32767) {
@@ -5074,7 +5074,7 @@ OCODE* CodeGenerator::GenerateReturnBlock(Function* fn)
 	// Put this marker here so that storing the link register relative to the
 	// frame pointer counts as a frame pointer reference.
 	if (!cpu.SupportsEnter)
-		GenerateMonadic(op_hint, 0, MakeImmediate(end_return_block));
+		GenerateHint(end_return_block);
 	//	GenerateTriadic(op_stdp, 0, makereg(regFP), makereg(regZero), MakeIndirect(regSP));
 	n = 0;
 	if (!currentFn->IsLeaf && fn->doesJAL) {

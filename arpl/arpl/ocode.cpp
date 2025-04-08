@@ -890,6 +890,14 @@ void OCODE::OptStore()
 
 void OCODE::OptBeq()
 {
+	if (1) {
+		if (cpu.SupportsPredicateBranches) {
+			if (TargetDistance(oper2->offset->i, true) < 7) {
+				opcode = op_peq;
+				insn = Instruction::Get(op_peq);
+			}
+		}
+	}
 	if (back && back->opcode == op_cmp && back->oper3->preg == regZero) {
 		if (back->back && (back->back->opcode & 0x7fff) == cpu.ldi_op) {
 			if (back->back->oper1->preg == back->oper2->preg) {
@@ -899,6 +907,46 @@ void OCODE::OptBeq()
 					MarkRemove();
 				}
 			}
+		}
+	}
+}
+
+void OCODE::OptBlt()
+{
+	if (cpu.SupportsPredicateBranches) {
+		if (TargetDistance(oper2->offset->i, true) < 7) {
+			opcode = op_plt;
+			insn = Instruction::Get(op_plt);
+		}
+	}
+}
+
+void OCODE::OptBle()
+{
+	if (cpu.SupportsPredicateBranches) {
+		if (TargetDistance(oper2->offset->i, true) < 7) {
+			opcode = op_ple;
+			insn = Instruction::Get(op_ple);
+		}
+	}
+}
+
+void OCODE::OptBgt()
+{
+	if (cpu.SupportsPredicateBranches) {
+		if (TargetDistance(oper2->offset->i, true) < 7) {
+			opcode = op_pgt;
+			insn = Instruction::Get(op_pgt);
+		}
+	}
+}
+
+void OCODE::OptBge()
+{
+	if (cpu.SupportsPredicateBranches) {
+		if (TargetDistance(oper2->offset->i, true) < 7) {
+			opcode = op_pge;
+			insn = Instruction::Get(op_pge);
 		}
 	}
 }
@@ -945,13 +993,15 @@ void OCODE::OptIncrBranch()
 }
 
 
-int OCODE::TargetDistance(int64_t i)
+int OCODE::TargetDistance(int64_t i, bool pred)
 {
 	OCODE* ip;
 	int count;
 
 	count = 1;
 	for (ip = this->back; ip; ip = ip->back) {
+		if (pred)
+			break;
 		if (ip->opcode == op_label) {
 			if ((int64_t)ip->oper1 == i)
 				return (count);
@@ -962,6 +1012,8 @@ int OCODE::TargetDistance(int64_t i)
 		if (ip->opcode == op_label) {
 			if ((int64_t)ip->oper1 == i)
 				return (count);
+			else if (pred)
+				return (0x7fffffffL);
 		}
 		count++;
 	}
@@ -971,6 +1023,15 @@ int OCODE::TargetDistance(int64_t i)
 
 void OCODE::OptBne()
 {
+	if (1) {
+		if (cpu.SupportsPredicateBranches) {
+			if (TargetDistance(oper2->offset->i, true) < 7) {
+				opcode = op_pne;
+				insn = Instruction::Get(op_pne);
+				return;
+			}
+		}
+	}
 	if (oper2->mode == am_reg && oper2->preg == regZero) {
 		if (TargetDistance(oper3->offset->i) < 512) {
 			opcode = op_bnez;

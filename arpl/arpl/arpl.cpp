@@ -149,6 +149,7 @@ int main(int argc, char **argv)
 	cpu.RIimmSize = 32;
 	cpu.cache_line_size = 6;
 	cpu.code_align = 6;					// power of two
+	cpu.SupportsPredicateBranches = true;
 	cpu.SupportsBand = false;
 	cpu.SupportsBor = false;
 	cpu.SupportsBBC = true;
@@ -165,6 +166,7 @@ int main(int argc, char **argv)
 	cpu.SupportsLeave = true;
 	cpu.SupportsIndexed = true;
 	cpu.SupportsTrinary = false;
+	cpu.SupportsInlineCode = false;
 	cpu.Addsi = false;
 	cpu.ext_op = op_ext;
 	cpu.extu_op = op_extu;

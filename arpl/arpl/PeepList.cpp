@@ -833,7 +833,9 @@ void PeepList::OptInstructions()
 			case op_beq:	ip->OptBeq(); ip->OptIncrBranch(); break;
 			case op_bne:	ip->OptBne(); ip->OptIncrBranch(); break;
 			case op_ble:	ip->OptIncrBranch(); break;
-			case op_blt:	ip->OptIncrBranch(); break;
+			case op_blt:	ip->OptBlt();  ip->OptIncrBranch(); break;
+			case op_bgt:	ip->OptBgt(); break;
+			case op_bge:	ip->OptBge(); break;
 			case op_bra:	ip->OptBra(); break;
 			case op_branch:	ip->OptBra(); break;
 			case op_jal:	ip->OptJAL(); break;

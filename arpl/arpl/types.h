@@ -1286,6 +1286,10 @@ public:
 	void OptPop();
 	void OptBne();
 	void OptBeq();
+	void OptBlt();
+	void OptBle();
+	void OptBgt();
+	void OptBge();
 	void OptIncrBranch();
 	void OptScc();
 	void OptSll();
@@ -1294,7 +1298,7 @@ public:
 	void OptVmask();
 	void OptZxb();
 	void OptZxw();
-	int TargetDistance(int64_t i);
+	int TargetDistance(int64_t i, bool predmd = false);
 
 	static OCODE *loadHex(txtiStream& ifs);
 	void store(txtoStream& ofs);
@@ -3220,6 +3224,7 @@ public:
 	Register regs[96];
 	CSet availableTemps;
 	int savedCrRegs[96];
+	bool SupportsPredicateBranches;
 	bool SupportsBand;
 	bool SupportsBor;
 	bool SupportsBBS;
@@ -3236,6 +3241,7 @@ public:
 	bool SupportsLeave;
 	bool SupportsIndexed;
 	bool SupportsTrinary;
+	bool SupportsInlineCode;
 	void SetRealRegisters();
 	void SetVirtualRegisters();
 	bool Addsi;

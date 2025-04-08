@@ -23,7 +23,7 @@ Declaration::Declaration(Statement* st)
 
 Function* Declaration::MakeFunction(int symnum, Symbol* sym, bool isPascal, bool isInline) {
 	Function* fn = compiler.ff.MakeFunction(symnum, sym, isPascal);
-	fn->IsInline = isInline;
+	fn->IsInline = isInline && cpu.SupportsInlineCode;
 	return (fn);
 };
 

@@ -1839,7 +1839,7 @@ int64_t i386CodeGenerator::PushArgument(ENODE* ep, int regno, int stkoffs, bool*
 						else {
 		*/
 		if (regno) {
-			GenerateMonadic(op_hint, 0, MakeImmediate(1));
+			GenerateHint(1);
 			if (ap->mode == am_imm) {
 				GenerateDiadic(cpu.ldi_op, 0, makereg(regno & 0x7fff), ap);
 				if (regno & 0x8000) {
