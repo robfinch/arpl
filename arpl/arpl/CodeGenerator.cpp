@@ -2173,7 +2173,8 @@ Operand* CodeGenerator::GenerateRegToRegAssign(ENODE* node, Operand* ap1, Operan
 		GenerateMove(ap1, ap3);
 		ReleaseTempRegister(ap3);
 		//GenerateZeradic(op_setwb);
-		ap1->isPtr = TRUE;
+		// IsPtrSetting
+		//ap1->isPtr = TRUE;
 	}
 	else if (node->p[0]->IsRefType()) {
 		GenerateStore(ap2, MakeIndirect(ap1->preg), ssize);
@@ -2208,7 +2209,8 @@ Operand* CodeGenerator::GenerateVregToVregAssign(ENODE* node, Operand* ap1, Oper
 		GenerateMove(ap1, ap3, mask);
 		ReleaseTempRegister(ap3);
 		//GenerateZeradic(op_setwb);
-		ap1->isPtr = TRUE;
+		// IsPtrSetting
+		//ap1->isPtr = TRUE;
 	}
 	else if (node->p[0]->IsRefType()) {
 		GenerateStore(ap2, MakeIndirect(ap1->preg), ssize, mask);
@@ -2220,24 +2222,24 @@ Operand* CodeGenerator::GenerateVregToVregAssign(ENODE* node, Operand* ap1, Oper
 	return (ap1);
 }
 
-Operand* CodeGenerator::GenerateImmToRegAssign(Operand* ap1, Operand* ap2, int64_t ssize)
+Operand* CodeGenerator::GenerateImmToRegAssign(Operand* dst, Operand* src, int64_t ssize)
 {
 	int om;
 
-	//if (ap2->isPtr)
+	//if (src->isPtr)
 //	GenerateZeradic(op_setwb);
-	if (ap1->isPtr) {
-		om = ap1->mode;
-		ap1->mode = am_ind;
-		GenerateStoreImmediate(ap2, ap1, ssize);
-		ap1->mode = om;
+	if (dst->isPtr && src->isPtr) {
+		om = dst->mode;
+		dst->mode = am_ind;
+		GenerateStoreImmediate(src, dst, ssize);
+		dst->mode = om;
 	}
 	else
-		GenerateLoadConst(ap2, ap1);
-	ap1->isPtr = ap2->isPtr;
-	if (ap1->preg < cpu.nregs)
-		cpu.regs[ap1->preg].containsValue = true;
-	return (ap1);
+		GenerateLoadConst(src, dst);
+	dst->isPtr = src->isPtr;
+	if (dst->preg < cpu.nregs)
+		cpu.regs[dst->preg].containsValue = true;
+	return (dst);
 }
 
 

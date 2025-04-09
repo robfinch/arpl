@@ -50,9 +50,10 @@ static Instruction starkInsnTbl[] =
 { ";string", op_string },
 { "abs", op_abs,2,1,false,am_reg,am_reg,0,0 },
 { "add",op_add,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
-{ "adds",op_adds,1,1,false,am_reg,am_reg,am_reg, 0 },
+{ "addi",op_addi,1,1,false,am_reg,am_reg,am_imm,0 },
 { "addu", op_addu,1,1 },
 { "and",op_and,1,1,false,am_reg | amCrReg,am_reg | amCrReg,am_reg | amCrReg | am_imm,0 },
+{ "andi",op_andi,1,1,false,am_reg,am_reg,am_imm,0 },
 { "andcm",op_andcm,1,1,false,am_reg,am_reg,am_reg,0 },
 { "asl", op_asl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "aslx", op_aslx,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
@@ -78,7 +79,7 @@ static Instruction starkInsnTbl[] =
 { "bmap", op_bmap,1,0,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "bne", op_bne,3,0,false,amCrReg,am_reg,am_direct|am_brind,0 },
 { "branch",op_bra,3,0,false,0,0,0,0 },
-//{ "branch",op_branch,3,0,false,am_direct,0,0,0 },
+//{ "branch",op_b,3,0,false,am_direct,0,0,0 },
 { "brk", op_brk,1,0 },
 { "bun", op_bun,2,0 },
 { "bytndx", op_bytendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
@@ -89,6 +90,8 @@ static Instruction starkInsnTbl[] =
 { "cmovenz", op_cmovenz,1,1,false,am_reg,am_reg,am_reg,am_reg },
 { "cmp",op_cmp,1,1,false,am_reg,am_reg | am_imm,am_reg | am_imm,0 },
 { "cmpa",op_cmpa,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "cmpai",op_cmpai,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "cmpi",op_cmpi,1,1,false,am_reg,am_reg | am_imm, am_imm,0 },
 { "com", op_com,2,1,false,am_reg,am_reg,0,0 },
 { "cr2cr", op_cr2cr,1,0,false,amCrReg,amCrReg,0,0},
 { "crand",op_crand,1,0,false,amCrReg,amCrReg,amCrReg,0 },
@@ -107,7 +110,6 @@ static Instruction starkInsnTbl[] =
 { "divu",op_divu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "dw", op_dw },
 { "enter", op_enter,40,0,true,am_imm,0,0,0 },
-{ "eor",op_eor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "eq",op_eq, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
 { "ext", op_ext,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
 { "extu", op_extu,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
@@ -174,10 +176,10 @@ static Instruction starkInsnTbl[] =
 { "l",op_l,1,1,false,am_reg,am_imm,0,0 },
 { "la",op_la,1,1,false,am_reg,am_mem,0,0 },
 { "lb", op_lb,4,1,true,am_reg,am_mem,0,0 },
-{ "lbu", op_lbu,4,1,true,am_reg,am_mem,0,0 },
+{ "lbz", op_lbu,4,1,true,am_reg,am_mem,0,0 },
 { "ld", op_ld,4,1,true,am_reg,am_mem,0,0 },
 { "ldb", op_ldb,4,1,true,am_reg,am_mem,0,0 },
-{ "ldbu", op_ldbu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldbz", op_ldbz,4,1,true,am_reg,am_mem,0,0 },
 { "ldd", op_ldd,4,1,true,am_reg,am_mem,0,0 },
 { "lddr", op_lddr,4,1,true,am_reg,am_mem,0,0 },
 { "ldfd", op_ldfd,4,1,true, am_reg, am_mem,0,0 },
@@ -186,14 +188,13 @@ static Instruction starkInsnTbl[] =
 { "ldhs", op_ldhs,4,1,true,am_reg,am_mem,0,0 },
 { "ldm", op_ldm,20,1,true,am_mem,0,0,0 },
 { "ldo", op_ldo,4,1,true,am_reg,am_mem,0,0 },
-{ "ldos", op_ldos,4,1,true,am_reg,am_mem,0,0 },
-{ "ldou", op_ldou,4,1,true,am_reg,am_mem,0,0 },
+{ "ldoz", op_ldoz,4,1,true,am_reg,am_mem,0,0 },
 { "ldp", op_ldp,4,1,true,am_reg,am_mem,0,0 },
 { "ldpu", op_ldpu,4,1,true,am_reg,am_mem,0,0 },
 { "ldt", op_ldt,4,1,true,am_reg,am_mem,0,0 },
-{ "ldtu", op_ldtu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldtz", op_ldtz,4,1,true,am_reg,am_mem,0,0 },
 { "ldw", op_ldw,4,1,true,am_reg,am_mem,0,0 },
-{ "ldwu", op_ldwu,4,1,true,am_reg,am_mem,0,0 },
+{ "ldwz", op_ldwz,4,1,true,am_reg,am_mem,0,0 },
 { "le",op_le, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
 { "lea",op_lea,1,1,false,am_reg,am_mem,0,0 },
 { "leave", op_leave,40,0,true,am_imm,0,0,0 },
@@ -244,20 +245,27 @@ static Instruction starkInsnTbl[] =
 { "not", op_not,2,1,false,am_reg,am_reg,0,0 },
 { "not",op_not,2,1, false,am_reg, am_reg,0,0 },
 { "or",op_or,1,1,false,am_reg | amCrReg,am_reg | amCrReg,am_reg | amCrReg | am_imm,0 },
+{ "ori",op_ori,1,1,false,am_reg,am_reg,am_imm,0 },
 { "padd", op_padd, 6, 1, false, am_reg, am_reg, am_reg, 0 },
 { "pdiv", op_pdiv, 10, 1, false, am_reg, am_reg, am_reg, 0 },
 { "pea", op_pea },
 { "pea",op_pea },
+{ "peq", op_peq,3,0,false,amCrReg,am_reg,am_direct | am_brind,0 },
 { "pfi", op_pfi, 1, 1, false, 0, 0, 0, 0 },
 { "pfx0", op_pfx0, 1, 0, false, am_imm, 0, 0, 0 },
 { "pfx1", op_pfx1, 1, 0, false, am_imm, 0, 0, 0 },
 { "pfx2", op_pfx2, 1, 0, false, am_imm, 0, 0, 0 },
 { "pfx3", op_pfx3, 1, 0, false, am_imm, 0, 0, 0 },
+{ "pge", op_pge,3,0,false,amCrReg,am_reg,am_direct | am_brind,0 },
+{ "pgt", op_pgt,3,0,false,amCrReg,am_reg,am_direct | am_brind,0 },
 { "phi", op_phi },
 { "pldo", op_pldo,4,1,true,am_reg,am_mem,0,0 },
 { "pldt", op_pldt,4,1,true,am_reg,am_mem,0,0 },
 { "pldw", op_pldw,4,1,true,am_reg,am_mem,0,0 },
+{ "ple", op_ple, 3,0,false,amCrReg,am_reg,am_direct | am_brind,0 },
+{ "plt", op_plt,3,0,false,amCrReg,am_reg,am_direct | am_brind,0 },
 { "pmul", op_pmul, 8, 1, false, am_reg, am_reg, am_reg, 0 },
+{ "pne", op_pne,3,0,false,amCrReg,am_reg,am_direct | am_brind,0 },
 { "pop", op_pop,4,2,true,am_reg | amCrReg | amCrgReg,am_reg,0,0 },
 { "popf", op_popf,4,2,true,am_reg,am_reg,0,0 },
 { "popm", op_popm,4,1,true,am_imm,0,0,0 },
@@ -266,7 +274,7 @@ static Instruction starkInsnTbl[] =
 { "pstw", op_pstw,4,1,true,am_reg,am_mem,0,0 },
 { "psub", op_psub, 6, 1, false, am_reg, am_reg, am_reg, 0 },
 { "ptrdif",op_ptrdif,1,1,false,am_reg,am_reg,am_reg,am_imm },
-{ "push",op_push,4,1,true,am_reg | amCrReg | amCrgReg | am_imm,am_reg,0,0 },
+{ "push",op_push,4,1,true,am_reg | amCrReg | amCrgReg,am_reg,0,0 },
 { "pushf",op_pushf,4,0,true,am_reg,0,0,0 },
 { "pushm", op_pushm,4,0,true,am_imm,0,0,0 },
 { "redor", op_redor,2,1,false,am_reg,am_reg,am_reg,0 },
@@ -295,15 +303,19 @@ static Instruction starkInsnTbl[] =
 { "shru", op_stpru,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "sll", op_sll,2,1,false,am_reg,am_reg,am_reg,0 },
 { "sllh", op_sllh,2,1,false,am_reg,am_reg,am_reg,0 },
+{ "slli", op_slli,2,1,false,am_reg,am_reg,am_ui6,0 },
 { "sllp", op_sllp,2,1,false,am_reg,am_reg,am_reg,am_reg | am_ui6 },
 { "sm",op_sm },
 { "sor",op_sor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "spt", op_spt,4,0,true ,am_reg,am_mem,0,0 },
 { "sptr", op_sptr,4,0,true,am_reg,am_mem,0,0 },
 { "sra", op_sra,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "srai", op_srai,2,1,false,am_reg,am_reg,am_ui6,0 },
 { "sret", op_sret,1,0,0,0,0,0 },
 { "srl", op_srl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "srli", op_srli,2,1,false,am_reg,am_reg,am_ui6,0 },
 { "stb",op_stb,4,0,true,am_reg,am_mem,0,0 },
+{ "stbi",op_stib,4,0,true,am_imm,am_mem,0,0 },
 { "std", op_std,4,0,true,am_reg,am_mem,0,0 },
 { "stdcr", op_stdc,4,0,true, am_reg, am_mem,0,0 },
 { "stfd", op_stfd,4,0,true, am_reg, am_mem,0,0 },
@@ -311,21 +323,22 @@ static Instruction starkInsnTbl[] =
 { "sth", op_sth,4,0,true,am_reg,am_mem,0,0 },
 { "sths",op_sths,4,0,true,am_reg,am_mem,0,0 },
 { "sti", op_sti,1,0 },
-{ "stib",op_stib,4,0,true,am_imm,am_mem,0,0 },
-{ "stio",op_stio,4,0,true,am_imm,am_mem,0,0 },
-{ "stit",op_stit,4,0,true,am_imm,am_mem,0,0 },
-{ "stiw",op_stiw,4,0,true,am_imm,am_mem,0,0 },
 { "stm", op_stm,20,1,true,am_mem,0,0,0 },
+{ "stoi",op_stio,4,0,true,am_imm,am_mem,0,0 },
 { "sto",op_sto,4,0,true,am_reg,am_mem,0,0 },
 { "stop", op_stop },
 { "store",op_store,4,0,true,am_reg,am_mem,0,0 },
+{ "storei",op_storei,4,0,true,am_reg,am_mem,0,0 },
 { "storem", op_storem,32,0,true,am_imm,am_mem,0,0 },
 { "storev", op_storev,4,1, true, am_vreg, am_mem,0,0 },
 { "stos",op_stos,4,0,true,am_reg,am_mem,0,0 },
 { "stp",op_stp,4,0,true,am_reg,am_mem,0,0 },
 { "stt",op_stt,4,0,true,am_reg,am_mem,0,0 },
+{ "stti",op_stit,4,0,true,am_imm,am_mem,0,0 },
 { "stw",op_stw,4,0,true,am_reg,am_mem,0,0 },
+{ "stwi",op_stiw,4,0,true,am_imm,am_mem,0,0 },
 { "sub",op_sub,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "subi",op_subi,1,1,false,am_reg,am_reg,am_imm,0 },
 { "subs",op_subs,1,1,false,am_reg,am_reg,am_reg, 0 },
 { "subtract",op_subtract,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "subu", op_subu,1,1 },
@@ -369,6 +382,7 @@ static Instruction starkInsnTbl[] =
 { "wydendx", op_wydendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "xnor",op_xnor,1,1,false,am_reg,am_reg,am_reg,0 },
 { "xor",op_xor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "xori",op_xori,1,1,false,am_reg,am_reg,am_imm,0 },
 { "zseq", op_zseq,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
 { "zsge",op_zsge,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
 { "zsgeu",op_zsgeu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
@@ -713,7 +727,7 @@ char* starkCPU::RegMoniker(int32_t regno)
 		return (invert ? &buf[n][0] : &buf[n][1]);
 	}
 	if (is_crg) {
-		sprintf_s(&buf[n][0], 20, "%%crg");
+		sprintf_s(&buf[n][0], 20, "crg");
 	}
 	else if (is_cr) {
 		sprintf_s(&buf[n][0], 20, "%%cr%d", regno & 7);
@@ -741,13 +755,13 @@ char* starkCPU::RegMoniker(int32_t regno)
 		else if (regno == regSP)
 			sprintf_s(&buf[n][0], 20, "%%sp");
 		else if (regno == regLR)
-			sprintf_s(&buf[n][0], 20, "%%lr0");
+			sprintf_s(&buf[n][0], 20, "%%br0");
 		else if (regno == regLR + 1)
-			sprintf_s(&buf[n][0], 20, "%%lr1");
+			sprintf_s(&buf[n][0], 20, "%%br1");
 		else if (regno == regLR + 2)
-			sprintf_s(&buf[n][0], 20, "%%lr2");
+			sprintf_s(&buf[n][0], 20, "%%br2");
 		else if (regno == regLR + 3)
-			sprintf_s(&buf[n][0], 20, "%%lr3");
+			sprintf_s(&buf[n][0], 20, "%%br3");
 		else if (regno == 0) {
 			sprintf_s(&buf[n][0], 20, "%%r%d", regno);
 		}
@@ -764,7 +778,7 @@ char* starkCPU::RegMoniker(int32_t regno)
 
 void starkCodeGenerator::banner()
 {
-	printf("stark Code Generator v0.03\n");
+	printf("StarkCPU Code Generator v0.06\n(c) 2005 Robert Finch\n");
 };
 
 
@@ -1347,7 +1361,7 @@ Operand *starkCodeGenerator::GenExpr(ENODE *node)
 		GenerateFalseJump(node,lab0,0);
 		ap1 = GetTempRegister();
 		GenerateDiadic(cpu.ldi_op|op_dot,0,ap1,MakeImmediate(1));
-		GenerateMonadic(op_branch,0,MakeDataLabel(lab1,regZero));
+		GenerateMonadic(op_b,0,MakeDataLabel(lab1,regZero));
 		GenerateLabel(lab0);
 		GenerateDiadic(cpu.ldi_op|op_dot,0,ap1,MakeImmediate(0));
 		GenerateLabel(lab1);
@@ -1401,7 +1415,7 @@ Operand *starkCodeGenerator::GenExpr(ENODE *node)
     GenerateFalseJump(node,lab0,0);
     ap1 = GetTempRegister();
     GenerateDiadic(op_ld,0,ap1,MakeImmediate(1));
-    GenerateMonadic(op_branch,0,MakeDataLabel(lab1));
+    GenerateMonadic(op_b,0,MakeDataLabel(lab1));
     GenerateLabel(lab0);
     GenerateDiadic(op_ld,0,ap1,MakeImmediate(0));
     GenerateLabel(lab1);
@@ -1436,7 +1450,7 @@ void starkCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
 			if (!Int128::IsEQ(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 		}
 		else {
 			// If comparing to zero, go back an instruction and set the record bit.
@@ -1444,14 +1458,20 @@ void starkCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
 				ip = currentFn->pl.tail;
 				if (ip == nullptr)
 					return;
-				ip->opcode |= 0x8000;	// Add '.'
-				GenerateDiadic(op_beq, 0, makeCrReg(CR0), MakeCodeLabel(label));
+				if (SetDot(ip))	// Add '.'
+					GenerateDiadic(op_beq, 0, makeCrReg(CR0), MakeCodeLabel(label));
+				else {
+					ap3 = GetTempCrRegister();
+					GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+					GenerateDiadic(op_beq, 0, makeCrReg(CR0), MakeCodeLabel(label));
+					ReleaseTempRegister(ap3);
+				}
 				return;
 			}
 			else {
-				ap3 = GetTempRegister();
-				GenerateLoadConst(ap2, ap3);
-				GenerateTriadic(op_beq, 0, ap1, ap3, MakeCodeLabel(label));
+				ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_beq, 0, makeCrReg(CR0), MakeCodeLabel(label));
 				ReleaseTempRegister(ap3);
 				return;
 			}
@@ -1463,8 +1483,14 @@ void starkCodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_beq, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_beq, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_beq, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 	}
@@ -1493,7 +1519,7 @@ void starkCodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label)
 		}
 		else {
 			ap3 = GetTempCrRegister();
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
+			GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
 			GenerateDiadic(op_bne, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 			return;
@@ -1505,8 +1531,14 @@ void starkCodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_bne, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))	// Add '.'
+				GenerateDiadic(op_bne, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_bne, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 	}
@@ -1534,7 +1566,7 @@ void starkCodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
 		}
 		else {
 			Operand* ap3 = GetTempCrRegister();
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
+			GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
 			GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
@@ -1545,8 +1577,14 @@ void starkCodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_blt, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_blt, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
@@ -1569,7 +1607,7 @@ void starkCodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
 			;
 		else {
 			Operand* ap3 = GetTempCrRegister();
-			GenerateTriadic(op_cmp, 0, ap3, ap1, ap2);
+			GenerateTriadic(ap1->isUnsigned ? op_cmpai : op_cmpi, 0, ap3, ap1, ap2);
 			GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
@@ -1580,8 +1618,14 @@ void starkCodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_bge, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_bge, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
@@ -1605,12 +1649,12 @@ void starkCodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
 			if (!Int128::IsLE(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_ble, 0, ap1, ap3, MakeCodeLabel(label));
+			Operand* ap3 = GetTempCrRegister();
+			GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
 	}
@@ -1620,8 +1664,14 @@ void starkCodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_bge, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_bge, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
@@ -1645,12 +1695,12 @@ void starkCodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
 			if (Int128::IsLE(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_bgt, 0, ap1, ap3, MakeCodeLabel(label));
+			Operand* ap3 = GetTempCrRegister();
+			GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
 	}
@@ -1660,8 +1710,14 @@ void starkCodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_bge, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_bge, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpi, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
@@ -1685,12 +1741,12 @@ void starkCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label)
 			if (!Int128::IsULT(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_bltu, 0, ap1, ap3, MakeCodeLabel(label));
+			Operand* ap3 = GetTempCrRegister();
+			GenerateTriadic(op_cmpai, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
 	}
@@ -1700,8 +1756,14 @@ void starkCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_blt, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_blt, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpai, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_blt, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
@@ -1713,35 +1775,30 @@ void starkCodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label)
 
 void starkCodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t label)
 {
-	Int128 i;
 	OCODE* ip;
 
-	i = regs[ap1->preg].val128;
 	if (ap2->mode == am_imm) {
+		Int128 i;
+
+		i = regs[ap1->preg].val128;
 		// Check if branch is always false. If the branch is always false, do nothing.
-		// If the branch is always true, generate unconditional branch. Unconditional
-		// branches are faster than conditional ones.
-		if (regs[ap1->preg].isConst) {
-			if (Int128::IsULT(&i, &ap2->offset->i128))
-				;
-			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
-		}
+		if (regs[ap1->preg].isConst && !Int128::IsUGE(&i, &ap2->offset->i128))
+			;
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_bgeu, 0, ap1, ap3, MakeCodeLabel(label));
+			Operand* ap3 = GetTempCrRegister();
+			GenerateTriadic(op_cmpai, 0, ap3, ap1, ap2);
+			GenerateDiadic(op_bge, 0, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
 	}
 	else {
-		// If comparing to zero, go back an instruction and set the record bit.
+		// If comparing to zero, branch is always true. Unsigned numbers are always
+		// greater than or equal to zero.
 		if (ap2->preg == 0) {
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_bge, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
@@ -1765,12 +1822,12 @@ void starkCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t label)
 			if (!Int128::IsULE(&i, &ap2->offset->i128))
 				;
 			else
-				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_bleu, 0, ap1, ap3, MakeCodeLabel(label));
+			Operand* ap3 = GetTempCrRegister();
+			GenerateTriadic(op_cmpa, 0, ap3, ap1, ap2);
+			GenerateTriadic(op_ble, 0, ap1, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
 	}
@@ -1780,15 +1837,20 @@ void starkCodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_ble, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_ble, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpai, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
 		GenerateTriadic(op_cmpa, 0, ap3, ap1, ap2);
 		GenerateDiadic(op_ble, 0, ap3, MakeCodeLabel(label));
 		ReleaseTempRegister(ap3);
-
 	}
 }
 
@@ -1809,9 +1871,9 @@ void starkCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t label)
 				GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 		}
 		else {
-			Operand* ap3 = GetTempRegister();
-			GenerateLoadConst(ap2, ap3);
-			GenerateTriadic(op_bgtu, 0, ap1, ap3, MakeCodeLabel(label));
+			Operand* ap3 = GetTempCrRegister();
+			GenerateTriadic(op_cmpa, 0, ap3, ap1, ap2);
+			GenerateTriadic(op_bgt, 0, ap1, ap3, MakeCodeLabel(label));
 			ReleaseTempRegister(ap3);
 		}
 	}
@@ -1821,15 +1883,20 @@ void starkCodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t label)
 			ip = currentFn->pl.tail;
 			if (ip == nullptr)
 				return;
-			ip->opcode |= 0x8000;	// Add '.'
-			GenerateDiadic(op_bgt, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			if (SetDot(ip))
+				GenerateDiadic(op_bgt, 0, makeCrReg(CR0), MakeCodeLabel(label));
+			else {
+				Operand* ap3 = GetTempCrRegister();
+				GenerateTriadic(op_cmpai, 0, ap3, ap1, ap2);
+				GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
+				ReleaseTempRegister(ap3);
+			}
 			return;
 		}
 		Operand* ap3 = GetTempCrRegister();
 		GenerateTriadic(op_cmpa, 0, ap3, ap1, ap2);
 		GenerateDiadic(op_bgt, 0, ap3, MakeCodeLabel(label));
 		ReleaseTempRegister(ap3);
-
 	}
 }
 
@@ -2276,7 +2343,7 @@ int64_t starkCodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool
         else {
 */
 			if (regno) {
-				GenerateMonadic(op_hint,0,MakeImmediate(1));
+				GenerateHint(1);
 				if (ap->mode==am_imm) {
 					GenerateDiadic(cpu.ldi_op,0,makereg(regno & 0x7fff), ap);
 					if (regno & 0x8000) {
@@ -2588,7 +2655,7 @@ void starkCodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* 
 	}
 	else {
 		if (flags & am_jmp)
-			GenerateMonadic(op_branch, 0, MakeDirect(node->p[0]));
+			GenerateMonadic(op_b, 0, MakeDirect(node->p[0]));
 		else
 			GenerateMonadic(op_bsr, 0, MakeDirect(node->p[0]));
 		currentFn->doesJAL = true;
@@ -2818,7 +2885,7 @@ void starkCodeGenerator::GenerateFalseJump(ENODE* node, int64_t label, unsigned 
 			GenerateBeq(ap, makereg(regZero), label);
 			if (false) {
 				//				if (ap->offset->nodetype==en_icon && ap->offset->i != 0)
-				//					GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
+				//					GenerateMonadic(op_b, 0, MakeCodeLabel(label));
 				//				else
 				{
 					//ap1 = MakeBoolean(ap);
@@ -3146,13 +3213,6 @@ void starkCodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* a
 		return;
 	}
 	else {
-		// Simple register indirect, we know displacement is zero.
-		if (ap2->mode == am_ind) {
-			if (opcode == op_store)
-				opcode = op_stos;
-			if (opcode == op_load)
-				opcode = op_ldos;
-		}
 		GenerateDiadic(opcode, 0, ap1, ap2);
 	}
 }
@@ -3183,11 +3243,11 @@ void starkCodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize,
 	else if (ap3->isUnsigned) {
 		// If size is zero, probably a pointer to void being processed.
 		switch (size) {
-		case 0: GenerateLoadStore(op_ldbu, ap3, ap1); break;
-		case 1:	GenerateLoadStore(op_ldbu, ap3, ap1); break;
-		case 2:	GenerateLoadStore(op_ldwu, ap3, ap1); break;
-		case 4:	GenerateLoadStore(op_ldtu, ap3, ap1); break;
-		case 8: GenerateLoadStore(op_ldou, ap3, ap1); break;
+		case 0: GenerateLoadStore(op_ldbz, ap3, ap1); break;
+		case 1:	GenerateLoadStore(op_ldbz, ap3, ap1); break;
+		case 2:	GenerateLoadStore(op_ldwz, ap3, ap1); break;
+		case 4:	GenerateLoadStore(op_ldtz, ap3, ap1); break;
+		case 8: GenerateLoadStore(op_ldo, ap3, ap1); break;
 		case 16:	GenerateLoadStore(op_ldh, ap3, ap1); break;
 		case 64:	GenerateLoadStore(op_load, ap3, ap1); break;
 		}
@@ -3248,17 +3308,36 @@ void starkCodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int64_t size,
 	//else if (ap1->mode==am_fpreg)
 	//	GenerateTriadic(op_fsto,0,ap1,ap3, mask);
 	else {
-		switch (size) {
-		case 1: GenerateLoadStore(op_stb, ap1, ap3); break;
-		case 2: GenerateLoadStore(op_stw, ap1, ap3); break;
-		case 4: GenerateLoadStore(op_stt, ap1, ap3); break;
-		case 8:	GenerateLoadStore(op_store, ap1, ap3); break;
-		case 16:	GenerateLoadStore(op_sth, ap1, ap3); break;
-		case 64:  GenerateLoadStore(op_store, ap1, ap3); break;
-		default:
-			;
+		if (ap1->mode == am_imm) {
+			switch (size) {
+			case 1: GenerateLoadStore(op_stib, ap1, ap3); break;
+			case 2: GenerateLoadStore(op_stiw, ap1, ap3); break;
+			case 4: GenerateLoadStore(op_stit, ap1, ap3); break;
+			case 8:	GenerateLoadStore(op_storei, ap1, ap3); break;
+			case 16:	GenerateLoadStore(op_sth, ap1, ap3); break;
+			case 64:  GenerateLoadStore(op_storei, ap1, ap3); break;
+			default:
+				;
+			}
+		}
+		else {
+			switch (size) {
+			case 1: GenerateLoadStore(op_stb, ap1, ap3); break;
+			case 2: GenerateLoadStore(op_stw, ap1, ap3); break;
+			case 4: GenerateLoadStore(op_stt, ap1, ap3); break;
+			case 8:	GenerateLoadStore(op_store, ap1, ap3); break;
+			case 16:	GenerateLoadStore(op_sth, ap1, ap3); break;
+			case 64:  GenerateLoadStore(op_store, ap1, ap3); break;
+			default:
+				;
+			}
 		}
 	}
+}
+
+void starkCodeGenerator::GenerateStoreImmediate(Operand* src, Operand* dst, int64_t size, Operand* mask)
+{
+	GenerateStore(src, dst, size);
 }
 
 Operand* starkCodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
@@ -3391,7 +3470,7 @@ OCODE* starkCodeGenerator::GenerateReturnBlock(Function* fn)
 	ip = nullptr;
 	fn->alstk = false;
 	if (!cpu.SupportsEnter)
-		GenerateMonadic(op_hint, 0, MakeImmediate(begin_return_block));
+		GenerateHint(begin_return_block);
 	if (cpu.SupportsEnter)
 	{
 		if (fn->stkspace < 8388607LL) {
@@ -3440,7 +3519,7 @@ OCODE* starkCodeGenerator::GenerateReturnBlock(Function* fn)
 	// Put this marker here so that storing the link register relative to the
 	// frame pointer counts as a frame pointer reference.
 	if (!cpu.SupportsEnter)
-		GenerateMonadic(op_hint, 0, MakeImmediate(end_return_block));
+		GenerateHint(end_return_block);
 	//	GenerateTriadic(op_stdp, 0, makereg(regFP), makereg(regZero), MakeIndirect(regSP));
 	n = 0;
 	if (!currentFn->IsLeaf && fn->doesJAL) {
@@ -3522,36 +3601,21 @@ Operand* starkCodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool s
 */
 Operand* starkCodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
-	Operand* ap5;
-
 	// ToDo: Should spit out a compiler warning here.
 	if (src2->offset == nullptr)
 		return (dst);
 
-	if (src2->offset->i128.IsNBit(cpu.RIimmSize)) {
-		GenerateTriadic(op_add, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
-		return (dst);
-	}
-	ap5 = nullptr;
+	GenerateTriadic(op_addi, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+	return (dst);
+}
 
-	if (!src2->offset->i128.IsNBit(24LL)) {
-		ap5 = GetTempRegister();
-		GenerateLoadConst(src2, ap5);
-		GenerateTriadic(op_add, 0, dst, src1, ap5);
-		ReleaseTempRegister(ap5);
+Operand* starkCodeGenerator::GenerateSubtractImmediate(Operand* dst, Operand* src1, Operand* src2)
+{
+	// ToDo: Should spit out a compiler warning here.
+	if (src2->offset == nullptr)
 		return (dst);
-	}
-	GenerateTriadic(op_add, 0, dst, src1, MakeImmediate(src2->offset->i128.low & 0xffffffLL));
-	/* Should update this sometime to use adds. But managing the sign extended constant is tricky.
-	if (src2->offset->i128.low & 0x800000LL) {
-		if (((src2->offset->i128.low >> 24) & 0xffffffLL) == 0xffffffLL)
-			GenerateTriadic(op_ands, 0, dst, MakeImmediate(1LL), MakeImmediate(2LL));
-		else
-			GenerateTriadic(op_ands, 0, dst, MakeImmediate(((src2->offset->i128.low >> 24LL) & 0xffffffLL) + 1), MakeImmediate(1LL));
-	}
-	else
-		GenerateTriadic(op_ands, 0, dst, MakeImmediate((src2->offset->i >> 24LL) & 0xffffffLL), MakeImmediate(1LL));
-	*/
+
+	GenerateTriadic(op_subi, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
@@ -3572,7 +3636,7 @@ Operand* starkCodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, O
 	if (src2->offset == nullptr)
 		return (dst);
 
-	GenerateTriadic(op_and, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+	GenerateTriadic(op_andi, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
@@ -3593,7 +3657,7 @@ Operand* starkCodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, Op
 	if (src2->offset == nullptr)
 		return (dst);
 
-	GenerateTriadic(op_or, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+	GenerateTriadic(op_ori, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
@@ -3614,7 +3678,7 @@ Operand* starkCodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1, O
 	if (src2->offset == nullptr)
 		return (dst);
 
-	GenerateTriadic(op_eor, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
+	GenerateTriadic(op_xori, 0, dst, src1, MakeImmediate(src2->offset->i128.low));
 	return (dst);
 }
 
@@ -3647,7 +3711,7 @@ Operand* starkCodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size,
 		if (Int128::IsGT(&val, &sz))
 			error(ERR_SHIFT_TOOMANYBITS);
 	}
-	Generate4adic(op, size == cpu.sizeOfWord ? 0 : (int)size, ap3, ap1, makereg(regZero), ap2);
+	GenerateTriadic(op, size == cpu.sizeOfWord ? 0 : (int)size, ap3, ap1, ap2);
 	// Rotates automatically sign extend
 	if ((op == op_rol || op == op_ror) && ap2->isUnsigned && !ap1->tp->IsVectorType())
 		switch (size) {
@@ -3669,10 +3733,7 @@ Operand* starkCodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size,
 
 Operand* starkCodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
 {
-	if (dst->preg < 32 && src1->preg < 32 && src2->preg < 32)
-		GenerateTriadic(op_adds, 0, dst, src1, src2);
-	else
-		GenerateTriadic(op_add, 0, dst, src1, src2);
+	GenerateTriadic(op_add, 0, dst, src1, src2);
 	return (dst);
 }
 
@@ -3685,4 +3746,17 @@ Operand* starkCodeGenerator::GenerateSubtract(Operand* dst, Operand* src1, Opera
 	*/
 		GenerateTriadic(op_sub, 0, dst, src1, src2);
 	return (dst);
+}
+
+bool starkCodeGenerator::SetDot(OCODE* ip)
+{
+	short opcode = ip->opcode & 0xfff;
+
+	if (opcode != op_hint && opcode != op_hint2 &&
+		opcode != op_label && opcode != op_rem && opcode != op_rem2 &&
+		!ip->IsStore()) {
+		ip->opcode |= 0x8000;	// Add '.'
+		return (true);
+	}
+	return (false);
 }

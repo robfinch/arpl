@@ -157,12 +157,17 @@ bool Instruction::IsStore()
 	if (this == nullptr)
 		return (false);
 	if (opcode == op_stb
+		|| opcode == op_stib
 		|| opcode == op_stw
+		|| opcode == op_stiw
 		|| opcode == op_stt
+		|| opcode == op_stit
 		|| opcode == op_stp
 		|| opcode == op_sto
+		|| opcode == op_stio
 		|| opcode == op_stos
 		|| opcode == op_store
+		|| opcode == op_storei
 		|| opcode == op_storem
 		|| opcode == op_sth
 		|| opcode == op_stdc
@@ -259,8 +264,6 @@ Instruction *Instruction::GetMapping(int op)
 
 size_t Instruction::store(txtoStream& ofs)
 {
-	if (_strnicmp(mnem, ";empty", 6)==0)
-		printf("hi");
 	switch (syntax) {
 	case MOT:
 		if (mnem[0] == '#') {

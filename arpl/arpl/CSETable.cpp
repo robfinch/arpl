@@ -353,7 +353,6 @@ void CSETable::InitializeTempRegs()
 						ap2->tp = ap->tp;
 					}
 					*/
-					ap2->isPtr = ap->isPtr;
 					if (ap->mode == am_imm) {
 						//if (ap2->mode == am_fpreg) {
 						//	ap3 = GetTempRegister();
@@ -371,6 +370,8 @@ void CSETable::InitializeTempRegs()
 						//}
 						//else
 						{
+							ap->isPtr = false;
+							ap2->isPtr = false;
 							cg.GenerateLoadConst(ap, ap2);
 						}
 					}
@@ -384,11 +385,13 @@ void CSETable::InitializeTempRegs()
 						size = exptr->GetNaturalSize();
 						ap->isUnsigned = exptr->isUnsigned;
 						// Avoid loading from the stack frame that was just saved to.
-						if (ap->mode == am_indx && ap->preg == regFP && ap->offset->i128.high < 0)
+						if (ap->mode == am_indx && ap->preg == regFP && ap->offset->i128.high < 0) {
 							;
+						}
 						else
 							cg.GenerateLoad(ap2, ap, size, size);
 					}
+					ap2->isPtr = ap->isPtr;
 					ReleaseTempReg(ap);
 				}
 			}

@@ -322,6 +322,7 @@ enum e_op {
 	op_seteq, op_setne, op_setl, op_setle, op_setg, op_setge, op_setb, op_setbe, op_seta, op_setae,
 	// stark
 	op_b, op_bl, op_cmpa, op_cmpai, op_storei, op_pne, op_pgt, op_pge,
+	op_ldbz, op_ldwz, op_ldtz, op_ldoz,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxo, op_bmap,
 	op_movzxb, op_movzxw, op_movzxt,
