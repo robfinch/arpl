@@ -267,6 +267,12 @@
     <ClCompile Include="machines\stark\starkCSE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Qupls4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Qupls4CSE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">

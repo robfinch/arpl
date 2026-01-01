@@ -955,6 +955,8 @@ void OCODE::OptIncrBranch()
 {
 	OCODE* bck;
 
+	if (compiler.cputype == qupls4)
+		return;
 	if (back->opcode == op_loadi && back->oper1->preg != oper1->preg) {
 		bck = back->back;
 		if (bck && bck->opcode == op_add && bck->oper3->offset) {

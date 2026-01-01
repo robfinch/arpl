@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -27,12 +27,12 @@
 /*      global definitions      */
 
 int syntax;
-char comment_char = ';';
+char comment_char = '#';
 const char* imm_char = "$";
 Compiler compiler;
 int pass;
 int maxPn = 15;
-int gCpu = 5;
+int gCpu = QUPLS4;
 #ifdef STARK
 starkCPU cpu;
 int regTS = 52;
@@ -129,6 +129,53 @@ int nregs = 128;
 #endif
 #ifdef QUPLS
 QuplsCPU cpu;
+int regTS = 52;
+int regPC = 34;
+int regSP = 31;
+int regFP = 30;
+int regAFP = 31;      // alternate frame pointer
+int regLR = 41;
+int regXLR = 28;
+int regXHSP = 27;
+int regGP = 29;
+int regGP1 = 60;
+int regGP2 = 51;
+int regGOT = 45;
+int regTP = 52;
+int regCLP = 25;                // class pointer
+int regPP = 56;					// program pointer
+int regZero = 0;
+int regXoffs = 55;
+int regAsm = 58;
+int pregSP = 31;
+int pregFP = 30;
+int pregLR = 41;
+int pregXLR = 28;
+int pregGP = 29;
+int pregTP = 27;
+int pregCLP = 25;                // class pointer
+int pregPP = 24;					// program pointer
+int pregZero = 0;
+int pregFirstTemp = 9;
+int pregLastTemp = 17;
+int pregFirstRegvar = 18;
+int pregLastRegvar = 26;
+int pregFirstArg = 1;
+int pregLastArg = 8;
+int regRS = 46;
+int regCS = 47;
+int farcode = 0;
+int wcharSupport = 1;
+int verbose = 0;
+int use_gp = 1;
+int use_iprel = 0;
+int address_bits = 32;
+int maxVL = 64;
+int nregs = 128;
+
+#endif
+#ifdef QUPLS4
+Qupls4CPU cpu;
 int regTS = 52;
 int regPC = 34;
 int regSP = 31;
@@ -483,6 +530,10 @@ LB650StatementGenerator sg;
 #ifdef QUPLS
 QuplsCodeGenerator cg;
 QuplsStatementGenerator sg;
+#endif
+#ifdef QUPLS4
+Qupls4CodeGenerator cg;
+Qupls4StatementGenerator sg;
 #endif
 #ifdef QUPLS40
 QuplsCodeGenerator cg;

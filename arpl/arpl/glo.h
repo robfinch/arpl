@@ -3,7 +3,7 @@
 
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -43,6 +43,7 @@
 #define isRiscv     (gCpu==RISCV)
 #define isBigfoot   (gCpu==BIGFOOT)
 #define isI386      (gCpu==I386)
+#define isQupls4		(gCpu==QUPLS4)
 //#define DOTRACE	1
 #ifdef DOTRACE
 #define TRACE(x)	x
@@ -279,6 +280,11 @@ extern LB650StatementGenerator sg;
 extern QuplsCPU cpu;
 extern QuplsCodeGenerator cg;
 extern QuplsStatementGenerator sg;
+#endif
+#ifdef QUPLS4
+extern Qupls4CPU cpu;
+extern Qupls4CodeGenerator cg;
+extern Qupls4StatementGenerator sg;
 #endif
 #ifdef QUPLS40
 extern CPU cpu;

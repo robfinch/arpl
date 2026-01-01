@@ -186,6 +186,8 @@
     <ClCompile Include="Posit64.cpp" />
     <ClCompile Include="Posit64DividerLUT.cpp" />
     <ClCompile Include="Preprocessor.cpp" />
+    <ClCompile Include="Qupls4.cpp" />
+    <ClCompile Include="Qupls4CSE.cpp" />
     <ClCompile Include="rand.cpp" />
     <ClCompile Include="Range.cpp" />
     <ClCompile Include="Register.cpp" />

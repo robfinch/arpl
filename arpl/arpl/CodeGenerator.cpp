@@ -2542,6 +2542,13 @@ Operand* CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 	ap1->tp = node->tp;
 	return (ap1);
 #endif
+#ifdef QUPLS4
+	ap1 = allocOperand();
+	ap1->mode = am_imm;
+	ap1->offset = node;
+	ap1->tp = node->tp;
+	return (ap1);
+#endif
 #ifdef QUPLS40
 	ap1 = allocOperand();
 	ap1->mode = am_imm;

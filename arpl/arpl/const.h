@@ -3,7 +3,7 @@
 
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -26,11 +26,12 @@
 //                                                                          
 // ============================================================================
 //
-enum e_cpu { thor, qupls, riscv, bigfoot, i386 };
+enum e_cpu { thor, qupls, qupls4, riscv, bigfoot, i386 };
 //#define THOR	1
 //#define LB650	1
-#define STARK	1
+//#define STARK	1
 //#define QUPLS	1
+#define QUPLS4	4
 //#define QUPLS40 1
 //#define RISCV 5
 //#define I386 386
@@ -321,8 +322,8 @@ enum e_op {
 	op_shl, op_shr, op_jae, op_jeq, op_jne, op_jl, op_jge, op_jle, op_jg, op_jb, op_jbe, op_ja,
 	op_seteq, op_setne, op_setl, op_setle, op_setg, op_setge, op_setb, op_setbe, op_seta, op_setae,
 	// stark
-	op_b, op_bl, op_cmpa, op_cmpai, op_storei, op_pne, op_pgt, op_pge,
-	op_ldbz, op_ldwz, op_ldtz, op_ldoz,
+	op_b, op_bl, op_blr, op_blri, op_cmpa, op_cmpai, op_storei, op_pne, op_pgt, op_pge,
+	op_ldbz, op_ldwz, op_ldtz, op_ldoz, op_exit,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxo, op_bmap,
 	op_movzxb, op_movzxw, op_movzxt,
