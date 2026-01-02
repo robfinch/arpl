@@ -32,7 +32,10 @@
 #include <streambuf>
 #include <fstream>
 #include <iomanip>
+//#include <algorithm>
+//#include <numeric>
 #include <string>
+//#include <list>
 #include <math.h>
 #include <map>
 #include <stdlib.h>

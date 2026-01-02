@@ -179,12 +179,13 @@ Qupls4CPU cpu;
 int regTS = 52;
 int regPC = 34;
 int regSP = 31;
+int regSSP = 32;
 int regFP = 30;
 int regAFP = 31;      // alternate frame pointer
-int regLR = 41;
-int regXLR = 28;
+int regLR = 29;
+int regXLR = 33;
 int regXHSP = 27;
-int regGP = 29;
+int regGP = 28;
 int regGP1 = 60;
 int regGP2 = 51;
 int regGOT = 45;
@@ -461,7 +462,7 @@ int incldepth = 0;
 int             lineno = 0;
 int             nextlabel = 1;
 int             lastch = 0;
-int             lastst = 0;
+enum e_sym lastst = tk_nop;
 char            lastkw[128] = "";
 char            laststr[MAX_STRLEN + 1] = "";
 int64_t			ival = 0;
@@ -555,3 +556,5 @@ BigfootStatementGenerator sg;
 i386CodeGenerator cg;
 i386StatementGenerator sg;
 #endif
+
+int64_t ocode_ip = 0;

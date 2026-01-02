@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -65,6 +65,9 @@ void GenerateZeradic(int op)
 	OCODE *cd;
 	dfs.printf("A");
 	cd = (OCODE *)allocx(sizeof(OCODE));
+//	cd = new OCODE;
+	cd->ip = ocode_ip;
+	ocode_ip++;
 	dfs.printf("B");
 	cd->insn = GetInsn(op);
 	cd->opcode = op;
@@ -78,6 +81,7 @@ void GenerateZeradic(int op)
 	cd->loop_depth = looplevel;
 	//AddToPeepList(cd);
 	currentFn->pl.Add(cd);
+//	currentFn->OcodeList.push_back(cd);
 	dfs.printf("</GenerateZeradic>\r\n");
 }
 
@@ -87,6 +91,9 @@ void GenerateMonadic(int op, int len, Operand *ap1)
 	OCODE *cd;
 	dfs.printf("A");
 	cd = (OCODE *)allocx(sizeof(OCODE));
+//	cd = new OCODE;
+	cd->ip = ocode_ip;
+	ocode_ip++;
 	dfs.printf("B");
 	cd->insn = GetInsn(op);
 	cd->opcode = op;
@@ -100,6 +107,7 @@ void GenerateMonadic(int op, int len, Operand *ap1)
 	cd->loop_depth = looplevel;
 	//AddToPeepList(cd);
 	currentFn->pl.Add(cd);
+//	currentFn->OcodeList.push_back(cd);
 	dfs.printf("</GenerateMonadic>\n");
 }
 
@@ -107,6 +115,9 @@ OCODE* GenerateDiadic(int op, int len, Operand *ap1, Operand *ap2)
 {
 	OCODE *cd;
 	cd = (OCODE *)xalloc(sizeof(OCODE));
+//	cd = new OCODE;
+	cd->ip = ocode_ip;
+	ocode_ip++;
 	cd->insn = GetInsn(op);
 	cd->opcode = op;
 	cd->length = len;
@@ -123,6 +134,7 @@ OCODE* GenerateDiadic(int op, int len, Operand *ap1, Operand *ap2)
 	cd->loop_depth = looplevel;
 	//AddToPeepList(cd);
 	currentFn->pl.Add(cd);
+//	currentFn->OcodeList.push_back(cd);
 	return (cd);
 }
 
@@ -130,6 +142,9 @@ OCODE* GenerateTriadic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3
 {
 	OCODE    *cd;
 	cd = (OCODE *)allocx(sizeof(OCODE));
+//	cd = new OCODE;
+	cd->ip = ocode_ip;
+	ocode_ip++;
 	cd->insn = GetInsn(op);
 	cd->opcode = op;
 	cd->length = len;
@@ -140,6 +155,7 @@ OCODE* GenerateTriadic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3
 	cd->loop_depth = looplevel;
 	//AddToPeepList(cd);
 	currentFn->pl.Add(cd);
+//	currentFn->OcodeList.push_back(cd);
 	return (cd);
 }
 
@@ -147,6 +163,9 @@ void GenerateTriadicEx(int op, std::string* ext, Operand* ap1, Operand* ap2, Ope
 {
 	OCODE* cd;
 	cd = (OCODE*)allocx(sizeof(OCODE));
+//	cd = new OCODE;
+	cd->ip = ocode_ip;
+	ocode_ip++;
 	cd->insn = GetInsn(op);
 	cd->opcode = op;
 	cd->length = 0;
@@ -158,12 +177,16 @@ void GenerateTriadicEx(int op, std::string* ext, Operand* ap1, Operand* ap2, Ope
 	cd->loop_depth = looplevel;
 	//AddToPeepList(cd);
 	currentFn->pl.Add(cd);
+//	currentFn->OcodeList.push_back(cd);
 }
 
 void Generate4adic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3, Operand *ap4)
 {
 	OCODE *cd;
 	cd = (OCODE *)allocx(sizeof(OCODE));
+//	cd = new OCODE;
+	cd->ip = ocode_ip;
+	ocode_ip++;
 	cd->insn = GetInsn(op);
 	cd->opcode = op;
 	cd->length = len;
@@ -174,6 +197,7 @@ void Generate4adic(int op, int len, Operand *ap1, Operand *ap2, Operand *ap3, Op
 	cd->loop_depth = looplevel;
 	//AddToPeepList(cd);
 	currentFn->pl.Add(cd);
+//	currentFn->OcodeList.push_back(cd);
 }
 
 /*
@@ -183,21 +207,29 @@ void GenerateLabel(int64_t labno)
 {      
 	OCODE *newl;
 	newl = (OCODE *)allocx(sizeof(OCODE));
+//	newl = new OCODE;
+	newl->ip = ocode_ip;
+	ocode_ip++;
 	newl->opcode = op_label;
 	newl->oper1 = (Operand *)labno;
 	newl->oper2 = (Operand *)my_strdup((char *)currentFn->sym->name->c_str());
 	currentFn->pl.Add(newl);
+//	currentFn->OcodeList.push_back(newl);
 }
 
 void GenerateStrLabel(char *str)
 {
 	OCODE* newl;
 	newl = (OCODE*)allocx(sizeof(OCODE));
+//	newl = new OCODE;
+	newl->ip = ocode_ip;
+	ocode_ip++;
 	newl->opcode = op_label;
 	newl->str = true;
 	newl->oper1 = (Operand*)str;
 	newl->oper2 = (Operand*)my_strdup((char*)currentFn->sym->name->c_str());
 	currentFn->pl.Add(newl);
+//	currentFn->OcodeList.push_back(newl);
 }
 
 
@@ -219,6 +251,17 @@ static void MergeSubi(OCODE *first, OCODE *last, int64_t amt)
 	if (ip)	 {// there should be one
 		ip->oper3->offset->i = amt;
 	}
+	/*
+	std::for_each(currentFn->OcodeList.begin(), currentFn->OcodeList.end(), [](OCODE* cd) {
+		if (cd->IsSubiSP()) {
+			cd->MarkRemove();
+			optimized++;
+		}
+		});
+	std::for_each(currentFn->OcodeList.end(), currentFn->OcodeList.end(), [amt](OCODE* cd) {
+		cd->oper3->offset->i = amt;
+	});
+	*/
 }
 
 // 'subui'
@@ -270,6 +313,7 @@ void Function::PeepOpt()
 
 	// Remove any dead code identified by the code generator.
 	pl.Remove();
+//	OcodeList.remove_if([](OCODE* cd) { cd->remove == true; });
 
 	if (!::opt_nopeep) {
 
@@ -288,8 +332,10 @@ void Function::PeepOpt()
 			pl.SetLabelReference();
 			pl.EliminateUnreferencedLabels();
 			pl.Remove();
+//			OcodeList.remove_if([](OCODE* cd) { cd->remove == true; });
 			pl.OptInstructions();
 			pl.Remove();
+			//			OcodeList.remove_if([](OCODE* cd) { cd->remove == true; });
 			pl.OptDoubleTargetRemoval();
 		}
 
@@ -302,13 +348,13 @@ void Function::PeepOpt()
 		hasBPReferences = (pl.CountBPReferences() != 0);
 		hasGPReferences = (pl.CountGPReferences() != 0);
 
-		if (pl.UsesOnlyArgRegs() && !hasSPReferences && !hasBPReferences)
+		if (pl.UsesOnlyArgRegs() && !hasSPReferences && !hasBPReferences && ru->isEmpty())
 			pl.RemoveEnterLeave();
-		if (!hasBPReferences)
+		if (!hasBPReferences && ru->isEmpty())
 			pl.RemoveLinkUnlink();
-		if (IsLeaf && !hasSPReferences && !hasBPReferences)
+		if (IsLeaf && !hasSPReferences && !hasBPReferences && ru->isEmpty())
 			pl.RemoveStackCode();
-		if (!hasSPReferences && !hasBPReferences)
+		if (!hasSPReferences && !hasBPReferences && ru->isEmpty())
 			pl.RemoveReturnBlock();
 		if (!hasGPReferences)
 			pl.RemoveGPLoad();
@@ -322,6 +368,13 @@ void Function::PeepOpt()
 	// Remove all the compiler hints that didn't work out.
 	pl.RemoveCompilerHints();
 	pl.Remove();
+//	OcodeList.remove_if([](OCODE* cd) { cd->remove == true; });
+	// Try one more time, some instructions may have been separated by hints or 
+	// labels that have been removed.
+	pl.OptInstructions();
+	pl.Remove();
+//	pl.flush(ofs);
+	//	OcodeList.remove_if([](OCODE* cd) { cd->remove == true; });
 
 	/*
 	if (!hasSPReferences && !hasBPReferences) {
@@ -445,6 +498,7 @@ void RemoveCode()
 j1:	;
 		}
 		currentFn->pl.Remove2();
+//		currentFn->OcodeList.remove_if([](OCODE* cd) { cd->remove2 == true; });
 	}
 	dfs.printf("<CodeRemove>%d</CodeRemove>\n", count);
 }

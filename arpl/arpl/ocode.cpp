@@ -27,8 +27,8 @@
 
 void OCODE::Remove()
 {
-	currentFn->pl.Remove(this);
-};
+	//currentFn->pl.Remove(this);
+}
 
 bool OCODE::IsLoad() const
 {
@@ -184,13 +184,17 @@ int OCODE::GetTargetReg(int *rg1, int *rg2) const
 OCODE *OCODE::Clone(OCODE *c)
 {
 	OCODE *cd;
-	cd = (OCODE *)xalloc(sizeof(OCODE));
+//	cd = (OCODE *)xalloc(sizeof(OCODE));
+	cd = new OCODE;
 	memcpy(cd, c, sizeof(OCODE));
 	if (cd->opcode != op_label) {
 		cd->oper1 = cd->oper1->Clone();
 		cd->oper2 = cd->oper2->Clone();
 		cd->oper3 = cd->oper3->Clone();
 		cd->oper4 = cd->oper4->Clone();
+		cd->oper5 = cd->oper5->Clone();
+		cd->oper6 = cd->oper6->Clone();
+		cd->oper7 = cd->oper7->Clone();
 	}
 	return (cd);
 }
@@ -292,6 +296,16 @@ void OCODE::OptMove()
 		MarkRemove();
 		optimized++;
 		return;
+	}
+
+	if ((back->opcode & 0xfff) == op_move || (back->opcode & 0xfff) ==op_mov || (back->opcode & 0xfff)==op_mv) {
+		if (back->oper3 == nullptr) {
+			back->oper3 = oper1;
+			back->oper4 = oper2;
+			MarkRemove();
+			optimized++;
+			return;
+		}
 	}
 	
 	/* under construction */
@@ -762,6 +776,7 @@ void OCODE::OptDefUse()
 	if (!isVolatile && insn->opcode!=op_loadm) {
 		if (oper1->preg != regFP
 			&& oper1->preg != regSP
+			&& oper1->preg != regSSP
 			&& oper1->preg != regLR
 			&& !IsArgReg(oper1->preg)
 			&& !IsSavedReg(oper1->preg)
@@ -794,7 +809,8 @@ void OCODE::OptNoUse()
 	// But, do not remove frame pointer load at end of function.
 	if (!isVolatile && insn->opcode!=op_loadm) {
 		if (oper1->preg != regFP
-			&& !oper1->preg==regSP
+			&& oper1->preg != regSP
+			&& oper1->preg != regSSP
 			&& !IsArgReg(oper1->preg)
 			&& !IsSavedReg(oper1->preg)
 			&& oper1->preg != regLR
@@ -1411,6 +1427,8 @@ void OCODE::OptDoubleTargetRemoval()
 	// push has an implicit target, but we don't want to remove it.
 	if (opcode == op_push)
 		return;
+	if (opcode == op_pop)
+		return;
 	if (opcode == op_loadm || opcode == op_storem)
 		return;
 	//if (rg3 == regSP)
@@ -1915,45 +1933,95 @@ void OCODE::OptLea()
 void OCODE::OptPush()
 {
 	OCODE *ip;
+	int cnt;
 
-	//return;
-	if (oper1->mode != am_reg)
+//	return;
+	if (remove || oper1->mode != am_reg)
 		return;
+	if (gCpu == QUPLS4) {
+		ip = this;
+		for (cnt = 2; cnt < 6; cnt++) {
+			ip = ip->fwd;
+			if (ip == nullptr)
+				return;
+			if (ip->opcode == op_push) {
+				if (ip->remove)
+					continue;
+				if (ip->oper2->mode == am_reg) {
+					if (oper3 == nullptr)
+						oper3 = makereg(ip->oper2->preg);
+					else if (oper4 == nullptr)
+						oper4 = makereg(ip->oper2->preg);
+					else if (oper5 == nullptr)
+						oper5 = makereg(ip->oper2->preg);
+					else if (oper6 == nullptr)
+						oper6 = makereg(ip->oper2->preg);
+					else
+						return;
+					ip->MarkRemove();
+					optimized++;
+				}
+			}
+			else
+				return;
+		}
+		return;
+	}
 	ip = fwd;
 	if (ip && !ip->remove) {
-		if (ip->opcode == op_push && cpu.pushpop_multiple > 1) {
-			if (ip->oper1->mode == am_reg) {
-				if (oper2==nullptr)
-					oper2 = makereg(ip->oper1->preg);
-				else if (oper3==nullptr)
-					oper3 = makereg(ip->oper1->preg);
-				else if (oper4 == nullptr)
-					oper4 = makereg(ip->oper1->preg);
-				ip->MarkRemove();
-				if (ip) {
-					ip = ip->fwd;
+		if (gCpu == QUPLS4) {
+			if (ip->opcode == op_push && cpu.pushpop_multiple > 1) {
+				if (oper6 != nullptr)
+					return;
+				if (ip->oper2->mode == am_reg) {
+					if (oper3 == nullptr)
+						oper3 = ip->oper2;
+					else if (oper4 == nullptr)
+						oper4 = ip->oper2;
+					else if (oper5 == nullptr)
+						oper5 = ip->oper2;
+					else if (oper6 == nullptr)
+						oper6 = ip->oper2;
+					ip->MarkRemove();
+					optimized++;
+				}
+			}
+		}
+		else {
+			if (ip->opcode == op_push && cpu.pushpop_multiple > 1) {
+				if (ip->oper1->mode == am_reg) {
+					if (oper2 == nullptr)
+						oper2 = makereg(ip->oper1->preg);
+					else if (oper3 == nullptr)
+						oper3 = makereg(ip->oper1->preg);
+					else if (oper4 == nullptr)
+						oper4 = makereg(ip->oper1->preg);
+					ip->MarkRemove();
 					if (ip) {
-						if (ip->opcode == op_push && cpu.pushpop_multiple > 2) {
-							if (ip->oper1->mode == am_reg) {
-								if (oper2 == nullptr)
-									oper2 = makereg(ip->oper1->preg);
-								else if (oper3 == nullptr)
-									oper3 = makereg(ip->oper1->preg);
-								else if (oper4 == nullptr)
-									oper4 = makereg(ip->oper1->preg);
-								ip->MarkRemove();
-								if (ip) {
-									ip = ip->fwd;
+						ip = ip->fwd;
+						if (ip) {
+							if (ip->opcode == op_push && cpu.pushpop_multiple > 2) {
+								if (ip->oper1->mode == am_reg) {
+									if (oper2 == nullptr)
+										oper2 = makereg(ip->oper1->preg);
+									else if (oper3 == nullptr)
+										oper3 = makereg(ip->oper1->preg);
+									else if (oper4 == nullptr)
+										oper4 = makereg(ip->oper1->preg);
+									ip->MarkRemove();
 									if (ip) {
-										if (ip->opcode == op_push && cpu.pushpop_multiple > 3) {
-											if (ip->oper1->mode == am_reg) {
-												if (oper2 == nullptr)
-													oper2 = makereg(ip->oper1->preg);
-												else if (oper3 == nullptr)
-													oper3 = makereg(ip->oper1->preg);
-												else if (oper4 == nullptr)
-													oper4 = makereg(ip->oper1->preg);
-												ip->MarkRemove();
+										ip = ip->fwd;
+										if (ip) {
+											if (ip->opcode == op_push && cpu.pushpop_multiple > 3) {
+												if (ip->oper1->mode == am_reg) {
+													if (oper2 == nullptr)
+														oper2 = makereg(ip->oper1->preg);
+													else if (oper3 == nullptr)
+														oper3 = makereg(ip->oper1->preg);
+													else if (oper4 == nullptr)
+														oper4 = makereg(ip->oper1->preg);
+													ip->MarkRemove();
+												}
 											}
 										}
 									}
@@ -1971,10 +2039,40 @@ void OCODE::OptPush()
 void OCODE::OptPop()
 {
 	OCODE* ip;
+	int cnt = 0;
 
 	//return;
 	if (oper1->mode != am_reg)
 		return;
+	if (gCpu == QUPLS4) {
+		ip = this;
+		for (cnt = 2; cnt < 6; cnt++) {
+			ip = ip->fwd;
+			if (ip == nullptr)
+				return;
+			if (ip->opcode == op_pop) {
+				if (ip->remove)
+					continue;
+				if (ip->oper2->mode == am_reg) {
+					if (oper3 == nullptr)
+						oper3 = makereg(ip->oper2->preg);
+					else if (oper4 == nullptr)
+						oper4 = makereg(ip->oper2->preg);
+					else if (oper5 == nullptr)
+						oper5 = makereg(ip->oper2->preg);
+					else if (oper6 == nullptr)
+						oper6 = makereg(ip->oper2->preg);
+					else
+						return;
+					ip->MarkRemove();
+					optimized++;
+				}
+			}
+			else
+				return;
+		}
+		return;
+	}
 	ip = fwd;
 	if (ip && !ip->remove) {
 		if (ip->opcode == op_pop && cpu.pushpop_multiple > 1) {
@@ -2158,7 +2256,7 @@ void OCODE::store(txtoStream& ofs)
 	static BasicBlock *b = nullptr;
 	int op = opcode & 0x7fff;
 	int dot = opcode & 0x8000;
-	Operand *ap1, *ap2, *ap3, *ap4;
+	Operand *ap1, *ap2, *ap3, *ap4, *ap5, * ap6,* ap7;
 	ENODE *ep;
 	int predreg = pregreg;
 	char buf[8];
@@ -2175,10 +2273,15 @@ void OCODE::store(txtoStream& ofs)
 	}
 
 	nn = 0;
+	if (opcode == op_nop)
+		return;
 	ap1 = oper1;
 	ap2 = oper2;
 	ap3 = oper3;
 	ap4 = oper4;
+	ap5 = oper5;
+	ap6 = oper6;
+	ap7 = oper7;
 	if ((ap2 && ap2->mode == am_imm) || (ap3 && ap3->mode == am_imm) || (ap4 && ap4->mode == am_imm))
 		addi = cpu.Addsi;
 #ifdef RISCV
@@ -2291,6 +2394,8 @@ void OCODE::store(txtoStream& ofs)
 	}
 	else if (ap1 != 0)
 	{
+		if (op == op_move && ap3 != nullptr)
+			ofs.printf("{");
 		ap1->store(ofs);
 		if (ap2 != 0)
 		{
@@ -2301,11 +2406,15 @@ void OCODE::store(txtoStream& ofs)
 			//if (op == op_cmp && ap2->mode != am_reg)
 			//	printf("aha\r\n");
 			ap2->store(ofs);
+			if (op == op_move && ap3 != nullptr)
+				ofs.printf("}");
 			if (ap3 != NULL) {
 				if (op == op_push || op == op_pop)
 					ofs.printf(",");
 				else
 					ofs.printf(",");
+				if (op == op_move && ap3 != nullptr)
+					ofs.printf("{");
 				ap3->store(ofs);
 				if (ap4 != NULL) {
 					if (op == op_push || op == op_pop)
@@ -2313,6 +2422,29 @@ void OCODE::store(txtoStream& ofs)
 					else
 						ofs.printf(",");
 					ap4->store(ofs);
+					if (op == op_move && ap3 != nullptr)
+						ofs.printf("}");
+					if (ap5 != NULL) {
+						if (op == op_push || op == op_pop)
+							ofs.printf(",");
+						else
+							ofs.printf(",");
+						ap5->store(ofs);
+						if (ap6 != NULL) {
+							if (op == op_push || op == op_pop)
+								ofs.printf(",");
+							else
+								ofs.printf(",");
+							ap6->store(ofs);
+							if (ap7 != NULL) {
+								if (op == op_push || op == op_pop)
+									ofs.printf(",");
+								else
+									ofs.printf(",");
+								ap7->store(ofs);
+							}
+						}
+					}
 				}
 			}
 		}

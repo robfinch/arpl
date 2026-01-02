@@ -69,7 +69,7 @@ int Compiler::main2(int argc, char **argv)
 				lineno = 0;
 				initsym();
 				lstackptr = 0;
-				lastst = 0;
+				lastst = tk_nop;
 				NextToken();
 				compile();
 				summary();
@@ -131,7 +131,7 @@ void Compiler::compile()
 
 	getch();
 	lstackptr = 0;
-	lastst = 0;
+	lastst = tk_nop;
 	NextToken();
 	string_exclude.clear();
 	try {

@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2017-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2017-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -210,18 +210,27 @@ void PeepList::MarkAllKeep2()
 
 void PeepList::Remove(OCODE *ip)
 {
-	OCODE *ip1, *ip2;
-
-	ip1 = ip->fwd;
-	ip2 = ip->back;
-	if (ip1 && ip1->comment == nullptr)
-		ip1->comment = ip->comment;
-	if (ip2)
-		ip2->fwd = ip1;
-	if (ip1)
-		ip1->back = ip2;
-	if (ip == head)
+	if (ip->fwd && ip->fwd->comment == nullptr)
+		ip->fwd->comment = ip->comment;
+	ip->opcode = op_nop;
+	return;
+	// The following double-linked list removal did not work.
+	// It caused push instructions to be removed.
+	if (ip == head) {
 		head = ip->fwd;
+		if (ip->fwd)
+			ip->fwd->back = nullptr;
+		return;
+	}
+	if (ip == tail) {
+		tail = ip->back;
+		ip->back->fwd = nullptr;
+		return;
+	}
+	if (ip->back)
+		ip->back->fwd = ip->fwd;
+	if (ip->fwd)
+		ip->fwd->back = ip->back;
 }
 
 void PeepList::Remove()
@@ -231,8 +240,9 @@ void PeepList::Remove()
 	if (1)//(RemoveEnabled)
 		for (ip = head; ip; ip = ip1) {
 			ip1 = ip->fwd;
-			if (ip->remove)
+			if (ip->remove) {
 				Remove(ip);
+			}
 		}
 }
 
@@ -383,19 +393,19 @@ int PeepList::CountSPReferences()
 				}
 				else if (ip->insn->opcode != op_add && ip->insn->opcode != op_sub && ip->insn->opcode != cpu.mov_op) {
 					if (ip->oper1) {
-						if (ip->oper1->preg == regSP || ip->oper1->sreg == regSP)
+						if (ip->oper1->preg == regSP || ip->oper1->sreg == regSP || ip->oper1->preg==regSSP || ip->oper1->sreg==regSSP)
 							refSP++;
 					}
 					if (ip->oper2) {
-						if (ip->oper2->preg == regSP || ip->oper2->sreg == regSP)
+						if (ip->oper2->preg == regSP || ip->oper2->sreg == regSP || ip->oper2->preg == regSSP || ip->oper2->sreg == regSSP)
 							refSP++;
 					}
 					if (ip->oper3) {
-						if (ip->oper3->preg == regSP || ip->oper3->sreg == regSP)
+						if (ip->oper3->preg == regSP || ip->oper3->sreg == regSP || ip->oper3->preg == regSSP || ip->oper3->sreg == regSSP)
 							refSP++;
 					}
 					if (ip->oper4) {
-						if (ip->oper4->preg == regSP || ip->oper4->sreg == regSP)
+						if (ip->oper4->preg == regSP || ip->oper4->sreg == regSP || ip->oper4->preg == regSSP || ip->oper4->sreg == regSSP)
 							refSP++;
 					}
 				}
@@ -435,6 +445,7 @@ int PeepList::CountBPReferences()
 					if (ip->oper1->preg == regFP || ip->oper1->sreg == regFP)
 						if (!IsTempReg(ip->oper1->preg)
 							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regSSP
 							&& ip->oper1->preg != regFP
 							) refBP++;
 				}
@@ -442,6 +453,7 @@ int PeepList::CountBPReferences()
 					if (ip->oper2->preg == regFP || ip->oper2->sreg == regFP)
 						if (!IsTempReg(ip->oper1->preg)
 							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regSSP
 							&& ip->oper1->preg != regFP
 							) refBP++;
 				}
@@ -449,6 +461,7 @@ int PeepList::CountBPReferences()
 					if (ip->oper3->preg == regFP || ip->oper3->sreg == regFP)
 						if (!IsTempReg(ip->oper1->preg)
 							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regSSP
 							&& ip->oper1->preg != regFP
 							) refBP++;
 				}
@@ -456,6 +469,7 @@ int PeepList::CountBPReferences()
 					if (ip->oper4->preg == regFP || ip->oper4->sreg == regFP)
 						if (!IsTempReg(ip->oper1->preg)
 							&& ip->oper1->preg != regSP
+							&& ip->oper1->preg != regSSP
 							&& ip->oper1->preg != regFP
 							) refBP++;
 				}
@@ -809,7 +823,7 @@ void PeepList::OptInstructions()
 					ip->MarkRemove();
 				}
 				break;
-			//case op_ld:		ip->OptLoad();	break;
+				//case op_ld:		ip->OptLoad();	break;
 			case op_loadi:	ip->OptLdi();	break;
 			case op_l:		ip->OptLdi(); break;
 			case op_lea:	ip->OptLea();	break;
@@ -1369,8 +1383,9 @@ void PeepList::flush(txtoStream& tfs)
 			else
 				put_label(tfs, (int)ip->oper1, (char*)"", GetNamespace(), 'C', 0, curseg);
 		}
-		else
+		else {
 			ip->store(tfs);
+		}
 	}
 }
 

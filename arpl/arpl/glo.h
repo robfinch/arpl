@@ -64,6 +64,7 @@ extern int regGP2;
 extern int regGOT;
 extern int regTP;
 extern int regSP;
+extern int regSSP;
 extern int regFP;
 extern int regAFP;
 extern int regLR;
@@ -135,7 +136,7 @@ extern int incldepth;
 extern int              lineno;
 extern int              nextlabel;
 extern int              lastch;
-extern int              lastst;
+extern enum e_sym lastst;
 extern char             lastkw[128];
 extern char             laststr[MAX_STLP1];
 extern int laststrlen;
@@ -448,5 +449,6 @@ extern OCODE* gHeadif;
 extern std::map<int, std::string*> DataLabelMap;
 
 extern int seg_aligned[20];
+extern int64_t ocode_ip;
 
 #endif

@@ -115,9 +115,10 @@ static Instruction Qupls4InsnTbl[] =
 { "div", op_div,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "divu",op_divu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "dw", op_dw },
-{ "enter", op_enter,40,0,true,am_imm,0,0,0 },
+{ "enter", op_enter,40,0,true,am_reg,am_reg,am_reg,am_imm },
 { "eor",op_eor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "eq",op_eq, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
+{ "exit", op_leave,40,0,true,am_reg,am_reg,am_reg,am_imm },
 { "ext", op_ext,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
 { "extu", op_extu,1,1,false,am_reg,am_reg,am_reg | am_imm | am_imm0, am_reg | am_imm | am_imm0 },
 { "fadd", op_fadd, 6, 1, false, am_reg, am_reg, am_reg, 0 },
@@ -205,7 +206,6 @@ static Instruction Qupls4InsnTbl[] =
 { "ldwu", op_ldwu,4,1,true,am_reg,am_mem,0,0 },
 { "le",op_le, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
 { "lea",op_lea,1,1,false,am_reg,am_mem,0,0 },
-{ "leave", op_leave,40,0,true,am_imm,0,0,0 },
 { "leu",op_leu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
 { "lh", op_lh,4,1,true,am_reg,am_mem,0,0 },
 { "lhu", op_lhu,4,1,true,am_reg,am_mem,0,0 },
@@ -267,7 +267,7 @@ static Instruction Qupls4InsnTbl[] =
 { "pldt", op_pldt,4,1,true,am_reg,am_mem,0,0 },
 { "pldw", op_pldw,4,1,true,am_reg,am_mem,0,0 },
 { "pmul", op_pmul, 8, 1, false, am_reg, am_reg, am_reg, 0 },
-{ "pop", op_pop,4,2,true,am_reg | amCrReg | amCrgReg,am_reg,0,0 },
+{ "pop", op_pop,4,2,true,am_reg, am_reg, 0, 0 },
 { "popf", op_popf,4,2,true,am_reg,am_reg,0,0 },
 { "popm", op_popm,4,1,true,am_imm,0,0,0 },
 { "psto", op_psto,4,1,true,am_reg,am_mem,0,0 },
@@ -275,7 +275,7 @@ static Instruction Qupls4InsnTbl[] =
 { "pstw", op_pstw,4,1,true,am_reg,am_mem,0,0 },
 { "psub", op_psub, 6, 1, false, am_reg, am_reg, am_reg, 0 },
 { "ptrdif",op_ptrdif,1,1,false,am_reg,am_reg,am_reg,am_imm },
-{ "push",op_push,4,1,true,am_reg | amCrReg | amCrgReg | am_imm,am_reg,0,0 },
+{ "push",op_push,4,1,true,am_reg,am_reg,0,0 },
 { "pushf",op_pushf,4,0,true,am_reg,0,0,0 },
 { "pushm", op_pushm,4,0,true,am_imm,0,0,0 },
 { "redor", op_redor,2,1,false,am_reg,am_reg,am_reg,0 },
@@ -284,9 +284,9 @@ static Instruction Qupls4InsnTbl[] =
 { "rem", op_rem,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "remu",op_remu,68,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "ret", op_ret,1,0,false,am_imm,0,0,0 },
-{ "retd", op_retd,1,0,false,am_reg,am_reg,am_reg,am_reg | am_imm },
 { "rol", op_rol,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "ror", op_ror,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "rtd", op_retd,1,0,false,am_reg,am_reg,am_reg,am_reg | am_imm },
 { "rte", op_rte,2,0 },
 { "rti", op_rti,2,0 },
 { "rtl", op_rtl,1,0,false,am_imm,0,0,0 },
@@ -470,9 +470,6 @@ char* Qupls4CPU::RegMoniker(int32_t regno)
 	if (is_crg) {
 		sprintf_s(&buf[n][0], 20, "%%crg");
 	}
-	else if (is_cr) {
-		sprintf_s(&buf[n][0], 20, "%%cr%d", regno & 7);
-	}
 	else if (rg = IsTempReg(regno)) {
 		sprintf_s(&buf[n][0], 20, "%%t%d", rg - 1);// tmpregs[rg - 1]);
 	}
@@ -495,8 +492,10 @@ char* Qupls4CPU::RegMoniker(int32_t regno)
 //		sprintf_s(&buf[n][0], 20, "$pc");
 		else if (regno == regSP)
 			sprintf_s(&buf[n][0], 20, "%%sp");
+		else if (regno == regSSP)
+			sprintf_s(&buf[n][0], 20, "%%ssp");
 		else if (regno == regLR)
-			sprintf_s(&buf[n][0], 20, "%%lr0");
+			sprintf_s(&buf[n][0], 20, "%%lr");
 		else if (regno == regLR + 1)
 			sprintf_s(&buf[n][0], 20, "%%lr1");
 		else if (regno == regLR + 2)
@@ -2240,10 +2239,26 @@ void Qupls4CodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Functio
 
 void Qupls4CodeGenerator::GenerateUnlink(int64_t amt)
 {
+	int nn;
+	int stack[32];
+	int sp = 0;
+	char buf[100];
+
 	if (cpu.SupportsEnter)
 		currentFn->PatchEnter(currentFn->mask);
 	if (cpu.SupportsLeave) {
-		GenerateDiadic(op_leave, 0, MakeImmediate(currentFn->mask->NumMember()), MakeImmediate(amt,0));
+		currentFn->mask->sprint(buf, 100);
+		printf(buf);
+		currentFn->mask->resetPtr();
+		for (nn = 0; nn < currentFn->mask->NumMember(); nn++) {
+			stack[sp] = currentFn->mask->nextMember();
+			sp++;
+		}
+		for (nn = sp - 1; nn >= 0; nn--) {
+			GenerateDiadic(op_pop, 0, makereg(regSSP), makereg(stack[nn]));
+		}
+		Generate4adic(op_leave, 0, makereg(regSP), makereg(regFP), makereg(regLR), MakeImmediate(amt,0));
+//		Generate4adic(op_leave, 0, MakeImmediate(currentFn->mask->NumMember()), MakeImmediate(amt, 0));
 	}
 	else if (cpu.SupportsUnlink)
 		GenerateZeradic(op_unlk);
@@ -2705,7 +2720,7 @@ void Qupls4CodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
 
 void Qupls4CodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
 {
-	GenerateDiadic(op_retd, 0, MakeImmediate(amt), MakeImmediate(0));
+	GenerateTriadic(op_retd, 0, makereg(regSP), makereg(regLR), MakeImmediate(amt));
 }
 
 void Qupls4CodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
@@ -3031,14 +3046,14 @@ OCODE* Qupls4CodeGenerator::GenerateReturnBlock(Function* fn)
 	if (cpu.SupportsEnter)
 	{
 		if (fn->stkspace < 8388607LL) {
-			GenerateDiadic(op_enter, 0, MakeImmediate(15LL), MakeImmediate(-fn->tempbot));
+			Generate4adic(op_enter, 0, makereg(regSP), makereg(regFP), makereg(regLR), MakeImmediate(-fn->tempbot));
 			ip = currentFn->pl.tail;
 			//			GenerateMonadic(op_link, 0, MakeImmediate(stkspace));
 						//spAdjust = pl.tail;
 			fn->alstk = true;
 		}
 		else {
-			GenerateDiadic(op_enter, 0, MakeImmediate(15LL), MakeImmediate(8388600LL));
+			Generate4adic(op_enter, 0, makereg(regSP), makereg(regFP), makereg(regLR), MakeImmediate(8388600LL));
 			ip = currentFn->pl.tail;
 			GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), MakeImmediate(-fn->tempbot - 8388600LL));
 			//GenerateMonadic(op_link, 0, MakeImmediate(SizeofReturnBlock() * cpu.sizeOfWord));
@@ -3324,4 +3339,27 @@ Operand* Qupls4CodeGenerator::GenerateSubtract(Operand* dst, Operand* src1, Oper
 	*/
 		GenerateTriadic(op_sub, 0, dst, src1, src2);
 	return (dst);
+}
+
+Operand* Qupls4CodeGenerator::PatchEnter(OCODE* pe, CSet* rmask)
+{
+	OCODE* ip, *tail;
+	int nn;
+	char buf[100];
+
+	ip = pe->fwd;
+	tail = currentFn->pl.tail;
+	currentFn->pl.tail = pe;
+	currentFn->mask->resetPtr();
+	currentFn->mask->sprint(buf, 100);
+	printf(buf);
+	for (nn = 0; nn < currentFn->mask->NumMember(); nn++) {
+		GenerateDiadic(op_push, 0, makereg(regSSP), makereg(currentFn->mask->nextMember()));
+	}
+	currentFn->mask->resetPtr();
+	currentFn->pl.tail->fwd = ip;
+	currentFn->pl.tail = tail;
+//	if (pe)
+//		return(pe->oper1 = MakeImmediate((int64_t)rmask->NumMember()));
+	return (nullptr);
 }

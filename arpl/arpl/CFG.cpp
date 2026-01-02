@@ -180,6 +180,8 @@ static void DiscoverPaths()
 	char buf[2000];
 
 	b = currentFn->RootBlock;
+	if (b == nullptr)
+		return;
 	visited = CSet::MakeNew();
 	paths[0] = CSet::MakeNew();
 	paths[0]->add(b->num);
@@ -203,6 +205,8 @@ void CFG::CalcDominatorTree()
 
 	DiscoverPaths();
 	pathSet = CSet::MakeNew();
+	if (currentFn->LastBlock == nullptr)
+		return;
 	for (n = currentFn->LastBlock->num; n >= 1; n--) {
 		pathSet->clear();
 		// Get all paths that contain n
@@ -375,8 +379,10 @@ void CFG::Search(BasicBlock *x)
 	int rg1, rg2;
 
 	eol = false;
+	if (x == nullptr)
+		return;
 	for (s = x->code; s && !eol; s = s->fwd) {
-		if (s->opcode!=op_label) {
+		if (s->opcode!=op_label && s->opcode != op_nop) {
 			if (s->oper1 && !s->HasTargetReg())
 				Subscript(s->oper1);
 			if (s->oper2)
@@ -430,7 +436,7 @@ void CFG::Search(BasicBlock *x)
 		Search(e->dst);
 	eol = false;
 	for (s = x->code; s && !eol; s = s->fwd) {
-		if (s->opcode!=op_label) {
+		if (s->opcode!=op_label && s->opcode != op_nop) {
 			if (s->HasTargetReg()) {
 				s->GetTargetReg(&rg1, &rg2);
 				v = Var::FindByMac(rg1);

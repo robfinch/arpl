@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2025  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 
-#define BLKSIZE		8000
+#define BLKSIZE		28000
 
 struct blk {
 	char name[8];			// string overwrite area

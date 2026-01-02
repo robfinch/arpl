@@ -3,7 +3,7 @@
 
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2025 Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2026 Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -26,7 +26,6 @@
 //                                                                          
 // ============================================================================
 //
-
 class Operand;
 class ENODE;
 class CodeGenerator;
@@ -45,6 +44,7 @@ class OCODE;
 class PeepList;
 class Var;
 class List;
+class PeepEntry;
 
 extern void GenerateZeradic(int op);
 extern void GenerateMonadic(int op, int len, Operand*);
@@ -386,6 +386,7 @@ public:
 	int64_t tryCount;
 	OCODE* defCatchLabelPatchPoint;
 	char* outbuf;
+//	list<OCODE*> OcodeList;
 public:
 	Function();
 	void RemoveDuplicates();
@@ -1217,6 +1218,7 @@ public:
 class OCODE : public CompilerType
 {
 public:
+	int64_t ip;
 	OCODE *fwd, *back, *comment;
 	BasicBlock *bb;
 	Instruction *insn;
@@ -1235,6 +1237,7 @@ public:
 	short predop;
 	int loop_depth;
 	Operand *oper1, *oper2, *oper3, *oper4;
+	Operand* oper5, * oper6, * oper7;	// for push / pop multiple
 	__int16 phiops[100];
 public:
 	static OCODE *MakeNew();
@@ -1970,6 +1973,7 @@ public:
 	int GetSegmentIndexReg(e_sg seg);
 	void SaveRegisterVars(CSet* mask);
 	bool CheckForShortAddressMode(e_op opcode, Operand* oper, e_op* opopcode);
+	Operand* PatchEnter(OCODE* code, CSet* save_mask);
 };
 
 class LB650CodeGenerator : public CodeGenerator

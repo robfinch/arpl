@@ -27,7 +27,7 @@
 
 extern char *errtext(int);
 
-int token_stack[5];
+enum e_sym token_stack[5];
 char *id_stack[5];
 Float128 rval128_stack[5];
 double rval_stack[5];
@@ -53,7 +53,7 @@ static char backup_token = 0;
 
 int window_pos = -1;
 char ch_window[20];
-int token_window[20];
+enum e_sym token_window[20];
 Float128 rval128_window[20];
 double rval_window[20];
 int64_t ival_window[20];
@@ -1055,7 +1055,7 @@ restart:        /* we come back here after comments */
 //		printf("compiler.lastid=%s| ", compiler.lastid);
 }
 
-void needpunc(enum e_sym p,int clue)
+void needpunc(e_sym p,int clue)
 {
 	if( lastst == p)
     NextToken();

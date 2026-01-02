@@ -92,6 +92,8 @@ BasicBlock *BasicBlock::Blockize(OCODE *start)
 	int num;
 	bool all = false;
 
+	if (start == nullptr)
+		return (nullptr);
 	num = 0;
 	currentFn->RootBlock = bbs = BasicBlock::MakeNew();
 	bbs->code = start;

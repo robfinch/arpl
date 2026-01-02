@@ -253,7 +253,7 @@ Statement *Statement::ParseFirstcall()
 {
 	Statement *snp;
 	Symbol *sp;
-	int st;
+	enum e_sym st;
 
 	dfs.puts("<ParseFirstcall>");
 	snp = MakeStatement(st_firstcall, TRUE);
@@ -1868,7 +1868,7 @@ void Statement::GenerateCatch(int opt, int oldthrow, int olderthrow)
 		stmt->GenMixedSource();
 		curlab = nextlabel++;
 		if (stmt->num != 99999) {
-			GenerateTriadic(op_bne, 0, makereg(cpu.argregs[1]), MakeImmediate(stmt->num), MakeCodeLabel(curlab));
+			cg.GenerateBne(makereg(cpu.argregs[1]), MakeImmediate(stmt->num), curlab);
 		}
 		// move the throw expression result in '$a0' into the catch variable.
 		node = stmt->exp;
@@ -2272,7 +2272,7 @@ void Statement::GenerateFirstcall()
 		ap2 = GetTempRegister();
 		GenerateDiadic(op_ldp, 0, ap1, MakeStringAsNameConst(fcname,dataseg));
 		GenerateTriadic(op_seq, 0, ap2, ap1, makereg(0));
-		GenerateDiadic(op_bne, 0, ap2, MakeCodeLabel(breaklab));
+		cg.GenerateBne(ap2, ap1, breaklab);
 		ReleaseTempRegister(ap2);
 		ReleaseTempRegister(ap1);
 		GenerateDiadic(op_stp, 0, makereg(regZero), MakeStringAsNameConst(fcname,dataseg));

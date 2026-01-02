@@ -551,6 +551,14 @@ int CSet::prevMember()
 	return (-1);
 }
 
+int CSet::firstMember()
+{
+	int nn = 0;
+	while (!test(nn) && nn < nbits) nn++;
+	MemberPtr = nn >= nbits ? 0 : nn;
+	return(MemberPtr);
+}
+
 int CSet::lastMember()
 {
 	int nn = nbits-1;
