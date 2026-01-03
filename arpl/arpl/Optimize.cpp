@@ -705,6 +705,42 @@ static void Opt0_logic(ENODE** node)
 		ooptimized = true;
 	}
 	else if (ep->p[2]==nullptr) {
+		if (ep->p[0]->nodetype==en_asl && cpu.SupportsTrinary) {
+			nt = ep->p[0]->nodetype;
+			switch (ep->nodetype) {
+			case en_xor:
+				ep1 = ep->p[0]->p[0];
+				ep2 = ep->p[0]->p[1];
+				tep = ep->p[1];
+				ep->p[0] = ep1;
+				ep->p[1] = ep2;
+				ep->p[2] = tep;
+				switch (nt) {
+				case en_asl:	ep->nodetype = en_asl_xor; break;
+				}
+				break;
+			}
+			return;
+		}
+		
+		if (ep->p[0]->nodetype == en_asr && cpu.SupportsTrinary) {
+			nt = ep->p[0]->nodetype;
+			switch (ep->nodetype) {
+			case en_and:
+				ep1 = ep->p[0]->p[0];
+				ep2 = ep->p[0]->p[1];
+				tep = ep->p[1];
+				ep->p[0] = ep1;
+				ep->p[1] = ep2;
+				ep->p[2] = tep;
+				switch (nt) {
+				case en_asr:	ep->nodetype = en_asr_and; break;
+				}
+				break;
+			}
+			return;
+		}
+		
 		if (ep->p[0]->IsLogic() && cpu.SupportsTrinary) {
 			nt = ep->p[0]->nodetype;
 			switch (ep->nodetype) {
@@ -742,6 +778,22 @@ static void Opt0_logic(ENODE** node)
 				case en_lor:
 				case en_lor_safe:
 				case en_or:		ep->nodetype = en_or_or; break;
+				}
+				break;
+			case en_xor:
+				ep1 = ep->p[0]->p[0];
+				ep2 = ep->p[0]->p[1];
+				tep = ep->p[1];
+				ep->p[0] = ep1;
+				ep->p[1] = ep2;
+				ep->p[2] = tep;
+				switch (nt) {
+				case en_land:
+				case en_land_safe:
+				case en_and:	ep->nodetype = en_and_xor; break;
+				case en_lor:
+				case en_lor_safe:
+				case en_or:		ep->nodetype = en_or_xor; break;
 				}
 				break;
 			}
@@ -796,10 +848,12 @@ static void Opt0_shift(ENODE** node)
 	opt0(&(ep->p[0]));
 	opt0(&(ep->p[1]));
 	if (ep->p[0]->nodetype == en_icon &&
-		ep->p[1]->nodetype == en_icon)
+		ep->p[1]->nodetype == en_icon) {
 		dooper(*node);
+		return;
+	}
 	// Shift by zero....
-	else if (ep->p[1]->nodetype == en_icon) {
+	if (ep->p[1]->nodetype == en_icon) {
 		if (Int128::IsEQ(&ep->p[1]->i128, Int128::Zero())) {
 			*node = ep->p[0];
 			ooptimized = true;
@@ -1527,10 +1581,14 @@ static void opt0(ENODE **node)
 					opt0(&(ep->p[2]));
 					break;
   case en_asand:  case en_asor:
-  case en_asadd:  case en_assub:
+  case en_assub:
   case en_asmul:  case en_asdiv:
   case en_asmod:  case en_asrsh:
   case en_aslsh:  
+		opt0(&(ep->p[0]));
+		opt0(&(ep->p[1]));
+		break;
+	case en_asadd:
 		opt0(&(ep->p[0]));
 		opt0(&(ep->p[1]));
 		break;

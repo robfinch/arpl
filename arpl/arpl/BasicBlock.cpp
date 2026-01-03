@@ -501,7 +501,7 @@ void BasicBlock::ComputeSpillCosts()
 		*b->MustSpill = *b->live;
 		endLoop = false;
 		for (ip = b->lcode; ip && !endLoop; ip = ip->back) {
-			if (ip->opcode == op_label)
+			if (ip->opcode == op_label || ip->opcode == op_nop)
 				continue;
 			if (ip->opcode == cpu.mov_op) {
 				r = ip->oper1->preg;

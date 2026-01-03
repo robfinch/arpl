@@ -97,7 +97,10 @@ enum e_node {
 		en_padd, en_psub, en_pmul, en_pdiv, en_ptoi, en_itop, en_peq, en_pne, en_plt, en_ple, en_pcon, en_pgt, en_pge,
 		en_d2t, en_d2q, en_t2q, en_p2d,
 		en_i2d, en_i2q, en_d2i, en_q2i, en_s2q, en_t2i, // 63<-
-        en_div, en_asl, en_shl, en_shlu, en_shr, en_shru, en_asr, en_rol, en_ror, en_ext, en_extu,
+        en_div,
+				en_asl, en_asl_xor, en_asl_and, en_asl_or, en_asl_add,
+				en_asr, en_asr_xor, en_asr_and, en_asr_or, en_asr_add,
+				en_shl, en_shlu, en_shr, en_shru, en_rol, en_ror, en_ext, en_extu,
 		en_cond, en_safe_cond, en_assign, 
         en_asadd, en_assub, en_asmul, en_asdiv, en_asdivu, en_asmod, en_asmodu,
 				en_asfmul,
@@ -106,10 +109,12 @@ enum e_node {
         en_eq, en_ne, en_lt, en_le, en_gt, en_ge,
         en_feq, en_fne, en_flt, en_fle, en_fgt, en_fge,
         en_veq, en_vne, en_vlt, en_vle, en_vgt, en_vge,
-		en_and, en_or, en_land, en_lor, en_land_safe, en_lor_safe, //104
-        en_xor, en_mulu, en_udiv, en_umod, en_ugt,
+		en_and, en_and_and, en_and_or, en_and_xor, en_and_add, en_and_asl,
+		en_or, en_or_and, en_or_or, en_or_xor, en_or_add, en_or_asl,
+		en_land, en_lor, en_land_safe, en_lor_safe, //104
+        en_xor, en_xor_and, en_xor_or, en_xor_xor, en_xor_add, en_xor_asl,
+				en_mulu, en_udiv, en_umod, en_ugt,
         en_uge, en_ule, en_ult,
-		en_and_and, en_or_and, en_and_or, en_or_or,
 		en_ref, en_fieldref, en_ursh,
 		en_bchk, en_chk, en_bytendx, en_bitoffset,
 		en_abs, en_max, en_min, en_addrof, en_ptrdif, en_wydendx,
@@ -324,6 +329,11 @@ enum e_op {
 	// stark
 	op_b, op_bl, op_blr, op_blri, op_cmpa, op_cmpai, op_storei, op_pne, op_pgt, op_pge,
 	op_ldbz, op_ldwz, op_ldtz, op_ldoz, op_exit,
+	// compound
+	op_or_xor, op_or_add, op_or_asl,
+	op_xor_asl,
+	op_asl_xor,
+	op_asr_and,
 	// Built in functions
 	op_abs, op_mulf, op_bytendx, op_zxo, op_bmap,
 	op_movzxb, op_movzxw, op_movzxt,

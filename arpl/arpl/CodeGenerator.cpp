@@ -420,9 +420,9 @@ void CodeGenerator::GenerateStoreImmediate(Operand* src, Operand* dst, int64_t s
 {
 	Operand* ap;
 
-	ap = GetTempRegister();
-	GenerateLoadConst(src, ap);
-	GenerateStore(ap, dst, size);
+//	ap = GetTempRegister();
+//	GenerateLoadConst(src, ap);
+	GenerateStore(src, dst, size);
 }
 
 Operand* CodeGenerator::GenerateBitfieldDereference(ENODE* node, int flags, int64_t size, int opt)
@@ -2112,7 +2112,7 @@ Operand* CodeGenerator::GenerateImmToMemAssign(Operand* ap1, Operand* ap2, int64
 
 	if (ap2->tp->IsFloatType()) {
 		if (Float128::IsEqual(&ap2->offset->f128, Float128::Zero())) {
-			GenerateStore(makereg(regZero), ap1, ssize);
+			GenerateStore(MakeImmediate(0), ap1, ssize);
 			return (ap1);
 		}
 		ap3 = GetTempRegister();
@@ -2121,16 +2121,16 @@ Operand* CodeGenerator::GenerateImmToMemAssign(Operand* ap1, Operand* ap2, int64
 		ReleaseTempRegister(ap3);
 		return (ap1);
 	}
-	if (ap2->offset->i == 0 && ap2->offset->nodetype != en_labcon) {
-		GenerateStore(makereg(regZero), ap1, ssize);
+	if (ap2->offset->nodetype != en_labcon) {
+		GenerateStore(MakeImmediate(ap2->offset->i), ap1, ssize);
 	}
 	else {
 		//if (ap2->offset->nodetype == en_icon && ap2->offset->i >= -32 && ap2->offset->i < 32) {
 		//	GenerateStore(ap2, ap1, ssize);
 		//}
 		//else
-		if (ap2->offset->nodetype == en_icon && ap2->offset->i == 0)
-			GenerateStore(makereg(regZero), ap1, ssize);
+		if (ap2->offset->nodetype == en_icon)
+			GenerateStore(MakeImmediate(ap2->offset->i), ap1, ssize);
 		else
 		{
 			ap3 = GetTempRegister();
@@ -3166,12 +3166,16 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 	case en_sub:  ap1 = GenerateBinary(node, flags, size, op_sub); goto retpt;
 	case en_ptrdif:  ap1 = GenerateBinary(node, flags, size, op_ptrdif); goto retpt;
 	case en_and:    ap1 = GenerateBinary(node, flags, size, op_and); goto retpt;
-  case en_or:     ap1 = GenerateBinary(node,flags,size,op_or); goto retpt;
-	case en_or_and:     ap1 = GenerateTrinary(node, flags, size, op_or_and); goto retpt;
-	case en_and_or:     ap1 = GenerateTrinary(node, flags, size, op_and_or); goto retpt;
-	case en_or_or:     ap1 = GenerateTrinary(node, flags, size, op_or_or); goto retpt;
 	case en_and_and:     ap1 = GenerateTrinary(node, flags, size, op_and_and); goto retpt;
+	case en_and_or:     ap1 = GenerateTrinary(node, flags, size, op_and_or); goto retpt;
+	case en_or:     ap1 = GenerateBinary(node,flags,size,op_or); goto retpt;
+	case en_or_and:     ap1 = GenerateTrinary(node, flags, size, op_or_and); goto retpt;
+	case en_or_or:     ap1 = GenerateTrinary(node, flags, size, op_or_or); goto retpt;
+	case en_or_xor:     ap1 = GenerateTrinary(node, flags, size, op_or_xor); goto retpt;
+	case en_or_add:     ap1 = GenerateTrinary(node, flags, size, op_or_add); goto retpt;
+	case en_or_asl:     ap1 = GenerateTrinary(node, flags, size, op_or_asl); goto retpt;
 	case en_xor:	ap1 = GenerateBinary(node, flags,size,op_xor); goto retpt;
+	case en_xor_asl:     ap1 = GenerateTrinary(node, flags, size, op_xor_asl); goto retpt;
 	case en_bmap:	ap1 = node->GenerateBinary(flags, size, op_bmap); goto retpt;
 	case en_bytendx:	ap1 = node->GenerateBinary(flags, size, op_bytendx); goto retpt;
 	case en_wydendx:	ap1 = node->GenerateBinary(flags, size, op_wydendx); goto retpt;
@@ -3185,11 +3189,13 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
   case en_udiv:   ap1 = node->GenerateDivMod(flags,size,op_divu); goto retpt;
   case en_mod:    ap1 = node->GenerateDivMod(flags,size,op_rem); goto retpt;
   case en_umod:   ap1 = node->GenerateDivMod(flags,size,op_remu); goto retpt;
-  case en_asl:    ap1 = node->GenerateShift(flags,size,op_sll); goto retpt;
-  case en_shl:    ap1 = GenerateShift(node,flags,size,op_sll); goto retpt;
-  case en_shlu:   ap1 = GenerateShift(node,flags,size,op_sll); goto retpt;
+  case en_asl:    ap1 = node->GenerateShift(flags,size,cpu.shift_left); goto retpt;
+	case en_asl_xor:    ap1 = GenerateTrinary(node, flags, size, op_asl_xor); goto retpt;
+	case en_shl:    ap1 = GenerateShift(node,flags,size,cpu.shift_left); goto retpt;
+  case en_shlu:   ap1 = GenerateShift(node,flags,size,cpu.shift_left); goto retpt;
   case en_asr:	ap1 = GenerateShift(node,flags,size,op_sra); goto retpt;
-  case en_shr:	ap1 = GenerateShift(node,flags,size,op_sra); goto retpt;
+	case en_asr_and:    ap1 = GenerateTrinary(node, flags, size, op_asr_and); goto retpt;
+	case en_shr:	ap1 = GenerateShift(node,flags,size,op_sra); goto retpt;
   case en_shru:   ap1 = GenerateShift(node,flags,size,op_srl); goto retpt;
 	case en_rol:   ap1 = GenerateShift(node,flags,size,op_rol); goto retpt;
 	case en_ror:   ap1 = GenerateShift(node,flags,size,op_ror); goto retpt;

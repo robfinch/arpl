@@ -36,6 +36,7 @@ CPU::CPU() {
 	sizeOfInt = 8;
 	sizeOfDecimal = 16;
 	sizeOfPosit = 8;
+	shift_left = op_sll;
 }
 
 void CPU::SetRealRegisters()

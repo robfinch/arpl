@@ -1767,7 +1767,7 @@ void SpillRegister(Operand *ap, int number)
 	compiler.reg_in_use[ap->preg&VR_MASK] = -1;
 #endif
 
-	GenerateMonadic(op_push, 0, ap);
+	GenerateDiadic(op_push, 0, makereg(regSSP), ap);
 	if (cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno))
 		fatal("SpillRegister(): register already spilled");
 	cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
@@ -1838,7 +1838,7 @@ void LoadRegister(int regno, int number)
 #endif
 	if (cpu.regs[regno & VR_MASK].inUse.isMember(wrapno))
 		fatal("LoadRegister():register still in use");
-	GenerateMonadic(op_pop, 0, makereg(regno));
+	GenerateDiadic(op_pop, 0, makereg(regSSP), makereg(regno));
 	cpu.regs[regno & VR_MASK].isPushed.remove(wrapno);
 	cpu.regs[regno & VR_MASK].inUse.add(wrapno);
 }

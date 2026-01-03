@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2023-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2023-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -363,7 +363,7 @@ void StatementGenerator::GenerateLinearSwitch(Statement* st)
 					else
 						nn = cases[kk + 1].label;
 					nn = stmt->FindNextLabel(nn);
-					GenerateTriadic(op_bne, 0, ap, MakeImmediate(cases[kk].val), MakeCodeLabel(nn));
+					cg.GenerateBne(ap, MakeImmediate(cases[kk].val), nn);
 					if (stmt->s1 && !stmt->s1->generated) {
 						stmt->s1->Generate(2);
 						stmt->s1->generated = true;

@@ -224,9 +224,12 @@ int64_t ENODE::GetNaturalSize()
 	case en_mod:    case en_umod:
 	case en_and:    case en_or:     case en_xor:
 	case en_asl:
+	case en_asl_xor:
 	case en_shl:    case en_shlu:
 	case en_shr:	case en_shru:	case en_bitoffset:
-	case en_asr:	case en_asrshu:
+	case en_asr:	
+	case en_asr_and:
+	case en_asrshu:
 	case en_feq:    case en_fne:
 	case en_flt:    case en_fle:
 	case en_fgt:    case en_fge:

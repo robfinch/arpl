@@ -824,6 +824,14 @@ public:
 			|| nodetype==en_lor_safe
 			|| nodetype==en_and);
 	}
+	bool IsShift() {
+		return (nodetype == en_asl
+			|| nodetype == en_shr
+			|| nodetype == en_asr
+			|| nodetype == en_rol
+			|| nodetype == en_ror
+		);
+	}
 	bool IsVectorType() {
 		return (etype == bt_vector); };
 	bool IsAutocon() { return (nodetype == en_autocon || nodetype == en_autofcon || nodetype == en_autopcon || nodetype == en_autovcon || nodetype == en_classcon); };
@@ -3393,6 +3401,7 @@ public:
 	int stw_op;
 	int stb_op;
 	int std_op;
+	e_op shift_left;
 	int sizeOfWord;
 	int sizeOfPtr;
 	int sizeOfFP;

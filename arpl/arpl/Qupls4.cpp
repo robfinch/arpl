@@ -50,20 +50,21 @@ static Instruction Qupls4InsnTbl[] =
 { ";string", op_string },
 { "abs", op_abs,2,1,false,am_reg,am_reg,0,0 },
 { "add",op_add,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
-{ "addq",op_addq,1,1,false,am_reg, am_imm,0, 0 },
-{ "adds",op_adds,1,1,false,am_reg,am_reg,am_reg, 0 },
 { "addu", op_addu,1,1 },
 { "and",op_and,1,1,false,am_reg | amCrReg,am_reg | amCrReg,am_reg | amCrReg | am_imm,0 },
 { "andcm",op_andcm,1,1,false,am_reg,am_reg,am_reg,0 },
 { "asl", op_asl,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "asl_xor", op_asl_xor,2,1,false,am_reg,am_reg,am_reg | am_ui6,am_reg|am_imm},
 { "aslx", op_aslx,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "asr",op_asr,2,1,false,am_reg,am_reg,am_reg | am_ui6,0 },
+{ "asr_and",op_asr_and,2,1,false,am_reg,am_reg,am_reg | am_ui6,am_reg|am_imm },
 { "bal", op_bal,4,2,false,am_reg,0,0,0 },
 { "band", op_band,2,0,false,am_reg,am_reg,0,0 },
 { "base", op_base,1,0,false,am_reg,am_reg,am_reg | am_ui6,0 },
 { "bchk", op_bchk,3,0 },
-{ "beq", op_beq,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "beq", op_beq,3,0,false,am_reg,am_reg|am_imm,am_direct,0 },
 { "beqi", op_beqi,3,0,false,am_reg,am_imm,am_direct,0 },
+{ "beqz", op_beqz,3,0,false,am_reg,am_direct,0, 0 },
 { "bex", op_bex,0,0,false,0,0,0,0 },
 { "bf", op_bf,3,0,false,am_reg,am_direct,0,0 },
 { "bfclr", op_bfclr,2,1,false,am_reg,am_reg | am_ui6,am_reg | am_ui6,0 },
@@ -82,7 +83,8 @@ static Instruction Qupls4InsnTbl[] =
 { "bltu", op_bltu,3,0,false,am_reg,am_reg,am_direct,0 },
 { "bmap", op_bmap,1,0,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "bmi", op_bmi,2,0,false,am_reg,am_direct,0,0 },
-{ "bne", op_bne,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bne", op_bne,3,0,false,am_reg,am_reg|am_imm,am_direct,0 },
+{ "bnez", op_bnez,3,0,false,am_reg,am_direct,0, 0 },
 { "br",op_br,3,0,false,0,0,0,0 },
 { "branch",op_bra,3,0,false,0,0,0,0 },
 //{ "branch",op_branch,3,0,false,am_direct,0,0,0 },
@@ -378,6 +380,7 @@ static Instruction Qupls4InsnTbl[] =
 { "wydendx", op_wydendx,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "xnor",op_xnor,1,1,false,am_reg,am_reg,am_reg,0 },
 { "xor",op_xor,1,1,false,am_reg,am_reg,am_reg | am_imm,0 },
+{ "xor_asl",op_xor_asl,1,1,false,am_reg,am_reg,am_reg | am_imm,am_reg|am_imm },
 { "zseq", op_zseq,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
 { "zsge",op_zsge,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
 { "zsgeu",op_zsgeu,1,1,false,am_reg,am_reg,am_reg | am_i16,am_reg | am_imm },
@@ -394,6 +397,7 @@ static Instruction Qupls4InsnTbl[] =
 };
 
 Qupls4CPU::Qupls4CPU() {
+	shift_left = op_asl;
 	sizeOfWord = 8;
 	sizeOfPtr = 8;
 	sizeOfFP = 8;
@@ -1919,9 +1923,12 @@ int64_t Qupls4CodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, boo
 			else {
 				if (cpu.SupportsPush && !large_argcount) {
 					if (ap->mode==am_imm) {	// must have been a zero
+						/*
 						if (ap->offset->i==0)
          					GenerateMonadic(op_push,0,makereg(regZero));
-						else {
+						else
+						*/
+						{
 							ap3 = GetTempRegister();
 							GenerateLoadConst(ap, ap3);
 							GenerateMonadic(op_push,0,ap3);
@@ -1950,16 +1957,19 @@ int64_t Qupls4CodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, boo
 				else {
 					if (ap->mode==am_imm) {	// must have been a zero
 						ap3 = nullptr;
-						if (ap->offset->i!=0) {
+//						if (ap->offset->i!=0) 
+						{
 							ap3 = GetTempRegister();
 							regs[ap3->preg].IsArg = true;
 							GenerateLoadConst(ap, ap3);
 	         		cg.GenerateStore(ap3,MakeIndexed(stkoffs,regSP),cpu.sizeOfWord);
 							ReleaseTempReg(ap3);
 						}
+						/*
 						else {
 							cg.GenerateStore(makereg(0), MakeIndexed(stkoffs, regSP), cpu.sizeOfWord);
 						}
+						*/
 						nn = 1;
 					}
 					else {
@@ -2247,8 +2257,8 @@ void Qupls4CodeGenerator::GenerateUnlink(int64_t amt)
 	if (cpu.SupportsEnter)
 		currentFn->PatchEnter(currentFn->mask);
 	if (cpu.SupportsLeave) {
-		currentFn->mask->sprint(buf, 100);
-		printf(buf);
+		//currentFn->mask->sprint(buf, 100);
+		//printf(buf);
 		currentFn->mask->resetPtr();
 		for (nn = 0; nn < currentFn->mask->NumMember(); nn++) {
 			stack[sp] = currentFn->mask->nextMember();
@@ -2758,10 +2768,12 @@ void Qupls4CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* 
 			GenerateDiadic(opcode, 0, ap1, MakeIndirect(ap4->preg));
 			return;
 		}
+		/*
 		if (opcode == op_store && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
 			opcode = op_stos;
 		if (opcode == op_load && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
 			opcode = op_ldos;
+		*/
 		GenerateDiadic(opcode, 0, ap1, ap2);
 		return;
 	}
@@ -2784,10 +2796,12 @@ void Qupls4CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* 
 			GenerateDiadic(opcode, 0, ap1, ap4);
 			return;
 		}
+		/*
 		if (opcode == op_store && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
 			opcode = op_stos;
 		if (opcode == op_load && ap2->offset->i128.IsNBit(8) && (ap2->offset->i128.low & 7LL) == 0)
 			opcode = op_ldos;
+		*/
 		GenerateDiadic(opcode, 0, ap1, ap2);
 		return;
 	}
@@ -3351,8 +3365,8 @@ Operand* Qupls4CodeGenerator::PatchEnter(OCODE* pe, CSet* rmask)
 	tail = currentFn->pl.tail;
 	currentFn->pl.tail = pe;
 	currentFn->mask->resetPtr();
-	currentFn->mask->sprint(buf, 100);
-	printf(buf);
+	//currentFn->mask->sprint(buf, 100);
+	//printf(buf);
 	for (nn = 0; nn < currentFn->mask->NumMember(); nn++) {
 		GenerateDiadic(op_push, 0, makereg(regSSP), makereg(currentFn->mask->nextMember()));
 	}

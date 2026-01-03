@@ -267,7 +267,7 @@ void IGraph::Fill()
 		b->BuildLivesetFromLiveout();
 		eol = false;
 		for (ip = b->lcode; ip && !eol; ip = ip->back) {
-			if (ip->opcode != op_label) {
+			if (ip->opcode != op_label && ip->opcode != op_nop) {
 				// examine instruction ip and update graph and live
 				if (ip->opcode == cpu.mov_op) {
 					v = FindTreeno(ip->oper1->preg, ip->bb->num);
@@ -364,7 +364,7 @@ void IGraph::BuildAndCoalesce()
 	if (forest.pass == 1)
 		InsertArgumentMoves();
 
-	// Vist high-priority blocks (blocks in nested loops) first, so sort the
+	// Visit high-priority blocks (blocks in nested loops) first, so sort the
 	// blocks according to depth.
 	BasicBlock::DepthSort();
 
