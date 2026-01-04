@@ -26,12 +26,13 @@
 //                                                                          
 // ============================================================================
 //
-enum e_cpu { thor, qupls, qupls4, riscv, bigfoot, i386 };
+enum e_cpu { thor, qupls, qupls4, qupls5, riscv, bigfoot, i386 };
 //#define THOR	1
 //#define LB650	1
 //#define STARK	1
 //#define QUPLS	1
-#define QUPLS4	4
+//#define QUPLS4	4
+#define QUPLS5	50
 //#define QUPLS40 1
 //#define RISCV 5
 //#define I386 386
@@ -110,7 +111,9 @@ enum e_node {
         en_feq, en_fne, en_flt, en_fle, en_fgt, en_fge,
         en_veq, en_vne, en_vlt, en_vle, en_vgt, en_vge,
 		en_and, en_and_and, en_and_or, en_and_xor, en_and_add, en_and_asl,
+		en_nand,
 		en_or, en_or_and, en_or_or, en_or_xor, en_or_add, en_or_asl,
+		en_nor,
 		en_land, en_lor, en_land_safe, en_lor_safe, //104
         en_xor, en_xor_and, en_xor_or, en_xor_xor, en_xor_add, en_xor_asl,
 				en_mulu, en_udiv, en_umod, en_ugt,
@@ -224,7 +227,8 @@ enum e_op {
 	op_beq, op_bne, op_blt, op_ble, op_bgt, op_bge, op_band, op_bor, op_bnand, op_bnor,
 	op_bltu, op_bleu, op_bgtu, op_bgeu,
 	op_bltui, op_bleui, op_blti, op_blei, op_bgti, op_bgtui, op_bgei, op_bgeui,
-	op_bbs, op_bbc, op_beqz, op_bnez,
+	op_bbs, op_bbc,
+	op_beqz, op_bnez, op_bltz, op_blez, op_bgez, op_bgtz,
 	op_dbra,
 
 	op_brz, op_brnz, op_br,

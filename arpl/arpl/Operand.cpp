@@ -386,7 +386,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 					return;
 				if (flags & am_imm) {
 					
-					if ((flags & am_reg) && gCpu!=QUPLS4) {
+					if ((flags & am_reg) && cpu.cpu_type!=qupls4 && cpu.cpu_type != qupls5) {
 						if (offset->i == 0) {
 							mode = am_reg;
 							preg = 0;
@@ -403,7 +403,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 					return;
 					if (flags & am_reg) {
 						if (offset->f128.IsZero()) {
-							if (gCpu != QUPLS4) {
+							if (cpu.cpu_type != qupls4 && cpu.cpu_type != qupls5) {
 								mode = am_reg;
 								preg = 0;
 							}
@@ -420,7 +420,7 @@ void Operand::MakeLegal(int flags, int64_t size)
 				}
 				else {
 					if (flags & am_reg) {
-						if (gCpu != QUPLS4) {
+						if (cpu.cpu_type != qupls4 && cpu.cpu_type != qupls5) {
 							if (offset->i == 0) {
 								mode = am_reg;
 								preg = 0;

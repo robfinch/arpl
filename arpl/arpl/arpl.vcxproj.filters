@@ -273,6 +273,12 @@
     <ClCompile Include="Qupls4CSE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Qupls5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Qupls5CSE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">

@@ -196,6 +196,8 @@
     <ClCompile Include="Preprocessor.cpp" />
     <ClCompile Include="Qupls4.cpp" />
     <ClCompile Include="Qupls4CSE.cpp" />
+    <ClCompile Include="Qupls5.cpp" />
+    <ClCompile Include="Qupls5CSE.cpp" />
     <ClCompile Include="rand.cpp" />
     <ClCompile Include="Range.cpp" />
     <ClCompile Include="Register.cpp" />

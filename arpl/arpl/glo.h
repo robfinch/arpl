@@ -44,6 +44,7 @@
 #define isBigfoot   (gCpu==BIGFOOT)
 #define isI386      (gCpu==I386)
 #define isQupls4		(gCpu==QUPLS4)
+#define isQupls5		(gCpu==QUPLS5)
 //#define DOTRACE	1
 #ifdef DOTRACE
 #define TRACE(x)	x
@@ -286,6 +287,11 @@ extern QuplsStatementGenerator sg;
 extern Qupls4CPU cpu;
 extern Qupls4CodeGenerator cg;
 extern Qupls4StatementGenerator sg;
+#endif
+#ifdef QUPLS5
+extern Qupls5CPU cpu;
+extern Qupls5CodeGenerator cg;
+extern Qupls5StatementGenerator sg;
 #endif
 #ifdef QUPLS40
 extern CPU cpu;

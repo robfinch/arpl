@@ -1938,7 +1938,7 @@ void OCODE::OptPush()
 //	return;
 	if (remove || oper1->mode != am_reg)
 		return;
-	if (gCpu == QUPLS4) {
+	if (cpu.cpu_type == qupls4) {
 		ip = this;
 		for (cnt = 2; cnt < 6; cnt++) {
 			ip = ip->fwd;
@@ -1967,9 +1967,34 @@ void OCODE::OptPush()
 		}
 		return;
 	}
+	if (cpu.cpu_type == qupls5) {
+		ip = this;
+		for (cnt = 2; cnt < 4; cnt++) {
+			ip = ip->fwd;
+			if (ip == nullptr)
+				return;
+			if (ip->opcode == op_push) {
+				if (ip->remove)
+					continue;
+				if (ip->oper2->mode == am_reg) {
+					if (oper3 == nullptr)
+						oper3 = makereg(ip->oper2->preg);
+					else if (oper4 == nullptr)
+						oper4 = makereg(ip->oper2->preg);
+					else
+						return;
+					ip->MarkRemove();
+					optimized++;
+				}
+			}
+			else
+				return;
+		}
+		return;
+	}
 	ip = fwd;
 	if (ip && !ip->remove) {
-		if (gCpu == QUPLS4) {
+		if (cpu.cpu_type == qupls4) {
 			if (ip->opcode == op_push && cpu.pushpop_multiple > 1) {
 				if (oper6 != nullptr)
 					return;
@@ -1982,6 +2007,20 @@ void OCODE::OptPush()
 						oper5 = ip->oper2;
 					else if (oper6 == nullptr)
 						oper6 = ip->oper2;
+					ip->MarkRemove();
+					optimized++;
+				}
+			}
+		}
+		else if (cpu.cpu_type == qupls5) {
+			if (ip->opcode == op_push && cpu.pushpop_multiple > 1) {
+				if (oper4 != nullptr)
+					return;
+				if (ip->oper2->mode == am_reg) {
+					if (oper3 == nullptr)
+						oper3 = ip->oper2;
+					else if (oper4 == nullptr)
+						oper4 = ip->oper2;
 					ip->MarkRemove();
 					optimized++;
 				}
@@ -2044,7 +2083,7 @@ void OCODE::OptPop()
 	//return;
 	if (oper1->mode != am_reg)
 		return;
-	if (gCpu == QUPLS4) {
+	if (cpu.cpu_type == qupls4) {
 		ip = this;
 		for (cnt = 2; cnt < 6; cnt++) {
 			ip = ip->fwd;
@@ -2062,6 +2101,31 @@ void OCODE::OptPop()
 						oper5 = makereg(ip->oper2->preg);
 					else if (oper6 == nullptr)
 						oper6 = makereg(ip->oper2->preg);
+					else
+						return;
+					ip->MarkRemove();
+					optimized++;
+				}
+			}
+			else
+				return;
+		}
+		return;
+	}
+	if (cpu.cpu_type == qupls5) {
+		ip = this;
+		for (cnt = 2; cnt < 4; cnt++) {
+			ip = ip->fwd;
+			if (ip == nullptr)
+				return;
+			if (ip->opcode == op_pop) {
+				if (ip->remove)
+					continue;
+				if (ip->oper2->mode == am_reg) {
+					if (oper3 == nullptr)
+						oper3 = makereg(ip->oper2->preg);
+					else if (oper4 == nullptr)
+						oper4 = makereg(ip->oper2->preg);
 					else
 						return;
 					ip->MarkRemove();

@@ -1984,6 +1984,113 @@ public:
 	Operand* PatchEnter(OCODE* code, CSet* save_mask);
 };
 
+class Qupls5CodeGenerator : public CodeGenerator
+{
+public:
+	void banner();
+	Operand* MakeBoolean(Operand* oper);
+	Operand* GenerateLand(ENODE*, int flags, int op, bool safe);
+	void GenerateLea(Operand* ap1, Operand* ap2);
+	void GenerateBranchTrue(Operand* ap, int64_t label);
+	void GenerateBranchFalse(Operand* ap, int64_t label);
+	void GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction);
+	void GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction);
+	bool GenerateBranch(ENODE* node, int op, int64_t label, int predreg, unsigned int prediction, bool limit);
+	void GenerateBeq(Operand*, Operand*, int64_t);
+	void GenerateBne(Operand*, Operand*, int64_t);
+	void GenerateBlt(Operand*, Operand*, int64_t);
+	void GenerateBle(Operand*, Operand*, int64_t);
+	void GenerateBgt(Operand*, Operand*, int64_t);
+	void GenerateBge(Operand*, Operand*, int64_t);
+	void GenerateBltu(Operand*, Operand*, int64_t);
+	void GenerateBleu(Operand*, Operand*, int64_t);
+	void GenerateBgtu(Operand*, Operand*, int64_t);
+	void GenerateBgeu(Operand*, Operand*, int64_t);
+	void GenerateBand(Operand*, Operand*, int64_t);
+	void GenerateBor(Operand*, Operand*, int64_t);
+	void GenerateBnand(Operand*, Operand*, int64_t);
+	void GenerateBnor(Operand*, Operand*, int64_t);
+	Operand* GenerateEq(ENODE* node);
+	Operand* GenerateNe(ENODE* node);
+	Operand* GenerateLt(ENODE* node);
+	Operand* GenerateLe(ENODE* node);
+	Operand* GenerateGt(ENODE* node);
+	Operand* GenerateGe(ENODE* node);
+	Operand* GenerateLtu(ENODE* node);
+	Operand* GenerateLeu(ENODE* node);
+	Operand* GenerateGtu(ENODE* node);
+	Operand* GenerateGeu(ENODE* node);
+	Operand* GenerateFeq(ENODE* node);
+	Operand* GenerateFne(ENODE* node);
+	Operand* GenerateFlt(ENODE* node);
+	Operand* GenerateFle(ENODE* node);
+	Operand* GenerateFgt(ENODE* node);
+	Operand* GenerateFge(ENODE* node);
+	Operand* GenExpr(ENODE* node);
+	void LinkAutonew(ENODE* node);
+	int64_t PushArgument(ENODE* ep, int regno, int stkoffs, bool* isFloat, int* push_count, bool large_argcount = true);
+	int64_t PushArguments(Function* func, ENODE* plist);
+	void PopArguments(Function* func, int howMany, bool isPascal = true);
+	Operand* GenerateSafeLand(ENODE*, int flags, int op);
+	void GenerateIndirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
+	void GenerateDirectJump(ENODE* node, Operand* oper, Function* func, int flags, int lab = 0);
+	void SignExtendBitfield(Operand* ap3, uint64_t mask);
+	void GenerateBitfieldInsert(Operand* dst, Operand* src, int offset, int width);
+	void GenerateBitfieldInsert(Operand* dst, Operand* src, Operand* offset, Operand* width);
+	void GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width);
+	Operand* GenerateBitfieldExtract(Operand* src, Operand* offset, Operand* width);
+	Operand* GenerateBitfieldExtract(Operand* ap1, ENODE* offset, ENODE* width);
+	Operand* GenerateShift(ENODE* node, int flags, int64_t size, int op);
+	void GenerateUnlink(int64_t amt);
+	void GenerateCall(Operand* tgt) {
+		GenerateMonadic(op_bsr, 0, tgt);
+	};
+	void GenerateLocalCall(Operand* tgt) {
+		GenerateMonadic(op_bsr, 0, tgt);
+	};
+	void GenerateReturnInsn() {
+		GenerateZeradic(op_rts);
+	};
+	void GenerateInterruptReturn(Function* func) {
+		GenerateZeradic(op_rti);
+	};
+	void GenerateReturnAndDeallocate(int64_t amt);
+	void GenerateReturnAndDeallocate(Operand* ap1);
+	void GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
+	void GenerateInterruptSave(Function* func);
+	void GenerateInterruptLoad(Function* func);
+	void GenerateLoadConst(Operand* operi, Operand* dst);
+	void GenerateLoadDataPointer(void);
+	void GenerateLoadBssPointer(void);
+	void GenerateLoadRodataPointer(void);
+	void GenerateSmallDataRegDecl(void);
+	void GenerateSignExtendByte(Operand*, Operand*);
+	void GenerateSignExtendWyde(Operand*, Operand*);
+	void GenerateSignExtendTetra(Operand*, Operand*);
+	void GenerateLoadAddress(Operand* ap3, Operand* ap1);
+	void GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask = nullptr);
+	void GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask = nullptr);
+	void GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2);
+	Operand* GenerateAddImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateAndImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateOrImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateEorImmediate(Operand* dst, Operand* src1, Operand* srci);
+	Operand* GenerateAdd(Operand* dst, Operand* src1, Operand* src2);
+	Operand* GenerateSubtract(Operand* dst, Operand* src1, Operand* src2);
+
+	OCODE* GenerateReturnBlock(Function* fn);
+
+	Operand* GenerateFloatcon(ENODE* node, int flags, int64_t size);
+	Operand* GenPositcon(ENODE* node, int flags, int64_t size);
+	Operand* GenLabelcon(ENODE* node, int flags, int64_t size);
+	Operand* GenNacon(ENODE* node, int flags, int64_t size);
+	void ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end);
+	int GetSegmentIndexReg(e_sg seg);
+	void SaveRegisterVars(CSet* mask);
+	bool CheckForShortAddressMode(e_op opcode, Operand* oper, e_op* opopcode);
+	Operand* PatchEnter(OCODE* code, CSet* save_mask);
+};
+
 class LB650CodeGenerator : public CodeGenerator
 {
 public:
@@ -2767,6 +2874,12 @@ public:
 	int OptimizationDesireability();
 };
 
+class Qupls5CSE : public CSE
+{
+public:
+	int OptimizationDesireability();
+};
+
 class LB650CSE : public CSE
 {
 public:
@@ -3005,6 +3118,13 @@ public:
 };
 
 class Qupls4StatementGenerator : public StatementGenerator
+{
+public:
+	void GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel);
+	void GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel);
+};
+
+class Qupls5StatementGenerator : public StatementGenerator
 {
 public:
 	void GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel);
@@ -3273,6 +3393,9 @@ public:
 #ifdef QUPLS4
 		sg = new Qupls4StatementGenerator;
 #endif
+#ifdef QUPLS5
+		sg = new Qupls5StatementGenerator;
+#endif
 #ifdef QUPLS40
 		sg = new QuplsStatementGenerator;
 #endif
@@ -3325,6 +3448,7 @@ public:
 class CPU
 {
 public:
+	e_cpu cpu_type;
 	std::string fileExt;
 	int nregs;
 	int pagesize;
@@ -3379,6 +3503,8 @@ public:
 	bool SupportsIndexed;
 	bool SupportsTrinary;
 	bool SupportsInlineCode;
+	bool SupportsNand;
+	bool SupportsNor;
 	void SetRealRegisters();
 	void SetVirtualRegisters();
 	bool Addsi;
@@ -3443,7 +3569,18 @@ public:
 class Qupls4CPU : public CPU
 {
 public:
+	bool supports_postfix_immediates;
+public:
 	Qupls4CPU();
+	char* RegMoniker(int32_t regno);
+};
+
+class Qupls5CPU : public CPU
+{
+public:
+	bool supports_postfix_immediates;
+public:
+	Qupls5CPU();
 	char* RegMoniker(int32_t regno);
 };
 

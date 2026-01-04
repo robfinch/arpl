@@ -315,6 +315,49 @@ int main(int argc, char **argv)
 	cpu.stw_op = op_stw;
 	cpu.std_op = op_std;
 #endif
+#ifdef QUPLS5
+	cpu.fileExt = ".qp5";
+	cpu.lea_op = op_lda;
+	cpu.pagesize = 13;
+	cpu.RIimmSize = 32;
+	cpu.cache_line_size = 6;
+	cpu.code_align = 6;					// power of two
+	cpu.SupportsBand = false;
+	cpu.SupportsBor = false;
+	cpu.SupportsBBC = true;
+	cpu.SupportsBBS = true;
+	cpu.SupportsPop = false;
+	cpu.SupportsPush = false;
+	cpu.SupportsLink = false;
+	cpu.SupportsUnlink = false;
+	cpu.SupportsBitfield = false;
+	cpu.SupportsLDM = false;
+	cpu.SupportsSTM = false;
+	cpu.SupportsPtrdif = false;
+	cpu.SupportsEnter = true;
+	cpu.SupportsLeave = true;
+	cpu.SupportsIndexed = true;
+	cpu.SupportsTrinary = true;
+	cpu.Addsi = false;
+	cpu.pushpop_multiple = 4;	// Max number of register supported by a push / pop operation
+	cpu.ext_op = op_ext;
+	cpu.extu_op = op_extu;
+	cpu.mov_op = op_move;
+	cpu.ldi_op = op_loadi;
+	cpu.ldbu_op = op_ldbu;
+	cpu.ldb_op = op_ldb;
+	cpu.ldo_op = op_ldo;
+	cpu.ldtu_op = op_ldtu;
+	cpu.ldt_op = op_ldt;
+	cpu.ldwu_op = op_ldwu;
+	cpu.ldw_op = op_ldw;
+	cpu.ldd_op = op_ldd;
+	cpu.stb_op = op_stb;
+	cpu.sto_op = op_sto;
+	cpu.stt_op = op_stt;
+	cpu.stw_op = op_stw;
+	cpu.std_op = op_std;
+#endif
 #ifdef QUPLS40
 	cpu.fileExt = ".asm";
 	cpu.lea_op = op_lda;

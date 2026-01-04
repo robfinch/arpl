@@ -41,7 +41,7 @@ extern void GenLoad(Operand *ap1, Operand *ap3, int ssize, int size);
 // Please keep table in alphabetical order.
 // Instruction.cpp has the number of table elements hard-coded in it.
 //
-static Instruction Qupls4InsnTbl[] =
+static Instruction Qupls5InsnTbl[] =
 {
 { ";", op_remark },
 { ";asm",op_asm,300 },
@@ -74,13 +74,17 @@ static Instruction Qupls4InsnTbl[] =
 { "bfset", op_bfset,2,1,false,am_reg,am_reg | am_ui6,am_reg | am_ui6,0 },
 { "bge", op_bge,3,0,false,am_reg,am_reg,am_direct,0 },
 { "bgeu", op_bgeu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgez", op_bgez,3,0,false,am_reg,am_direct,0,0 },
 { "bgt", op_bgt,3,0,false,am_reg,am_reg,am_direct,0 },
 { "bgtu", op_bgtu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bgtz", op_bgtz,3,0,false,am_reg,am_direct,0,0 },
 { "bit",op_bit,1,1,false,am_creg,am_reg,am_reg | am_imm,0 },
 { "ble", op_ble, 3,0,false,am_reg,am_reg,am_direct,0 },
 { "bleu", op_bleu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "blez", op_blez,3,0,false,am_reg,am_direct,0,0 },
 { "blt", op_blt,3,0,false,am_reg,am_reg,am_direct,0 },
 { "bltu", op_bltu,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "bltz", op_bltz,3,0,false,am_reg,am_direct,0,0 },
 { "bmap", op_bmap,1,0,false,am_reg,am_reg,am_reg | am_imm,0 },
 { "bmi", op_bmi,2,0,false,am_reg,am_direct,0,0 },
 { "bne", op_bne,3,0,false,am_reg,am_reg|am_imm,am_direct,0 },
@@ -396,7 +400,8 @@ static Instruction Qupls4InsnTbl[] =
 { "zxw",op_zxo,1,1,false,am_reg,am_reg,0,0 }
 };
 
-Qupls4CPU::Qupls4CPU() {
+Qupls5CPU::Qupls5CPU() {
+	cpu_type = qupls5;
 	shift_left = op_asl;
 	sizeOfWord = 8;
 	sizeOfPtr = 8;
@@ -409,12 +414,14 @@ Qupls4CPU::Qupls4CPU() {
 	sizeOfDecimal = 16;
 	sizeOfPosit = 8;
 	RIimmSize = 32;
-	itbl = Qupls4InsnTbl;
+	itbl = Qupls5InsnTbl;
 	supports_postfix_immediates = true;
-	itbl_cnt = sizeof(Qupls4InsnTbl) / sizeof(Instruction);
+	SupportsNand = true;
+	SupportsNor = true;
+	itbl_cnt = sizeof(Qupls5InsnTbl) / sizeof(Instruction);
 }
 
-char* Qupls4CPU::RegMoniker(int32_t regno)
+char* Qupls5CPU::RegMoniker(int32_t regno)
 {
 	static char buf[4][20];
 	static int n;
@@ -521,13 +528,13 @@ char* Qupls4CPU::RegMoniker(int32_t regno)
 	return &buf[n][0];
 }
 
-void Qupls4CodeGenerator::banner()
+void Qupls5CodeGenerator::banner()
 {
-	printf("Qupls4 Code Generator v0.01\n");
+	printf("Qupls5 Code Generator v0.01\n");
 };
 
 
-void Qupls4CodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
+void Qupls5CodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
 {
 	Operand* ap2;
 	uint64_t umask;
@@ -541,7 +548,7 @@ void Qupls4CodeGenerator::SignExtendBitfield(Operand* ap3, uint64_t mask)
 }
 
 // Convert a value to a Boolean.
-Operand* Qupls4CodeGenerator::MakeBoolean(Operand* ap)
+Operand* Qupls5CodeGenerator::MakeBoolean(Operand* ap)
 {
 	Operand* ap1;
 	OCODE* ip;
@@ -556,7 +563,7 @@ Operand* Qupls4CodeGenerator::MakeBoolean(Operand* ap)
 	return (ap1);
 }
 
-void Qupls4CodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
+void Qupls5CodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
 {
 	switch (ap2->mode) {
 	case am_reg:
@@ -573,7 +580,7 @@ void Qupls4CodeGenerator::GenerateLea(Operand* ap1, Operand* ap2)
 	}
 }
 
-Operand* Qupls4CodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
+Operand* Qupls5CodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
 {
 	Operand* ap1, * ap2, * ap4, * ap5;
 	int lab0;
@@ -601,7 +608,7 @@ Operand* Qupls4CodeGenerator::GenerateSafeLand(ENODE *node, int flags, int op)
 }
 
 
-void Qupls4CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width)
+void Qupls5CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, int offset, int width)
 {
 	ap1->MakeLegal(am_reg, cpu.sizeOfWord);
 	ap2->MakeLegal(am_reg, cpu.sizeOfWord);
@@ -624,7 +631,7 @@ static Operand* CombineOffsetWidth(Operand* offset, Operand* width)
 }
 
 
-void Qupls4CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, Operand* width)
+void Qupls5CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Operand* offset, Operand* width)
 {
 	Operand* op_begin;
 	Operand* op_end;
@@ -636,7 +643,7 @@ void Qupls4CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, Ope
 }
 
 
-void Qupls4CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width)
+void Qupls5CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENODE* offset, ENODE* width)
 {
 	Operand* ap3, * ap4;
 	Operand* op_begin;
@@ -669,7 +676,7 @@ void Qupls4CodeGenerator::GenerateBitfieldInsert(Operand* ap1, Operand* ap2, ENO
 	ReleaseTempReg(ap3);
 }
 
-void Qupls4CodeGenerator::ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end)
+void Qupls5CodeGenerator::ConvertOffsetWidthToBeginEnd(Operand* offset, Operand* width, Operand** op_begin, Operand** op_end)
 {
 	Int128 me;
 
@@ -683,7 +690,7 @@ void Qupls4CodeGenerator::ConvertOffsetWidthToBeginEnd(Operand* offset, Operand*
 	GenerateTriadic(op_add, 0, *op_end, offset, width);
 }
 
-Operand* Qupls4CodeGenerator::GenerateBitfieldExtract(Operand* ap, Operand* offset, Operand* width)
+Operand* Qupls5CodeGenerator::GenerateBitfieldExtract(Operand* ap, Operand* offset, Operand* width)
 {
 	Operand* ap1, *op_begin, * op_end;
 	Int128 me;
@@ -707,7 +714,7 @@ Operand* Qupls4CodeGenerator::GenerateBitfieldExtract(Operand* ap, Operand* offs
 	return (ap1);
 }
 
-Operand* Qupls4CodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset, ENODE* width)
+Operand* Qupls5CodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset, ENODE* width)
 {
 	Operand* ap1;
 	Operand* ap2;
@@ -728,7 +735,7 @@ Operand* Qupls4CodeGenerator::GenerateBitfieldExtract(Operand* ap, ENODE* offset
 	return (ap1);
 }
 
-Operand* Qupls4CodeGenerator::GenerateEq(ENODE *node)
+Operand* Qupls5CodeGenerator::GenerateEq(ENODE *node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -746,7 +753,7 @@ Operand* Qupls4CodeGenerator::GenerateEq(ENODE *node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateNe(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateNe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -764,7 +771,7 @@ Operand* Qupls4CodeGenerator::GenerateNe(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateLt(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateLt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -782,7 +789,7 @@ Operand* Qupls4CodeGenerator::GenerateLt(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateLe(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateLe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -802,7 +809,7 @@ Operand* Qupls4CodeGenerator::GenerateLe(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateGt(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateGt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -821,7 +828,7 @@ Operand* Qupls4CodeGenerator::GenerateGt(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateGe(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateGe(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -839,7 +846,7 @@ Operand* Qupls4CodeGenerator::GenerateGe(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateLtu(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateLtu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -857,7 +864,7 @@ Operand* Qupls4CodeGenerator::GenerateLtu(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateLeu(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateLeu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -875,7 +882,7 @@ Operand* Qupls4CodeGenerator::GenerateLeu(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateGtu(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateGtu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -894,7 +901,7 @@ Operand* Qupls4CodeGenerator::GenerateGtu(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateGeu(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateGeu(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -912,7 +919,7 @@ Operand* Qupls4CodeGenerator::GenerateGeu(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateFeq(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateFeq(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -927,7 +934,7 @@ Operand* Qupls4CodeGenerator::GenerateFeq(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateFne(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateFne(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -942,7 +949,7 @@ Operand* Qupls4CodeGenerator::GenerateFne(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateFlt(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateFlt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -957,7 +964,7 @@ Operand* Qupls4CodeGenerator::GenerateFlt(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateFle(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateFle(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -972,7 +979,7 @@ Operand* Qupls4CodeGenerator::GenerateFle(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateFgt(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateFgt(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -987,7 +994,7 @@ Operand* Qupls4CodeGenerator::GenerateFgt(ENODE* node)
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateFge(ENODE* node)
+Operand* Qupls5CodeGenerator::GenerateFge(ENODE* node)
 {
 	Operand* ap1, * ap2, * ap3;
 	int64_t size;
@@ -1002,7 +1009,7 @@ Operand* Qupls4CodeGenerator::GenerateFge(ENODE* node)
 	return (ap3);
 }
 
-Operand *Qupls4CodeGenerator::GenExpr(ENODE *node)
+Operand *Qupls5CodeGenerator::GenExpr(ENODE *node)
 {
 	Operand *ap1,*ap2,*ap3,*ap4;
 	int64_t lab0, lab1;
@@ -1171,19 +1178,19 @@ Operand *Qupls4CodeGenerator::GenExpr(ENODE *node)
 	*/
 }
 
-void Qupls4CodeGenerator::GenerateBranchTrue(Operand* ap, int64_t label)
+void Qupls5CodeGenerator::GenerateBranchTrue(Operand* ap, int64_t label)
 {
 	gHeadif = currentFn->pl.tail;
 	GenerateDiadic(op_bnez, 0, ap, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBranchFalse(Operand* ap, int64_t label)
+void Qupls5CodeGenerator::GenerateBranchFalse(Operand* ap, int64_t label)
 {
 	gHeadif = currentFn->pl.tail;
 	GenerateDiadic(op_beqz, 0, ap, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1217,7 +1224,7 @@ void Qupls4CodeGenerator::GenerateBeq(Operand* ap1, Operand* ap2, int64_t label)
 		GenerateTriadic(op_beq, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1251,7 +1258,7 @@ void Qupls4CodeGenerator::GenerateBne(Operand* ap1, Operand* ap2, int64_t label)
 		GenerateTriadic(op_bne, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1267,13 +1274,18 @@ void Qupls4CodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			if (cpu.supports_postfix_immediates)
-				GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(label));
+			if (ap2->offset->i == 0) {
+				GenerateDiadic(op_bltz, 0, ap1, MakeCodeLabel(label));
+			}
 			else {
-				Operand* ap3 = GetTempRegister();
-				GenerateLoadConst(ap2, ap3);
-				GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(label));
-				ReleaseTempRegister(ap3);
+				if (cpu.supports_postfix_immediates)
+					GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(label));
+				else {
+					Operand* ap3 = GetTempRegister();
+					GenerateLoadConst(ap2, ap3);
+					GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(label));
+					ReleaseTempRegister(ap3);
+				}
 			}
 		}
 	}
@@ -1281,7 +1293,7 @@ void Qupls4CodeGenerator::GenerateBlt(Operand* ap1, Operand* ap2, int64_t label)
 		GenerateTriadic(op_blt, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
 {
 	if (ap2->mode == am_imm) {
 		Int128 i;
@@ -1291,13 +1303,17 @@ void Qupls4CodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
 		if (regs[ap1->preg].isConst && !Int128::IsGE(&i, &ap2->offset->i128))
 			;
 		else {
-			if (cpu.supports_postfix_immediates)
-				GenerateTriadic(op_bge, 0, ap1, ap2, MakeCodeLabel(label));
+			if (ap2->offset->i==0)
+				GenerateDiadic(op_bgez, 0, ap1, MakeCodeLabel(label));
 			else {
-				Operand* ap3 = GetTempRegister();
-				GenerateLoadConst(ap2, ap3);
-				GenerateTriadic(op_bge, 0, ap1, ap3, MakeCodeLabel(label));
-				ReleaseTempRegister(ap3);
+				if (cpu.supports_postfix_immediates)
+					GenerateTriadic(op_bge, 0, ap1, ap2, MakeCodeLabel(label));
+				else {
+					Operand* ap3 = GetTempRegister();
+					GenerateLoadConst(ap2, ap3);
+					GenerateTriadic(op_bge, 0, ap1, ap3, MakeCodeLabel(label));
+					ReleaseTempRegister(ap3);
+				}
 			}
 		}
 	}
@@ -1305,7 +1321,7 @@ void Qupls4CodeGenerator::GenerateBge(Operand* ap1, Operand* ap2, int64_t label)
 		GenerateTriadic(op_bge, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1321,13 +1337,17 @@ void Qupls4CodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			if (cpu.supports_postfix_immediates)
-				GenerateTriadic(op_ble, 0, ap1, ap2, MakeCodeLabel(label));
+			if (ap2->offset->i==0)
+				GenerateDiadic(op_blez, 0, ap1, MakeCodeLabel(label));
 			else {
-				Operand* ap3 = GetTempRegister();
-				GenerateLoadConst(ap2, ap3);
-				GenerateTriadic(op_ble, 0, ap1, ap3, MakeCodeLabel(label));
-				ReleaseTempRegister(ap3);
+				if (cpu.supports_postfix_immediates)
+					GenerateTriadic(op_ble, 0, ap1, ap2, MakeCodeLabel(label));
+				else {
+					Operand* ap3 = GetTempRegister();
+					GenerateLoadConst(ap2, ap3);
+					GenerateTriadic(op_ble, 0, ap1, ap3, MakeCodeLabel(label));
+					ReleaseTempRegister(ap3);
+				}
 			}
 		}
 	}
@@ -1335,7 +1355,7 @@ void Qupls4CodeGenerator::GenerateBle(Operand* ap1, Operand* ap2, int64_t label)
 		GenerateTriadic(op_ble, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1351,13 +1371,17 @@ void Qupls4CodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(label));
 		}
 		else {
-			if (cpu.supports_postfix_immediates)
-				GenerateTriadic(op_bgt, 0, ap1, ap2, MakeCodeLabel(label));
+			if (ap2->offset->i==0)
+				GenerateDiadic(op_bgtz, 0, ap1, MakeCodeLabel(label));
 			else {
-				Operand* ap3 = GetTempRegister();
-				GenerateLoadConst(ap2, ap3);
-				GenerateTriadic(op_bgt, 0, ap1, ap3, MakeCodeLabel(label));
-				ReleaseTempRegister(ap3);
+				if (cpu.supports_postfix_immediates)
+					GenerateTriadic(op_bgt, 0, ap1, ap2, MakeCodeLabel(label));
+				else {
+					Operand* ap3 = GetTempRegister();
+					GenerateLoadConst(ap2, ap3);
+					GenerateTriadic(op_bgt, 0, ap1, ap3, MakeCodeLabel(label));
+					ReleaseTempRegister(ap3);
+				}
 			}
 		}
 	}
@@ -1365,7 +1389,7 @@ void Qupls4CodeGenerator::GenerateBgt(Operand* ap1, Operand* ap2, int64_t label)
 		GenerateTriadic(op_bgt, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1395,7 +1419,7 @@ void Qupls4CodeGenerator::GenerateBltu(Operand* ap1, Operand* ap2, int64_t label
 		GenerateTriadic(op_bltu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1425,7 +1449,7 @@ void Qupls4CodeGenerator::GenerateBgeu(Operand* ap1, Operand* ap2, int64_t label
 		GenerateTriadic(op_bgeu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1455,7 +1479,7 @@ void Qupls4CodeGenerator::GenerateBleu(Operand* ap1, Operand* ap2, int64_t label
 		GenerateTriadic(op_bleu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Int128 i;
 
@@ -1485,7 +1509,7 @@ void Qupls4CodeGenerator::GenerateBgtu(Operand* ap1, Operand* ap2, int64_t label
 		GenerateTriadic(op_bgtu, 0, ap1, ap2, MakeCodeLabel(label));
 }
 
-void Qupls4CodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -1499,7 +1523,7 @@ void Qupls4CodeGenerator::GenerateBand(Operand* ap1, Operand* ap2, int64_t label
 	}
 }
 
-void Qupls4CodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -1513,7 +1537,7 @@ void Qupls4CodeGenerator::GenerateBor(Operand* ap1, Operand* ap2, int64_t label)
 	}
 }
 
-void Qupls4CodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -1523,7 +1547,7 @@ void Qupls4CodeGenerator::GenerateBnand(Operand* ap1, Operand* ap2, int64_t labe
 	ReleaseTempReg(ap3);
 }
 
-void Qupls4CodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int64_t label)
+void Qupls5CodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int64_t label)
 {
 	Operand* ap3;
 
@@ -1533,7 +1557,7 @@ void Qupls4CodeGenerator::GenerateBnor(Operand* ap1, Operand* ap2, int64_t label
 	ReleaseTempReg(ap3);
 }
 
-bool Qupls4CodeGenerator::GenerateBranch(ENODE *node, int op, int64_t label, int predreg, unsigned int prediction, bool limit)
+bool Qupls5CodeGenerator::GenerateBranch(ENODE *node, int op, int64_t label, int predreg, unsigned int prediction, bool limit)
 {
 	int64_t size, sz;
 	Operand *ap1, *ap2, *ap3;
@@ -1732,7 +1756,7 @@ static void RestoreRegisterSet(Symbol * sym)
 
 // Push temporaries on the stack.
 
-void Qupls4CodeGenerator::SaveRegisterVars(CSet *rmask)
+void Qupls5CodeGenerator::SaveRegisterVars(CSet *rmask)
 {
 	int cnt;
 	int nn;
@@ -1876,7 +1900,7 @@ static void RestoreFPRegisterVars()
 // 8 we assume a structure variable and we assume we have the address in a reg.
 // Returns: number of stack words pushed.
 //
-int64_t Qupls4CodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat, int* push_count, bool large_argcount)
+int64_t Qupls5CodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, bool *isFloat, int* push_count, bool large_argcount)
 {    
 	Operand *ap, *ap1, *ap2, *ap3;
 	int nn = 0;
@@ -2068,7 +2092,7 @@ int64_t Qupls4CodeGenerator::PushArgument(ENODE *ep, int regno, int stkoffs, boo
 // use a push instruction rather than subtracting from the sp and using stores
 // if there are only a small number of arguments (<3).
 //
-int64_t Qupls4CodeGenerator::PushArguments(Function *sym, ENODE *plist)
+int64_t Qupls5CodeGenerator::PushArguments(Function *sym, ENODE *plist)
 {
 	TypeArray *ta = nullptr;
 	int64_t i,sum;
@@ -2205,7 +2229,7 @@ int64_t Qupls4CodeGenerator::PushArguments(Function *sym, ENODE *plist)
 
 // Pop parameters off the stack
 
-void Qupls4CodeGenerator::PopArguments(Function *fnc, int howMany, bool isPascal)
+void Qupls5CodeGenerator::PopArguments(Function *fnc, int howMany, bool isPascal)
 {
 	howMany *= cpu.sizeOfWord;
 	if (howMany != 0) {
@@ -2226,14 +2250,14 @@ void Qupls4CodeGenerator::PopArguments(Function *fnc, int howMany, bool isPascal
 }
 
 
-void Qupls4CodeGenerator::LinkAutonew(ENODE *node)
+void Qupls5CodeGenerator::LinkAutonew(ENODE *node)
 {
 	if (node->isAutonew) {
 		currentFn->hasAutonew = true;
 	}
 }
 
-void Qupls4CodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
+void Qupls5CodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
 {
 	char buf[500];
 
@@ -2265,7 +2289,7 @@ void Qupls4CodeGenerator::GenerateDirectJump(ENODE* node, Operand* ap, Function*
 	LinkAutonew(node);
 }
 
-void Qupls4CodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
+void Qupls5CodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Function* sym, int flags, int lab)
 {
 	ap->MakeLegal(am_ind, cpu.sizeOfWord);
 	if (sym && sym->IsLeaf) {
@@ -2288,7 +2312,7 @@ void Qupls4CodeGenerator::GenerateIndirectJump(ENODE* node, Operand* ap, Functio
 	LinkAutonew(node);
 }
 
-void Qupls4CodeGenerator::GenerateUnlink(int64_t amt)
+void Qupls5CodeGenerator::GenerateUnlink(int64_t amt)
 {
 	int nn;
 	int stack[32];
@@ -2322,7 +2346,7 @@ void Qupls4CodeGenerator::GenerateUnlink(int64_t amt)
 
 // The compiler makes use of local labels for the switch table. The data table label must also be local.
 
-void Qupls4StatementGenerator::GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel)
+void Qupls5StatementGenerator::GenerateTabularSwitch(Statement* stmt, int64_t minv, int64_t maxv, Operand* ap, bool HasDefcase, int deflbl, int tablabel)
 {
 	Operand* ap2;
 
@@ -2340,7 +2364,7 @@ void Qupls4StatementGenerator::GenerateTabularSwitch(Statement* stmt, int64_t mi
 	GenerateSwitchStatements(stmt);
 }
 
-void Qupls4StatementGenerator::GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel)
+void Qupls5StatementGenerator::GenerateNakedTabularSwitch(Statement* stmt, int64_t minv, Operand* ap, int tablabel)
 {
 	if (minv != 0)
 		GenerateTriadic(op_sub, 0, ap, ap, MakeImmediate(minv));
@@ -2358,7 +2382,7 @@ void Qupls4StatementGenerator::GenerateNakedTabularSwitch(Statement* stmt, int64
 // Generate a jump to label if the node passed evaluates to
 // a true condition.
 //
-void Qupls4CodeGenerator::GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction)
+void Qupls5CodeGenerator::GenerateTrueJump(ENODE* node, int64_t label, unsigned int prediction)
 {
 	Operand* ap1, * ap2;
 	int64_t lab0;
@@ -2434,7 +2458,7 @@ void Qupls4CodeGenerator::GenerateTrueJump(ENODE* node, int64_t label, unsigned 
 // Generate code to execute a jump to label if the expression
 // passed is false.
 //
-void Qupls4CodeGenerator::GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction)
+void Qupls5CodeGenerator::GenerateFalseJump(ENODE* node, int64_t label, unsigned int prediction)
 {
 	int64_t siz1;
 	int64_t lab0;
@@ -2513,7 +2537,7 @@ void Qupls4CodeGenerator::GenerateFalseJump(ENODE* node, int64_t label, unsigned
 	}
 }
 
-void Qupls4CodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
+void Qupls5CodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
 {
 	if (ap3->typep == &stdflt) {
 		GenerateTriadic(op_fload, 'd', ap3, ap1, mask);
@@ -2534,7 +2558,7 @@ void Qupls4CodeGenerator::GenerateLoadFloat(Operand* ap3, Operand* ap1, int64_t 
 	//		throw C64PException(ERR_UNKNOWN_FLOAT_TYPE, 0);
 }
 
-void Qupls4CodeGenerator::GenerateInterruptSave(Function* func)
+void Qupls5CodeGenerator::GenerateInterruptSave(Function* func)
 {
 	int nn, kk;
 	int64_t tsm = func->int_save_mask;
@@ -2577,7 +2601,7 @@ void Qupls4CodeGenerator::GenerateInterruptSave(Function* func)
 	*/
 }
 
-void Qupls4CodeGenerator::GenerateInterruptLoad(Function* func)
+void Qupls5CodeGenerator::GenerateInterruptLoad(Function* func)
 {
 	int nn, kk;
 	int64_t tsm = func->int_save_mask;
@@ -2608,7 +2632,7 @@ void Qupls4CodeGenerator::GenerateInterruptLoad(Function* func)
 	GenerateAddOnto(makereg(regSP), MakeImmediate(kk * cpu.sizeOfWord));
 }
 
-void Qupls4CodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
+void Qupls5CodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 {
 	Operand* ap3;
 
@@ -2675,7 +2699,7 @@ void Qupls4CodeGenerator::GenerateLoadConst(Operand* ap1, Operand* ap2)
 
 // For now, just assume the data pointers have been set at program start-up.
 
-void Qupls4CodeGenerator::GenerateLoadDataPointer()
+void Qupls5CodeGenerator::GenerateLoadDataPointer()
 {
 	Operand* ap = GetTempRegister();
 
@@ -2685,7 +2709,7 @@ void Qupls4CodeGenerator::GenerateLoadDataPointer()
 }
 
 // Compiler now uses global pointer two addressing for the rodataseg
-void Qupls4CodeGenerator::GenerateLoadRodataPointer()
+void Qupls5CodeGenerator::GenerateLoadRodataPointer()
 {
 	Operand* ap = GetTempRegister();
 
@@ -2706,7 +2730,7 @@ void Qupls4CodeGenerator::GenerateLoadRodataPointer()
 	ReleaseTempRegister(ap);
 }
 
-void Qupls4CodeGenerator::GenerateLoadBssPointer()
+void Qupls5CodeGenerator::GenerateLoadBssPointer()
 {
 	Operand* ap = GetTempRegister();
 
@@ -2722,7 +2746,7 @@ void Qupls4CodeGenerator::GenerateLoadBssPointer()
 	ReleaseTempRegister(ap);
 }
 
-void Qupls4CodeGenerator::GenerateSmallDataRegDecl()
+void Qupls5CodeGenerator::GenerateSmallDataRegDecl()
 {
 	switch (syntax) {
 	case MOT:
@@ -2749,32 +2773,32 @@ void Qupls4CodeGenerator::GenerateSmallDataRegDecl()
 	*/
 }
 
-void Qupls4CodeGenerator::GenerateSignExtendByte(Operand* tgt, Operand* src)
+void Qupls5CodeGenerator::GenerateSignExtendByte(Operand* tgt, Operand* src)
 {
 	Generate4adic(op_ext, 0, tgt, src, MakeImmediate(0), MakeImmediate(7));
 }
 
-void Qupls4CodeGenerator::GenerateSignExtendWyde(Operand* tgt, Operand* src)
+void Qupls5CodeGenerator::GenerateSignExtendWyde(Operand* tgt, Operand* src)
 {
 	Generate4adic(op_ext, 0, tgt, src, MakeImmediate(0), MakeImmediate(15));
 }
 
-void Qupls4CodeGenerator::GenerateSignExtendTetra(Operand* tgt, Operand* src)
+void Qupls5CodeGenerator::GenerateSignExtendTetra(Operand* tgt, Operand* src)
 {
 	Generate4adic(op_ext, 0, tgt, src, MakeImmediate(0), MakeImmediate(31));
 }
 
-void Qupls4CodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
+void Qupls5CodeGenerator::GenerateReturnAndDeallocate(Operand* ap1)
 {
 	GenerateMonadic(op_ret, 0, ap1);
 }
 
-void Qupls4CodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
+void Qupls5CodeGenerator::GenerateReturnAndDeallocate(int64_t amt)
 {
 	GenerateTriadic(op_retd, 0, makereg(regSP), makereg(regLR), MakeImmediate(amt));
 }
 
-void Qupls4CodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
+void Qupls5CodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 {
 	Operand* ap2, * ap4;
 
@@ -2787,7 +2811,7 @@ void Qupls4CodeGenerator::GenerateLoadAddress(Operand* ap3, Operand* ap1)
 // address bits required. If too many bits are needed turn the load or store
 // into a load of the address into a register, then use the register.
 
-void Qupls4CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2)
+void Qupls5CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* ap2)
 {
 	GenerateDiadic(opcode, 0, ap1, ap2);
 	return;
@@ -2863,7 +2887,7 @@ void Qupls4CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* 
 	}
 }
 
-void Qupls4CodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
+void Qupls5CodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize, int64_t size, Operand* mask)
 {
 	if (ap3->typep == &stdposit) {
 		switch (ap3->tp->precision) {
@@ -2913,7 +2937,7 @@ void Qupls4CodeGenerator::GenerateLoad(Operand* ap3, Operand* ap1, int64_t ssize
 	ap3->memop = ap1->Clone();
 }
 
-void Qupls4CodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask)
+void Qupls5CodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int64_t size, Operand* mask)
 {
 	//if (ap1->isPtr) {
 	//	GenerateTriadic(op_std, 0, ap1, ap3);
@@ -2967,7 +2991,7 @@ void Qupls4CodeGenerator::GenerateStore(Operand* ap1, Operand* ap3, int64_t size
 	}
 }
 
-Operand* Qupls4CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
+Operand* Qupls5CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1;
 
@@ -2999,7 +3023,7 @@ Operand* Qupls4CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t s
 	return (ap1);
 }
 
-Operand* Qupls4CodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
+Operand* Qupls5CodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1;
 
@@ -3022,7 +3046,7 @@ Operand* Qupls4CodeGenerator::GenPositcon(ENODE* node, int flags, int64_t size)
 	return (ap1);
 }
 
-Operand* Qupls4CodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
+Operand* Qupls5CodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1, * ap2;
 
@@ -3046,7 +3070,7 @@ Operand* Qupls4CodeGenerator::GenLabelcon(ENODE* node, int flags, int64_t size)
 	return (ap1);
 }
 
-Operand* Qupls4CodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
+Operand* Qupls5CodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
 {
 	Operand* ap1, * ap2;
 
@@ -3073,7 +3097,7 @@ Operand* Qupls4CodeGenerator::GenNacon(ENODE* node, int flags, int64_t size)
 	return (ap1);
 }
 
-int Qupls4CodeGenerator::GetSegmentIndexReg(e_sg segment)
+int Qupls5CodeGenerator::GetSegmentIndexReg(e_sg segment)
 {
 	switch (segment) {
 	case bssseg: return (regGP);
@@ -3087,7 +3111,7 @@ int Qupls4CodeGenerator::GetSegmentIndexReg(e_sg segment)
 }
 
 // For a leaf routine don't bother to store the link register.
-OCODE* Qupls4CodeGenerator::GenerateReturnBlock(Function* fn)
+OCODE* Qupls5CodeGenerator::GenerateReturnBlock(Function* fn)
 {
 	Operand* ap, * ap2;
 	int n;
@@ -3191,7 +3215,7 @@ OCODE* Qupls4CodeGenerator::GenerateReturnBlock(Function* fn)
 	return (ip);
 }
 
-Operand* Qupls4CodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool safe)
+Operand* Qupls5CodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool safe)
 {
 	Operand* ap1, * ap2;
 	int lab0, lab1;
@@ -3226,7 +3250,7 @@ Operand* Qupls4CodeGenerator::GenerateLand(ENODE* node, int flags, int op, bool 
 * Return:
 *		a pointer to the destination operand.
 */
-Operand* Qupls4CodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, Operand* src2)
+Operand* Qupls5CodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
 	Operand* ap5;
 
@@ -3278,7 +3302,7 @@ Operand* Qupls4CodeGenerator::GenerateAddImmediate(Operand* dst, Operand* src1, 
 * Return:
 *		a pointer to the destination operand.
 */
-Operand* Qupls4CodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, Operand* src2)
+Operand* Qupls5CodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
 	// ToDo: Should spit out a compiler warning here.
 	if (src2->offset == nullptr)
@@ -3299,7 +3323,7 @@ Operand* Qupls4CodeGenerator::GenerateAndImmediate(Operand* dst, Operand* src1, 
 * Return:
 *		a pointer to the destination operand.
 */
-Operand* Qupls4CodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, Operand* src2)
+Operand* Qupls5CodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
 	// ToDo: Should spit out a compiler warning here.
 	if (src2->offset == nullptr)
@@ -3320,7 +3344,7 @@ Operand* Qupls4CodeGenerator::GenerateOrImmediate(Operand* dst, Operand* src1, O
 * Return:
 *		a pointer to the destination operand.
 */
-Operand* Qupls4CodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1, Operand* src2)
+Operand* Qupls5CodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1, Operand* src2)
 {
 	// ToDo: Should spit out a compiler warning here.
 	if (src2->offset == nullptr)
@@ -3342,7 +3366,7 @@ Operand* Qupls4CodeGenerator::GenerateEorImmediate(Operand* dst, Operand* src1, 
 *		an operand referencing the shift value.
 */
 // ToDo: ShiftBitfield
-Operand* Qupls4CodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size, int op)
+Operand* Qupls5CodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size, int op)
 {
 	Operand* ap1, * ap2, * ap3;
 	Int128 val;
@@ -3381,13 +3405,13 @@ Operand* Qupls4CodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size
 	return (ap3);
 }
 
-Operand* Qupls4CodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
+Operand* Qupls5CodeGenerator::GenerateAdd(Operand* dst, Operand* src1, Operand* src2)
 {
 	GenerateTriadic(op_add, 0, dst, src1, src2);
 	return (dst);
 }
 
-Operand* Qupls4CodeGenerator::GenerateSubtract(Operand* dst, Operand* src1, Operand* src2)
+Operand* Qupls5CodeGenerator::GenerateSubtract(Operand* dst, Operand* src1, Operand* src2)
 {
 	/*
 	if (dst->preg < 32 && src1->preg < 32 && src2->preg < 32)
@@ -3398,7 +3422,7 @@ Operand* Qupls4CodeGenerator::GenerateSubtract(Operand* dst, Operand* src1, Oper
 	return (dst);
 }
 
-Operand* Qupls4CodeGenerator::PatchEnter(OCODE* pe, CSet* rmask)
+Operand* Qupls5CodeGenerator::PatchEnter(OCODE* pe, CSet* rmask)
 {
 	OCODE* ip, *tail;
 	int nn;

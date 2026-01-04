@@ -2549,6 +2549,13 @@ Operand* CodeGenerator::GenerateFloatcon(ENODE* node, int flags, int64_t size)
 	ap1->tp = node->tp;
 	return (ap1);
 #endif
+#ifdef QUPLS5
+	ap1 = allocOperand();
+	ap1->mode = am_imm;
+	ap1->offset = node;
+	ap1->tp = node->tp;
+	return (ap1);
+#endif
 #ifdef QUPLS40
 	ap1 = allocOperand();
 	ap1->mode = am_imm;
@@ -3168,12 +3175,14 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 	case en_and:    ap1 = GenerateBinary(node, flags, size, op_and); goto retpt;
 	case en_and_and:     ap1 = GenerateTrinary(node, flags, size, op_and_and); goto retpt;
 	case en_and_or:     ap1 = GenerateTrinary(node, flags, size, op_and_or); goto retpt;
+	case en_nand:    ap1 = GenerateBinary(node, flags, size, op_nand); goto retpt;
 	case en_or:     ap1 = GenerateBinary(node,flags,size,op_or); goto retpt;
 	case en_or_and:     ap1 = GenerateTrinary(node, flags, size, op_or_and); goto retpt;
 	case en_or_or:     ap1 = GenerateTrinary(node, flags, size, op_or_or); goto retpt;
 	case en_or_xor:     ap1 = GenerateTrinary(node, flags, size, op_or_xor); goto retpt;
 	case en_or_add:     ap1 = GenerateTrinary(node, flags, size, op_or_add); goto retpt;
 	case en_or_asl:     ap1 = GenerateTrinary(node, flags, size, op_or_asl); goto retpt;
+	case en_nor:     ap1 = GenerateBinary(node, flags, size, op_nor); goto retpt;
 	case en_xor:	ap1 = GenerateBinary(node, flags,size,op_xor); goto retpt;
 	case en_xor_asl:     ap1 = GenerateTrinary(node, flags, size, op_xor_asl); goto retpt;
 	case en_bmap:	ap1 = node->GenerateBinary(flags, size, op_bmap); goto retpt;

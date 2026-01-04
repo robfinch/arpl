@@ -642,6 +642,7 @@ static void Opt0_multiply(ENODE** node)
 
 // Complement of an immediate: do the operation
 // Complement of a complement: convert to nop
+// Complement of a logic op: use the 'n' version.
 
 static void Opt0_compl(ENODE** node)
 {
@@ -658,6 +659,16 @@ static void Opt0_compl(ENODE** node)
 			ep->nodetype = en_nop;
 			ep->p[0]->nodetype = en_nop;
 			ooptimized = true;
+		}
+	}
+	if (ep->p[0]) {
+		if (cpu.SupportsNand && ep->p[0]->nodetype == en_and) {
+			ep->p[0]->nodetype = en_nand;
+			ep->nodetype = en_nop;
+		}
+		else if (cpu.SupportsNor && ep->p[0]->nodetype == en_or) {
+			ep->p[0]->nodetype = en_nor;
+			ep->nodetype = en_nop;
 		}
 	}
 }
@@ -704,7 +715,7 @@ static void Opt0_logic(ENODE** node)
 		swap_nodes(ep);
 		ooptimized = true;
 	}
-	else if (ep->p[2]==nullptr) {
+	else if (ep->p[2]==nullptr && cpu.cpu_type==qupls4) {
 		if (ep->p[0]->nodetype==en_asl && cpu.SupportsTrinary) {
 			nt = ep->p[0]->nodetype;
 			switch (ep->nodetype) {
