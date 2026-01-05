@@ -31,8 +31,8 @@ enum e_cpu { thor, qupls, qupls4, qupls5, riscv, bigfoot, i386 };
 //#define LB650	1
 //#define STARK	1
 //#define QUPLS	1
-//#define QUPLS4	4
-#define QUPLS5	50
+#define QUPLS4	4
+//#define QUPLS5	50
 //#define QUPLS40 1
 //#define RISCV 5
 //#define I386 386
@@ -317,7 +317,8 @@ enum e_op {
 	op_addm, op_addh, op_eorm, op_eorh, op_eors, op_andm, op_andh, op_ands,
 	op_adds, op_ors, op_orh, op_orm, op_movsxb, op_movsxw, op_movsxt, op_subs,
 	op_or_and, op_or_or, op_and_and, op_and_or,
-	op_ibeq, op_iblt, op_ibltu, op_ible, op_ibleu,
+	op_ibeq, op_ibeqz, op_iblt, op_ibltu, op_ible, op_ibleu,
+	op_dbne, op_dbnez,
 	op_storev, op_subtract,
 	// Bigfoot
 	op_bra,

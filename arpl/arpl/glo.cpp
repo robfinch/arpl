@@ -32,7 +32,7 @@ const char* imm_char = "$";
 Compiler compiler;
 int pass;
 int maxPn = 15;
-int gCpu = QUPLS5;
+int gCpu = QUPLS4;
 #ifdef STARK
 starkCPU cpu;
 int regTS = 52;
@@ -182,7 +182,7 @@ int regSP = 31;
 int regSSP = 32;
 int regFP = 30;
 int regAFP = 31;      // alternate frame pointer
-int regLR = 29;
+int regLR = 38;
 int regXLR = 33;
 int regXHSP = 27;
 int regGP = 28;

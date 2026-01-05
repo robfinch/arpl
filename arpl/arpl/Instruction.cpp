@@ -98,6 +98,48 @@ bool Instruction::IsFlowControl()
 	return (false);
 }
 
+bool Instruction::IsConditionalBranch()
+{
+	if (this == nullptr)
+		return (false);
+	if (
+		opcode == op_beq ||
+		opcode == op_bne ||
+		opcode == op_blt ||
+		opcode == op_ble ||
+		opcode == op_bgt ||
+		opcode == op_bge ||
+		opcode == op_bltu ||
+		opcode == op_bleu ||
+		opcode == op_bgtu ||
+		opcode == op_bgeu ||
+		opcode == op_beqi ||
+		opcode == op_bnei ||
+		opcode == op_beqz ||
+		opcode == op_bnez ||
+		opcode == op_bltz ||
+		opcode == op_blez ||
+		opcode == op_bgtz ||
+		opcode == op_bgez ||
+		opcode == op_bbs ||
+		opcode == op_bbc ||
+		opcode == op_bnand ||
+		opcode == op_beqz ||
+		opcode == op_bnez ||
+		opcode == op_bnor ||
+
+		opcode == op_jeq ||
+		opcode == op_jne ||
+		opcode == op_jl ||
+		opcode == op_jg ||
+		opcode == op_jle ||
+		opcode == op_jge ||
+		opcode == op_jb
+		)
+		return (true);
+	return (false);
+}
+
 bool Instruction::IsLoad()
 {
 	if (this == nullptr)
@@ -218,6 +260,29 @@ short Instruction::InvertSet()
 	case op_sgeu:	return(op_sltu);
 	case op_sleu:	return(op_sgtu);
 	case op_sgtu:	return(op_sleu);
+	}
+	return (opcode);
+}
+
+short Instruction::InvertConditionalBranch()
+{
+	switch (opcode) {
+	case op_beq:	return(op_bne);
+	case op_bne:	return(op_beq);
+	case op_blt:	return(op_bge);
+	case op_bge:	return(op_blt);
+	case op_ble:	return(op_bgt);
+	case op_bgt:	return(op_ble);
+	case op_bltu:	return(op_bgeu);
+	case op_bgeu:	return(op_bltu);
+	case op_bleu:	return(op_bgtu);
+	case op_bgtu:	return(op_bleu);
+	case op_beqz:	return(op_bnez);
+	case op_bnez:	return(op_beqz);
+	case op_bltz:	return(op_bgez);
+	case op_bgez:	return(op_bltz);
+	case op_blez:	return(op_bgtz);
+	case op_bgtz:	return(op_blez);
 	}
 	return (opcode);
 }

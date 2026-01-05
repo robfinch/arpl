@@ -110,6 +110,8 @@ static Instruction Qupls4InsnTbl[] =
 { "cror",op_cror,1,0,false,amCrReg,amCrReg,amCrReg,0 },
 { "csrrd", op_csrrd,1,1,false,am_reg,am_reg,am_imm },
 { "csrrw", op_csrrw,1,1,false,am_reg,am_reg,am_imm },
+{ "dbne", op_dbne,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "dbnez", op_dbnez,3,0,false,am_reg,am_direct,0,0 },
 { "dec", op_dec,4,0,true,am_i5 },
 { "defcat", op_defcat,12,1,false,am_reg,am_reg,0 ,0 },
 { "dep",op_dep,1,1,false,am_reg,am_reg,am_reg | am_imm,am_reg | am_imm },
@@ -397,6 +399,7 @@ static Instruction Qupls4InsnTbl[] =
 };
 
 Qupls4CPU::Qupls4CPU() {
+	cpu_type = qupls4;
 	shift_left = op_asl;
 	sizeOfWord = 8;
 	sizeOfPtr = 8;
@@ -411,6 +414,8 @@ Qupls4CPU::Qupls4CPU() {
 	RIimmSize = 32;
 	itbl = Qupls4InsnTbl;
 	supports_postfix_immediates = true;
+	SupportsNand = true;
+	SupportsNor = true;
 	itbl_cnt = sizeof(Qupls4InsnTbl) / sizeof(Instruction);
 }
 
@@ -523,7 +528,7 @@ char* Qupls4CPU::RegMoniker(int32_t regno)
 
 void Qupls4CodeGenerator::banner()
 {
-	printf("Qupls4 Code Generator v0.01\n");
+	printf("Qupls4 Code Generator v0.03\n");
 };
 
 

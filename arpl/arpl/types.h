@@ -2818,6 +2818,7 @@ public:
 	static void SetMap();
 	static Instruction *GetMapping(int op);
 	bool IsFlowControl();
+	bool IsConditionalBranch();
 	bool IsLoad();
 	bool IsIntegerLoad();
 	bool IsStore();
@@ -2829,6 +2830,7 @@ public:
 			);
 	};
 	short InvertSet();
+	short InvertConditionalBranch();
 	static Instruction *FindByMnem(std::string& mn);
 	static Instruction *Get(int op);
 	inline bool HasTarget() { return (targetCount != 0); };

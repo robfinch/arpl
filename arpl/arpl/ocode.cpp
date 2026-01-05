@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2018-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2018-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -971,8 +971,8 @@ void OCODE::OptIncrBranch()
 {
 	OCODE* bck;
 
-	if (compiler.cputype == qupls4)
-		return;
+//	if (compiler.cputype == qupls4)
+//		return;
 	if (back->opcode == op_loadi && back->oper1->preg != oper1->preg) {
 		bck = back->back;
 		if (bck && bck->opcode == op_add && bck->oper3->offset) {
@@ -981,10 +981,30 @@ void OCODE::OptIncrBranch()
 					if (bck->oper1->mode == am_reg && bck->oper1->preg == oper1->preg) {
 						if (bck->oper2->mode == am_reg && bck->oper2->preg == oper1->preg) {
 							switch (this->opcode) {
-							case op_beq:	opcode = op_ibeq; insn = Instruction::Get(op_ibeq); bck->MarkRemove(); break;
-							case op_bne:	opcode = op_ibne; insn = Instruction::Get(op_ibne); bck->MarkRemove(); break;
+//							case op_beq:	opcode = op_ibeq; insn = Instruction::Get(op_ibeq); bck->MarkRemove(); break;
+//							case op_bne:	opcode = op_ibne; insn = Instruction::Get(op_ibne); bck->MarkRemove(); break;
 							case op_ble:	opcode = op_ible; insn = Instruction::Get(op_ible); bck->MarkRemove(); break;
 							case op_blt:	opcode = op_iblt; insn = Instruction::Get(op_iblt); bck->MarkRemove(); break;
+							case op_bleu:	opcode = op_ibleu; insn = Instruction::Get(op_ibleu); bck->MarkRemove(); break;
+							case op_bltu:	opcode = op_ibltu; insn = Instruction::Get(op_ibltu); bck->MarkRemove(); break;
+							}
+						}
+					}
+				}
+			}
+		}
+		if (bck && bck->opcode == op_sub && bck->oper3->offset) {
+			if (bck->oper3->mode == am_imm) {
+				if (bck->oper3->offset->i128.low == 1 && bck->oper3->offset->i128.high == 0) {
+					if (bck->oper1->mode == am_reg && bck->oper1->preg == oper1->preg) {
+						if (bck->oper2->mode == am_reg && bck->oper2->preg == oper1->preg) {
+							switch (this->opcode) {
+							case op_bne:	opcode = op_dbne; insn = Instruction::Get(op_dbne); bck->MarkRemove(); break;
+							}
+						}
+						else {
+							switch (this->opcode) {
+							case op_bnez:	opcode = op_dbnez; insn = Instruction::Get(op_dbnez); bck->MarkRemove(); break;
 							}
 						}
 					}
@@ -998,10 +1018,25 @@ void OCODE::OptIncrBranch()
 				if (back->oper1->mode == am_reg && back->oper1->preg == oper1->preg) {
 					if (back->oper2->mode == am_reg && back->oper2->preg == oper1->preg) {
 						switch (this->opcode) {
-						case op_beq:	opcode = op_ibeq; insn = Instruction::Get(op_ibeq); back->MarkRemove(); break;
-						case op_bne:	opcode = op_ibne; insn = Instruction::Get(op_ibne); back->MarkRemove(); break;
+						//case op_beq:	opcode = op_ibeq; insn = Instruction::Get(op_ibeq); back->MarkRemove(); break;
 						case op_ble:	opcode = op_ible; insn = Instruction::Get(op_ible); back->MarkRemove(); break;
 						case op_blt:	opcode = op_iblt; insn = Instruction::Get(op_iblt); back->MarkRemove(); break;
+						case op_bleu:	opcode = op_ible; insn = Instruction::Get(op_ibleu); back->MarkRemove(); break;
+						case op_bltu:	opcode = op_iblt; insn = Instruction::Get(op_ibltu); back->MarkRemove(); break;
+						}
+					}
+				}
+			}
+		}
+	}
+	else if (back && back->opcode == op_sub && back->oper3->offset) {
+		if (back->oper3->mode == am_imm) {
+			if (back->oper3->offset->i128.low == 1 && back->oper3->offset->i128.high == 0) {
+				if (back->oper1->mode == am_reg && back->oper1->preg == oper1->preg) {
+					if (back->oper2->mode == am_reg && back->oper2->preg == oper1->preg) {
+						switch (this->opcode) {
+						case op_bne:	opcode = op_dbne; insn = Instruction::Get(op_dbne); back->MarkRemove(); break;
+						case op_bnez:	opcode = op_dbnez; insn = Instruction::Get(op_dbnez); back->MarkRemove(); break;
 						}
 					}
 				}
@@ -1076,11 +1111,32 @@ void OCODE::OptBne()
 }
 
 // Remove instructions that branch to the next label.
+// Switch conditional branch followed by branch.
 //
 void OCODE::OptBra()
 {
 	OCODE *p;
 	bool opt = false;
+
+	p = this;
+	while (p->back->opcode == op_remark)
+		p = p->back;
+	if (p->back->insn->IsConditionalBranch()) {
+		p->back->opcode = p->back->insn->InvertConditionalBranch();
+		p->back->insn = Instruction::Get(p->back->insn->InvertConditionalBranch());
+		if (p->back->opcode==op_bnez ||
+			p->back->opcode==op_beqz ||
+			p->back->opcode==op_bltz ||
+			p->back->opcode==op_blez ||
+			p->back->opcode==op_bgtz ||
+			p->back->opcode==op_bgez)
+			p->back->oper2 = oper1;
+		else
+			p->back->oper3 = oper1;
+		MarkRemove();
+		optimized = true;
+		return;
+	}
 
 	for (p = fwd; p && (p->opcode == op_label); p = p->fwd)
 		if (oper1->offset->i == (int64_t)p->oper1) {

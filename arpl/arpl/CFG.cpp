@@ -84,9 +84,11 @@ void CFG::Create()
 			}
 			else {
 				if (ip->oper2 == nullptr) {
-					if (ip1 = FindLabel(ip->oper1->offset->i)) {
-						ip->bb->MakeOutputEdge(ip1->bb);
-						ip1->bb->MakeInputEdge(ip->bb);
+					if (ip->oper1->offset != nullptr) {
+						if (ip1 = FindLabel(ip->oper1->offset->i)) {
+							ip->bb->MakeOutputEdge(ip1->bb);
+							ip1->bb->MakeInputEdge(ip->bb);
+						}
 					}
 				}
 				else if (ip->oper2->offset == nullptr) {

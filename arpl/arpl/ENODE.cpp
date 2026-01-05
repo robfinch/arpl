@@ -223,6 +223,7 @@ int64_t ENODE::GetNaturalSize()
 	case en_div:	case en_udiv:
 	case en_mod:    case en_umod:
 	case en_and:    case en_or:     case en_xor:
+	case en_nand:		case en_nor:
 	case en_asl:
 	case en_asl_xor:
 	case en_shl:    case en_shlu:
