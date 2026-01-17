@@ -177,7 +177,10 @@ static Instruction Qupls4InsnTbl[] =
 { "gtu",op_gtu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
 { "hint", op_hint,0 },
 { "hint2",op_hint2,0 },
+{ "ible", op_ible,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "ibleu", op_ibleu,3,0,false,am_reg,am_reg,am_direct,0 },
 { "iblt", op_iblt,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "ibltu", op_ibltu,3,0,false,am_reg,am_reg,am_direct,0 },
 { "inc", op_inc,4,0,true,am_i5,am_mem,0,0 },
 { "iret", op_iret,2,0,false,0,0,0,0 },
 { "isnull", op_isnullptr,1,1,false,am_reg,am_reg,0,0 },
@@ -528,7 +531,7 @@ char* Qupls4CPU::RegMoniker(int32_t regno)
 
 void Qupls4CodeGenerator::banner()
 {
-	printf("Qupls4 Code Generator v0.03\n");
+	printf("Qupls4 Code Generator v0.04\n");
 };
 
 
@@ -3359,7 +3362,10 @@ Operand* Qupls4CodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size
 	{
 		Int128 sz, eight;
 		eight = Int128::Convert(8LL);
-		sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
+		if (ap1->tp == nullptr)
+			sz = Int128::Convert(8LL);
+		else
+			sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
 		Int128::Mul(&sz, &sz, &eight);
 		if (Int128::IsGT(&val, &sz))
 			error(ERR_SHIFT_TOOMANYBITS);

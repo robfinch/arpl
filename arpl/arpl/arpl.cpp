@@ -726,7 +726,7 @@ int	options(char *s)
   else if (s[1]=='S')
     mixedSource = TRUE;
 	else if (s[0] == '+' && s[1] == 'b') {
-		printf("ARPL v1.06 64-bit Compiler (C) 2024-2026 Robert Finch\n");
+		printf("ARPL v1.07 64-bit Compiler (C) 2024-2026 Robert Finch\n");
 		cg.banner();
 	}
 	return 0;

@@ -86,7 +86,7 @@ bool PeepList::UsesOnlyArgRegs() const
 	OCODE* ip;
 
 	for (ip = head; ip; ip = ip->fwd) {
-		if (ip->opcode != op_label && ip->opcode != op_rem) {
+		if (ip->opcode != op_label && ip->opcode != op_rem && ip->opcode != op_nop) {
 			if (ip->oper1) {
 				if (ip->oper1->preg > 0 && !(IsArgReg(ip->oper1->preg) || IsTempReg(ip->oper1->preg)))
 					return (false);
@@ -1229,7 +1229,7 @@ void PeepList::RemoveReturnBlock()
 			do_remove = false;
 			continue;
 		}
-		if (ip->opcode == op_label || ip->opcode == op_fnname)
+		if (ip->opcode == op_label || ip->opcode == op_fnname || ip->opcode==op_nop)
 			continue;
 		if (do_remove)
 			ip->MarkRemove();

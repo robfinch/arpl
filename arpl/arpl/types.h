@@ -3194,6 +3194,7 @@ private:
 public:
 	static int depth;
 	e_decltype dcltp;
+	bool isConst;
 	bool isLocal;
 	bool isTypedef;
 	bool isFar;

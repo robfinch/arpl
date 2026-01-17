@@ -516,6 +516,7 @@ j1:
 			*srcnode = makenode(en_octa2hexi, *srcnode, nullptr);
 			(*srcnode)->constflag = (*srcnode)->p[0]->constflag;
 			(*srcnode)->tp = srctp;
+			(*srcnode)->esize = 16;
 		}
 		if (dsttp->IsFloatType()) {
 			*srcnode = makenode(en_i2d, *srcnode, *dstnode);
@@ -538,6 +539,7 @@ j1:
 		if (!(*srcnode)->IsRefType()) {
 			*srcnode = makenode(en_uocta2hexi, *srcnode, nullptr);
 			(*srcnode)->constflag = (*srcnode)->p[0]->constflag;
+			(*srcnode)->esize = 16;
 		}
 		if (dsttp->IsFloatType()) {
 			*srcnode = makenode(en_i2d, *srcnode, *dstnode);

@@ -2647,6 +2647,14 @@ void ENODE::PutConstant(txtoStream& ofs, unsigned int lowhigh, unsigned int rshi
 			sprintf_s(buf, sizeof(buf), "0x%llx", CopyRawDouble(f));
 		ofs.write(buf);
 #endif
+#ifdef QUPLS4
+		// The following spits out a warning, but is okay.
+		if (true || this->tp->type == bt_quad)
+			sprintf_s(buf, sizeof(buf), "%.16s", f128.ToCompressedString());
+		else
+			sprintf_s(buf, sizeof(buf), "0x%llx", CopyRawDouble(f));
+		ofs.write(buf);
+#endif
 #ifdef LB650
 		// The following spits out a warning, but is okay.
 		if (true || this->tp->type == bt_quad)

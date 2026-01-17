@@ -2465,6 +2465,9 @@ TYP *Expression::ParseAddOps(ENODE **node, Symbol* symi)
 		PromoteConstFlag(ep1);
 		ep1->esize = tp1->size;
 		ep1->etype = tp1->type;
+		// ???
+		if (ep1->tp == nullptr)
+			ep1->tp = tp1;
 	}
   *node = ep1;
 xit:

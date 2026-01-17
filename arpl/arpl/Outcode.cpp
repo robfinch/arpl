@@ -1003,7 +1003,7 @@ void GenerateReference(txtoStream& tfs, Symbol *sp,int64_t offset)
         if( sp->storage_class == sc_static) {
 			tfs.printf(",");
 			tfs.printf(GetNamespace());
-			tfs.printf(".%05lld", sp->value.i);
+			tfs.printf("_%05lld", sp->value.i);
 			tfs.putch(sign);
 			tfs.printf("%lld", offset);
 //                fprintf(output,",%s_%ld%c%d",GetNamespace(),sp->value.i,sign,offset);
@@ -1011,7 +1011,7 @@ void GenerateReference(txtoStream& tfs, Symbol *sp,int64_t offset)
         else if( sp->storage_class == sc_thread) {
 			tfs.printf(",");
 			tfs.printf(GetNamespace());
-			tfs.printf(".%05lld", sp->value.i);
+			tfs.printf("_%05lld", sp->value.i);
 			tfs.putch(sign);
 			tfs.printf("%lld", offset);
 //                fprintf(output,",%s_%ld%c%d",GetNamespace(),sp->value.i,sign,offset);
@@ -1642,8 +1642,9 @@ void dumplits(txtoStream& tfs)
 #else
 			if (lit->sym && lit->sym->storage_class == sc_global)
 				put_label(tfs, -1, strip_crlf(&lit->str[1]), lit->sym->name->c_str(), 'D', ln, curseg);
-			else
+			else {
 				put_label(tfs, lit->label, strip_crlf(&lit->str[1]), lit->nmspace, 'D', ln, curseg);
+			}
 #endif
 		}
 		if (lit->isString) {

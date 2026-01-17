@@ -224,7 +224,11 @@ TYP* Expression::ParseStringConst(ENODE** node, Symbol* sym)
 	*/
 	pnode = makenodei(en_labcon, (ENODE*)NULL, 0);
 	if (sizeof_flag == 0) {
-		sp = SymbolFactory::Make(*sym->name, sym->tp, sym->parentp, sym->depth, sc_const);
+		sp = SymbolFactory::Make(*sym->name, sym->tp, sym->parentp, sym->depth, sym->storage_class);// sc_const);
+		sym->isConst = true;
+		sp->isConst = true;
+		if (sym->fi)
+			sp->storage_class = sc_const;
 		pnode->i = stringlit(str, sp);
 		pnode->sp = new std::string(&str[1]);
 		if (sym)
@@ -634,6 +638,10 @@ void Expression::ParseAggregateHelper(ENODE** node, ENODE* cnode)
 }
 
 /*
+* The following is needed because parsing an expression automatically adds
+* string literals to the string pool. Since we only want one string made up
+* of a concatonation of strings, we have to update the first string. That 
+* means finding it based on its label.
 */
 
 static int updateStringLit(int i, char* str, char ch)

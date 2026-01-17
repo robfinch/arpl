@@ -189,7 +189,8 @@ enum e_sym {
 
 enum e_sc {
 	sc_none,
-	sc_static, sc_auto, sc_global, sc_thread, sc_external, sc_type, sc_const,
+	sc_static, sc_auto, sc_global,
+	sc_thread, sc_external, sc_type, sc_const,
 	sc_member, sc_label, sc_ulabel, sc_typedef, sc_register
 };
 

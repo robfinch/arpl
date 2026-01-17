@@ -1,6 +1,6 @@
 // ============================================================================
 //        __
-//   \\__/ o\    (C) 2012-2024  Robert Finch, Waterloo
+//   \\__/ o\    (C) 2012-2026  Robert Finch, Waterloo
 //    \  __ /    All rights reserved.
 //     \/_//     robfinch<remove>@finitron.ca
 //       ||
@@ -2782,6 +2782,7 @@ void GlobalDeclaration::Parse()
 	Symbol* symo;
 
 	dfs.puts("<ParseGlobalDecl>\n");
+	isConst = false;
 	isPascal = defaultcc==1;
 	isFar = false;
 	isInline = false;
@@ -2888,14 +2889,29 @@ void GlobalDeclaration::Parse()
 				case kw_float: case kw_double: case kw_float128: case kw_posit:
 		case kw_vector: case kw_vector_mask:
 			compiler.lc_static += declare(NULL, &gsyms[0], sc_global, compiler.lc_static, bt_struct, &symo, false, 0);
-			if (symo) {
-				if (symo->segment == noseg)
-					symo->segment = bssseg;
-				if (symo->fi) {
-					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
-					symo->fi->depth = 0;
-					symo->segment = codeseg;
+			if (isConst) {
+				if (symo) {
+					symo->isConst = true;
+					symo->segment = use_iprel ? codeseg : rodataseg;
+					if (symo->fi) {
+						symo->fi->inline_threshold = inline_threshold;
+						symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
+						symo->fi->depth = 0;
+						symo->segment = codeseg;
+					}
+				}
+				isConst = false;
+			}
+			else {
+				if (symo) {
+					if (symo->segment == noseg)
+						symo->segment = bssseg;
+					if (symo->fi) {
+						symo->fi->inline_threshold = inline_threshold;
+						symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
+						symo->fi->depth = 0;
+						symo->segment = codeseg;
+					}
 				}
 			}
 			inline_threshold = compiler.autoInline;
@@ -2903,19 +2919,9 @@ void GlobalDeclaration::Parse()
 			break;
 
 		case kw_const:
-			compiler.lc_static += declare(NULL, &gsyms[0], sc_global, compiler.lc_static, bt_struct, &symo, false, 0);
-			if (symo) {
-				symo->segment = use_iprel ? codeseg : rodataseg;
-				if (symo->fi) {
-					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
-					symo->fi->depth = 0;
-					symo->segment = codeseg;
-				}
-			}
-			inline_threshold = compiler.autoInline;
-			isCoroutine = false;
-			break;
+			NextToken();
+			isConst = true;
+			continue;
 
 		case kw_thread:
 				NextToken();
@@ -2946,17 +2952,32 @@ void GlobalDeclaration::Parse()
     case kw_static:
       NextToken();
 			compiler.lc_static += declare(NULL,&gsyms[0],sc_static,compiler.lc_static,bt_struct, &symo, false, 0);
-			if (symo) {
-				if (symo->fi) {
-					symo->fi->inline_threshold = inline_threshold;
-					symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
-					symo->fi->depth = 0;
+			if (isConst) {
+				if (symo) {
+					symo->isConst = true;
+					symo->segment = use_iprel ? codeseg : rodataseg;
+					if (symo->fi) {
+						symo->fi->inline_threshold = inline_threshold;
+						symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
+						symo->fi->depth = 0;
+						symo->segment = codeseg;
+					}
 				}
-				// Not a function, must be a var.
-				else {
-					// If we don't know the segment assume bss.
-					if (symo->segment == noseg)
-						symo->segment = bssseg;
+				isConst = false;
+			}
+			else {
+				if (symo) {
+					if (symo->fi) {
+						symo->fi->inline_threshold = inline_threshold;
+						symo->fi->IsInline = inline_threshold > 0 && !symo->fi->IsPrototype && cpu.SupportsInlineCode;
+						symo->fi->depth = 0;
+					}
+					// Not a function, must be a var.
+					else {
+						// If we don't know the segment assume bss.
+						if (symo->segment == noseg)
+							symo->segment = bssseg;
+					}
 				}
 			}
 			inline_threshold = compiler.autoInline;
