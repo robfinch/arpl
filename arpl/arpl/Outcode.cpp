@@ -1702,9 +1702,9 @@ void nl(txtoStream& str)
 void align(txtoStream& tfs, int n)
 {
 	if (syntax == MOT)
-		tfs.printf("\talign\t%d\n", n);
+		tfs.printf("\tbalign\t%d\n", n);
 	else
-		tfs.printf("\t.align\t%d\n",n);
+		tfs.printf("\t.balign\t%d\n",n);
 }
 
 void cseg(txtoStream& tfs)
@@ -1736,9 +1736,9 @@ void dseg(txtoStream& tfs)
 		curseg = dataseg;
   }
 	if (syntax == MOT)
-		tfs.printf("\talign\t%d\n", 6);// cpu.pagesize);
+		tfs.printf("\tbalign\t%d\n", 6);// cpu.pagesize);
 	else
-		tfs.printf("\t.align\t%d\n", 6);// cpu.pagesize);
+		tfs.printf("\t.balign\t%d\n", 6);// cpu.pagesize);
 }
 
 void tseg(txtoStream& tfs)
@@ -1746,7 +1746,7 @@ void tseg(txtoStream& tfs)
 	if( curseg != tlsseg) {
 		nl(tfs);
 		tfs.printf("\t.tls\n");
-		tfs.printf("\t.align\t%d\n", 6);// cpu.pagesize);
+		tfs.printf("\t.balign\t%d\n", 6);// cpu.pagesize);
 		curseg = tlsseg;
     }
 }
@@ -1758,11 +1758,11 @@ void roseg(txtoStream& tfs)
 			nl(tfs);
 			if (syntax == MOT) {
 				tfs.printf("\tdata\n");
-				tfs.printf("\talign\t%d\n", 6);// cpu.pagesize);
+				tfs.printf("\tbalign\t%d\n", 6);// cpu.pagesize);
 			}
 			else {
 				tfs.printf("\t.rodata\n");
-				tfs.printf("\t.align\t%d\n", 6);// cpu.pagesize);
+				tfs.printf("\t.balign\t%d\n", 6);// cpu.pagesize);
 			}
 			curseg = codeseg;
 		}
@@ -1772,11 +1772,11 @@ void roseg(txtoStream& tfs)
 		nl(tfs);
 		if (syntax == MOT) {
 			tfs.printf("\tdata\n");
-			tfs.printf("\talign\t%d\n", 6);// cpu.pagesize);
+			tfs.printf("\tbalign\t%d\n", 6);// cpu.pagesize);
 		}
 		else {
 			tfs.printf("\t.rodata\n");
-			tfs.printf("\t.align\t%d\n", 6);// cpu.pagesize);
+			tfs.printf("\t.balign\t%d\n", 6);// cpu.pagesize);
 		}
 		curseg = rodataseg;
     }
@@ -1835,12 +1835,12 @@ void seg(txtoStream& tfs, int sg, int64_t algn)
 		curseg = sg;
     }
 	if (syntax == MOT) {
-		tfs.printf("\talign\t%d\n", algn);
+		tfs.printf("\tbalign\t%d\n", algn);
 	}
 	else {
 //		if ((curseg == dataseg && !seg_aligned[curseg])/*first_dataseg)*/ || ((curseg != dataseg) && !seg_aligned[curseg]))
 		if (seg_aligned[curseg]==false && curseg!=codeseg)
-			tfs.printf("\t.align\t%d\n", algn);
+			tfs.printf("\t.balign\t%d\n", algn);
 		first_dataseg = false;
 		seg_aligned[curseg] = true;
 	}
