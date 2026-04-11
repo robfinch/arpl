@@ -655,7 +655,7 @@ Operand* CodeGenerator::GenerateAutopconDereference(ENODE* node, TYP* tp, bool i
 Operand* CodeGenerator::GenerateNaconDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size, int64_t siz1, int su)
 {
 	Operand* ap1;
-	Operand* ap2;
+//	Operand* ap2;
 
 	ap1 = allocOperand();
 	ap1->isPtr = isRefType;
@@ -672,31 +672,35 @@ Operand* CodeGenerator::GenerateNaconDereference(ENODE* node, TYP* tp, bool isRe
 		ap1->segment = dataseg;
 	}
 	ap1->offset = node;//makeinode(en_icon,node->p[0]->i);
+	/*
 	if (ap1->isPtr) {
-		//ap2 = ap1;
+		ap2 = ap1;
 		
 		ap2 = GetTempRegister();
 		GenerateDiadic(op_lda, 0, ap2, ap1);
 		ReleaseTempRegister(ap1);
 		
+		
 	}
 	else
 		ap2 = ap1;
-	ap2->tp = tp;
-	ap2->isUnsigned = !su;
+	*/
+	// ap2 was used after this point
+	ap1->tp = tp;
+	ap1->isUnsigned = !su;
 	if (!node->isUnsigned)
-		ap2 = ap2->GenerateSignExtend(siz1, size, flags);
+		ap1 = ap1->GenerateSignExtend(siz1, size, flags);
 	else
-		ap2->MakeLegal(flags, siz1);
-	ap2->isVolatile = node->isVolatile;
+		ap1->MakeLegal(flags, siz1);
+	ap1->isVolatile = node->isVolatile;
 	switch (node->tp->type) {
-	case bt_float:	ap2->typep = &stdflt; break;
-	case bt_double:	ap2->typep = &stddouble; break;
-	case bt_quad:	ap2->typep = &stdquad; break;
-	case bt_posit:	ap2->typep = &stdposit; break;
+	case bt_float:	ap1->typep = &stdflt; break;
+	case bt_double:	ap1->typep = &stddouble; break;
+	case bt_quad:	ap1->typep = &stdquad; break;
+	case bt_posit:	ap1->typep = &stdposit; break;
 	}
-	ap2->MakeLegal(flags, size);
-	return (ap2);
+	ap1->MakeLegal(flags, size);
+	return (ap1);
 }
 
 Operand* CodeGenerator::GenerateAutovconDereference(ENODE* node, TYP* tp, bool isRefType, int flags, int64_t size)
@@ -2930,7 +2934,10 @@ Operand *CodeGenerator::GenerateExpression(ENODE *node, int flags, int64_t size,
 			goto retpt;
 		ap1->isPtr = TRUE;
 		ap1->rhs = rhs;
-		size = ap1->tp->size;
+		if (ap1->tp == nullptr)
+			size = cpu.sizeOfWord;
+		else
+			size = ap1->tp->size;
 		goto retpt;
 
 	case en_fieldref:

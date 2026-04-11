@@ -1813,7 +1813,7 @@ void Qupls5CodeGenerator::SaveRegisterVars(CSet *rmask)
 		}
 	}
 }
-#ifdef QUPLS
+#ifdef QUPLS5
 void SaveFPRegisterVars(CSet *rmask)
 {
 	int cnt;

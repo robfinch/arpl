@@ -55,23 +55,25 @@ int64_t* Statement::GetCasevals()
 	return (bf);
 }
 
-Statement *Statement::ParseCase()
+Statement* Statement::ParseCase()
 {
-	Statement *snp;
-	Statement *head, *tail;
+	Statement* snp;
+	Statement* head, * tail;
 	int64_t buf[256];
 	int nn;
-	int64_t *bf;
+	int64_t* bf;
 
 	snp = MakeStatement(st_case, false);
 	snp->s1 = nullptr;
 	snp->s2 = nullptr;
 	nn = 0;
 	bf = GetCasevals();
-	snp->casevals = (int64_t *)bf;
+	snp->casevals = (int64_t*)bf;
+
 	if (lastst != kw_case && lastst != kw_default)
 		snp->s1 = Parse();
 	snp->s2 = nullptr;
+	
 	snp->label = (int64_t*)nextlabel++;
 	return (snp);
 }
@@ -228,11 +230,11 @@ void Statement::GenerateSwitchLop2(Case* cases, Operand* ap, Operand* ap2, int l
 			}
 			else {
 				if (cases[lo + 2].val >= -32 && cases[lo + 2].val < 32) {
-					GenerateTriadic(op_beq, 0, ap, MakeImmediate(cases[lo + 2].val), MakeCodeLabel(cases[lo + 2].label));
+					cg.GenerateBeq(ap, MakeImmediate(cases[lo + 2].val), cases[lo + 2].label);
 				}
 				else {
 					GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(cases[lo + 2].val));
-					GenerateTriadic(op_beq, 0, ap, ap2, MakeCodeLabel(cases[lo + 2].label));
+					cg.GenerateBeq(ap, ap2, cases[lo + 2].label);
 				}
 				GenerateMonadic(op_branch, 0, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
 			}
@@ -243,7 +245,7 @@ void Statement::GenerateSwitchLop2(Case* cases, Operand* ap, Operand* ap2, int l
 			}
 			else {
 				GenerateDiadic(cpu.ldi_op, 0, ap2, MakeImmediate(cases[lo + 2].val));
-				GenerateTriadic(op_bne, 0, ap, ap2, MakeCodeLabel(deflab > 0 ? deflab : xitlab));
+				cg.GenerateBne(ap, ap2, deflab > 0 ? deflab : xitlab);
 			}
 		}
 	}

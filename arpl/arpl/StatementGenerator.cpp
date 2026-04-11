@@ -364,23 +364,29 @@ void StatementGenerator::GenerateLinearSwitch(Statement* st)
 						nn = cases[kk + 1].label;
 					nn = stmt->FindNextLabel(nn);
 					cg.GenerateBne(ap, MakeImmediate(cases[kk].val), nn);
-					if (stmt->s1 && !stmt->s1->generated) {
-						stmt->s1->Generate(2);
-						stmt->s1->generated = true;
+					
+					if (stmt->s1) {
+						if (!stmt->s1->generated) {
+							stmt->s1->Generate(2);
+							//								ns->s1->generated = true;
+						}
 					}
 				}
 				else if (stmt->stype == st_default) {
 					GenerateLabel((int)cases[kk].label);
-					if (stmt->s1 && !stmt->s1->generated) {
-						stmt->s1->Generate(2);
-						stmt->s1->generated = true;
+					
+					if (stmt->s1) {
+						if (!stmt->s1->generated) {
+							stmt->s1->Generate(2);
+//								ns->s1->generated = true;
+						}
 					}
 				}
 			}
 		}
 		if (!stmt->generated) {
 			stmt->Generate(2);
-			stmt->generated = true;
+//			stmt->generated = true;
 		}
 	}
 	ReleaseTempRegister(ap);

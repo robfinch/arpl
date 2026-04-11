@@ -3565,6 +3565,8 @@ public:
 class QuplsCPU : public CPU
 {
 public:
+	bool supports_postfix_immediates;
+public:
 	QuplsCPU();
 	char* RegMoniker(int32_t regno);
 };
@@ -3612,6 +3614,8 @@ public:
 
 class i386CPU : public CPU
 {
+public:
+	bool supports_postfix_immediates;
 public:
 	i386CPU();
 	int ReturnBlockSize() {

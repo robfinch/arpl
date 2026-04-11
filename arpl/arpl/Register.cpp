@@ -1427,8 +1427,9 @@ void CPU::InitRegs()
 	cpu.tmpregs[6] = 15;
 	cpu.tmpregs[7] = 16;
 	cpu.tmpregs[8] = 17;
-
+	
 	cpu.NumTmpCrRegs = 3;
+	/*
 	cpu.tmpCrRegs[0] = 2;
 	cpu.tmpCrRegs[1] = 3;
 	cpu.tmpCrRegs[2] = 4;
@@ -1438,7 +1439,7 @@ void CPU::InitRegs()
 	cpu.tmpCrRegs[6] = 0;
 	cpu.tmpCrRegs[7] = 0;
 	cpu.tmpCrRegs[8] = 0;
-
+	*/
 	// These are saved regs.
 	cpu.tmpregs[9] = 18;
 	cpu.tmpregs[10] = 19;

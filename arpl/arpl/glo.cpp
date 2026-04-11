@@ -144,6 +144,7 @@ int regGOT = 45;
 int regTP = 52;
 int regCLP = 25;                // class pointer
 int regPP = 56;					// program pointer
+int regSSP = 126;
 int regZero = 0;
 int regXoffs = 55;
 int regAsm = 58;
@@ -449,6 +450,7 @@ int nregs = 128;
 
 #ifdef I386
 i386CPU cpu;
+int regSSP = 0;
 int regTS = 52;
 int regPC = 34;
 int regSP = 31;

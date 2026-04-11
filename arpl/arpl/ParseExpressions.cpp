@@ -1614,6 +1614,7 @@ ENODE *Expression::Autoincdec(TYP *tp, ENODE **node, int flag, bool isPostfix)
 	else
 		ep1 = *node;
 	if( ep1->IsLValue() ) {
+		// Increment by the pointer size in the case of a pointer.
 		if (tp->type == bt_pointer) {
 			typ = tp->btpp;// tp->btpp;
 			ep2 = makeinode(en_icon,typ->size);
@@ -1632,7 +1633,8 @@ ENODE *Expression::Autoincdec(TYP *tp, ENODE **node, int flag, bool isPostfix)
 		if (isPostfix) {
 			if (postfixList == nullptr)
 				postfixList = ep1;
-			else {
+			else
+			{
 				for (ep2 = postfixList; ep2->pfl; ep2 = ep2->pfl)
 					;
 				
