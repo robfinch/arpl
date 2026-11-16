@@ -2012,8 +2012,12 @@ void SpillRegister(Operand *ap, int number)
   reg_alloc[number].f.isPushed = 'T';
 	compiler.reg_in_use[ap->preg&VR_MASK] = -1;
 #endif
-
-	GenerateDiadic(op_push, 0, makereg(regSSP), ap);
+	if (cpu.SupportsPush)
+		GenerateDiadic(op_push, 0, makereg(regSSP), ap);
+	else {
+		GenerateTriadic(op_subtract, 0, makereg(regSSP), makereg(regSSP), cg.MakeImmediate(8LL));
+		cg.GenerateStore(ap, cg.MakeIndirect(regSSP), 8LL);
+	}
 	if (cpu.regs[ap->preg & VR_MASK].isPushed.isMember(wrapno))
 		fatal("SpillRegister(): register already spilled");
 	cpu.regs[ap->preg & VR_MASK].inUse.remove(wrapno);
@@ -2084,7 +2088,12 @@ void LoadRegister(int regno, int number)
 #endif
 	if (cpu.regs[regno & VR_MASK].inUse.isMember(wrapno))
 		fatal("LoadRegister():register still in use");
-	GenerateDiadic(op_pop, 0, makereg(regSSP), makereg(regno));
+	if (cpu.SupportsPop)
+		GenerateDiadic(op_pop, 0, makereg(regSSP), makereg(regno));
+	else {
+		cg.GenerateLoad(makereg(regno), cg.MakeIndirect(regSP), 8LL, 8LL);
+		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(8LL));
+	}
 	cpu.regs[regno & VR_MASK].isPushed.remove(wrapno);
 	cpu.regs[regno & VR_MASK].inUse.add(wrapno);
 }
@@ -2134,7 +2143,12 @@ void GenerateTempRegPush(int reg, int rmode, int number, int stkpos)
     ap1->preg = reg;
     ap1->mode = rmode;
 
-	GenerateMonadic(op_push,0,ap1);
+	if (cpu.SupportsPush)
+		GenerateMonadic(op_push,0,ap1);
+	else {
+		GenerateTriadic(op_subtract, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(8LL));
+		cg.GenerateStore(cg.MakeIndirect(regSP), ap1, 8LL);
+	}
 	TRACE(printf("pushing r%d\r\n", reg);)
     reg_stack[reg_stack_ptr].Operand = ap1;
     reg_stack[reg_stack_ptr].reg = reg;
@@ -2181,7 +2195,12 @@ void GenerateTempRegPop(int reg, int rmode, int number, int stkpos)
 	ap1 = allocOperand();
 	ap1->preg = reg;
 	ap1->mode = rmode;
-	GenerateMonadic(op_pop,0,ap1);
+	if (cpu.SupportsPop)
+		GenerateMonadic(op_pop, 0, ap1);
+	else {
+		cg.GenerateLoad(cg.MakeIndirect(regSP), ap1, 8LL, 8LL);
+		GenerateTriadic(op_add, 0, makereg(regSP), makereg(regSP), cg.MakeImmediate(8LL));
+	}
     reg_alloc[number].f.isPushed = 'F';
 }
 

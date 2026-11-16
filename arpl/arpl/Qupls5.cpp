@@ -536,7 +536,7 @@ char* Qupls5CPU::RegMoniker(int32_t regno)
 
 void Qupls5CodeGenerator::banner()
 {
-	printf("Qupls5 Code Generator v0.03\n");
+	printf("Qupls5 Code Generator v0.04\n");
 };
 
 
@@ -2822,7 +2822,7 @@ void Qupls5CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* 
 	GenerateDiadic(opcode, 0, ap1, ap2);
 	return;
 	// If fewer than 20 bits addressing, nothing to worry about.
-	if (address_bits < 20) {
+	if (address_bits < 14) {
 		GenerateDiadic(opcode, 0, ap1, ap2);
 		return;
 	}
@@ -2849,7 +2849,7 @@ void Qupls5CodeGenerator::GenerateLoadStore(e_op opcode, Operand* ap1, Operand* 
 		return;
 	}
 	else if (ap2->mode == am_indx) {
-		if (ap2->offset == nullptr || ap2->offset2!=nullptr) {
+		if (false && ap2->offset == nullptr || ap2->offset2!=nullptr) {
 			Operand* ap4;
 			ap4 = GetTempRegister();
 			if (ap2->offset) {

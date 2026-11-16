@@ -1675,7 +1675,7 @@ Operand* ENODE::GenerateRegImmIndex(Operand* ap1, Operand* ap2, bool neg)
 // ----------------------------------------------------------------------------
 Operand *ENODE::GenerateIndex(bool neg)
 {
-	Operand *ap1, *ap2;
+	Operand *ap1, *ap2, *ap3;
 	static int ndxlvl = 0;
 
 	ndxlvl++;
@@ -1728,11 +1728,15 @@ Operand *ENODE::GenerateIndex(bool neg)
 		}
 		else {
 			//GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
-			cg.GenerateAdd(ap2, ap1, ap2);
+//			ap3 = GetTempRegister();
+			// ToDo: fix this:
+//			cg.GenerateAdd(makereg(ap2->preg), ap1, makereg(ap2->preg));
+//			cg.GenerateAdd(ap3, ap1, makereg(ap2->preg));
 			ap2->mode = am_indx;
 			ap2->deep2 = ap1->deep;
 			ap2->offset = makeinode(en_icon, 0);
 			if (ndxlvl > 1) {
+//				GenerateLoad(makereg(ap2->preg), ap2, esize, esize);
 				GenerateLoad(makereg(ap2->preg), ap2, esize, esize);
 				ap2->mode = am_reg;
 			}

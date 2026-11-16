@@ -5388,7 +5388,7 @@ Operand* CodeGenerator::GenerateIndex(ENODE* node, bool neg)
 		}
 		else {
 			//GenerateTriadic(op_mulu, 0, ap2, ap2, MakeImmediate(this->esize));
-			cg.GenerateAdd(ap2, ap1, ap2);
+			cg.GenerateAdd(makereg(ap2->preg), ap1, makereg(ap2->preg));
 			ap2->mode = am_indx;
 			ap2->deep2 = ap1->deep;
 			ap2->offset = makeinode(en_icon, 0);
