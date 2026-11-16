@@ -297,7 +297,7 @@ void OCODE::OptMove()
 		optimized++;
 		return;
 	}
-
+	/*
 	if ((back->opcode & 0xfff) == op_move || (back->opcode & 0xfff) ==op_mov || (back->opcode & 0xfff)==op_mv) {
 		if (back->oper3 == nullptr) {
 			back->oper3 = oper1;
@@ -307,7 +307,7 @@ void OCODE::OptMove()
 			return;
 		}
 	}
-	
+	*/
 	/* under construction */
 	// look for
 	//		add Rt,Ra,Rb
@@ -1996,7 +1996,7 @@ void OCODE::OptPush()
 		return;
 	if (cpu.cpu_type == qupls4) {
 		ip = this;
-		for (cnt = 2; cnt < 6; cnt++) {
+		for (cnt = 2; cnt < 5; cnt++) {
 			ip = ip->fwd;
 			if (ip == nullptr)
 				return;
@@ -2141,7 +2141,7 @@ void OCODE::OptPop()
 		return;
 	if (cpu.cpu_type == qupls4) {
 		ip = this;
-		for (cnt = 2; cnt < 6; cnt++) {
+		for (cnt = 2; cnt < 5; cnt++) {
 			ip = ip->fwd;
 			if (ip == nullptr)
 				return;

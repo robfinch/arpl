@@ -31,8 +31,8 @@ enum e_cpu { thor, qupls, qupls4, qupls5, riscv, bigfoot, i386 };
 //#define LB650	1
 //#define STARK	1
 //#define QUPLS	1
-#define QUPLS4	4
-//#define QUPLS5	50
+//#define QUPLS4	4
+#define QUPLS5	50
 //#define QUPLS40 1
 //#define RISCV 5
 //#define I386 386

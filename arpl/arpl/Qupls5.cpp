@@ -89,6 +89,7 @@ static Instruction Qupls5InsnTbl[] =
 { "bmi", op_bmi,2,0,false,am_reg,am_direct,0,0 },
 { "bne", op_bne,3,0,false,am_reg,am_reg|am_imm,am_direct,0 },
 { "bnez", op_bnez,3,0,false,am_reg,am_direct,0, 0 },
+{ "bor", op_bor,2,0,false,am_reg,am_reg,0,0 },
 { "br",op_br,3,0,false,0,0,0,0 },
 { "branch",op_bra,3,0,false,0,0,0,0 },
 //{ "branch",op_branch,3,0,false,am_direct,0,0,0 },
@@ -114,6 +115,8 @@ static Instruction Qupls5InsnTbl[] =
 { "cror",op_cror,1,0,false,amCrReg,amCrReg,amCrReg,0 },
 { "csrrd", op_csrrd,1,1,false,am_reg,am_reg,am_imm },
 { "csrrw", op_csrrw,1,1,false,am_reg,am_reg,am_imm },
+{ "dbne", op_dbne,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "dbnez", op_dbnez,3,0,false,am_reg,am_reg,am_direct,0 },
 { "dec", op_dec,4,0,true,am_i5 },
 { "defcat", op_defcat,12,1,false,am_reg,am_reg,0 ,0 },
 { "dep",op_dep,1,1,false,am_reg,am_reg,am_reg | am_imm,am_reg | am_imm },
@@ -179,7 +182,10 @@ static Instruction Qupls5InsnTbl[] =
 { "gtu",op_gtu, 1, 1, false, am_reg, am_reg, am_reg | am_imm,0 },
 { "hint", op_hint,0 },
 { "hint2",op_hint2,0 },
+{ "ible", op_ible,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "ibleu", op_ibleu,3,0,false,am_reg,am_reg,am_direct,0 },
 { "iblt", op_iblt,3,0,false,am_reg,am_reg,am_direct,0 },
+{ "ibltu", op_ibltu,3,0,false,am_reg,am_reg,am_direct,0 },
 { "inc", op_inc,4,0,true,am_i5,am_mem,0,0 },
 { "iret", op_iret,2,0,false,0,0,0,0 },
 { "isnull", op_isnullptr,1,1,false,am_reg,am_reg,0,0 },
@@ -530,7 +536,7 @@ char* Qupls5CPU::RegMoniker(int32_t regno)
 
 void Qupls5CodeGenerator::banner()
 {
-	printf("Qupls5 Code Generator v0.01\n");
+	printf("Qupls5 Code Generator v0.03\n");
 };
 
 
@@ -3378,7 +3384,10 @@ Operand* Qupls5CodeGenerator::GenerateShift(ENODE* node, int flags, int64_t size
 	{
 		Int128 sz, eight;
 		eight = Int128::Convert(8LL);
-		sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
+		if (ap1->tp == nullptr)
+			sz = Int128::Convert(8LL);
+		else
+			sz = Int128::Convert(TYP::GetSize(ap1->tp->type));
 		Int128::Mul(&sz, &sz, &eight);
 		if (Int128::IsGT(&val, &sz))
 			error(ERR_SHIFT_TOOMANYBITS);

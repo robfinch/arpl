@@ -334,8 +334,8 @@ int main(int argc, char **argv)
 	cpu.SupportsLDM = false;
 	cpu.SupportsSTM = false;
 	cpu.SupportsPtrdif = false;
-	cpu.SupportsEnter = true;
-	cpu.SupportsLeave = true;
+	cpu.SupportsEnter = false;
+	cpu.SupportsLeave = false;
 	cpu.SupportsIndexed = true;
 	cpu.SupportsTrinary = true;
 	cpu.Addsi = false;

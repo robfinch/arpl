@@ -32,7 +32,7 @@ const char* imm_char = "$";
 Compiler compiler;
 int pass;
 int maxPn = 15;
-int gCpu = QUPLS4;
+int gCpu = QUPLS5;
 #ifdef STARK
 starkCPU cpu;
 int regTS = 52;
